@@ -28,7 +28,7 @@ interface QuickAction {
 export type RootStackParamList = {
   MainTabs: undefined; // Represents the Bottom Tab Navigator itself
   Home: undefined; // If Home is also directly in the stack (unlikely with tabs)
-  Food: undefined; // Represents the Food Tab
+  // Remove Food: undefined; // Represents the Food Tab
   Progress: undefined; // Represents the Progress Tab
   Exercise: undefined; // Represents the Exercise Tab
   Settings: undefined; // Represents the Settings Tab
@@ -36,7 +36,6 @@ export type RootStackParamList = {
   Weight: undefined;
   Subscription: undefined;
   AddMeal: undefined; // Screen for adding a meal/food
-  FoodDetails: { id: string }; // Screen to show details of a food item
   // ... add other screens and their params here
 };
 */
@@ -50,15 +49,9 @@ export const useHomeNavigation = () => {
   const navigateToExercise = () => navigation.navigate('MainTabs', { screen: 'Exercise' }); // Keep if needed elsewhere
   // const navigateToWeight = () => navigation.navigate('Weight'); // Handled by separate screen/tab probably
   const navigateToSubscription = () => navigation.navigate('Subscription');
-  const navigateToFoodLog = () => navigation.navigate('MainTabs', { screen: 'Food' });
   const navigateToAddMeal = () => navigation.navigate('AddMeal', { mealCategory: 'breakfast'});
   const navigateToSettings = () => navigation.navigate('Settings'); // Add Settings navigation
   
-  const navigateToFoodItem = (item: RecentItem) => {
-    // Assuming foodId is the correct param name based on RootStackParamList
-    navigation.navigate('FoodDetails', { foodId: item.id }); 
-  };
-
   // Define Quick Actions within the hook - Removed
   /*
   const quickActions: QuickAction[] = [
@@ -90,9 +83,7 @@ export const useHomeNavigation = () => {
     navigateToExercise, // Keep this one
     // navigateToWeight, // Removed
     navigateToSubscription,
-    navigateToFoodLog,
     navigateToAddMeal,
-    navigateToFoodItem,
     navigateToSettings, // Export Settings navigation function
   };
 }; 

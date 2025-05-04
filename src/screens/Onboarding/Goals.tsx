@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet, ScrollView } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { useGoalsScreenLogic } from '../../hooks/useGoalsScreenLogic';
 import { useGoalsScreenNavigation } from '../../hooks/useGoalsScreenNavigation';
 import { OnboardingHeader } from '../../components/onboarding/OnboardingHeader';
@@ -10,22 +10,31 @@ export const GoalsScreen: React.FC = () => {
   const { goals, selectedGoalId, selectGoal } = useGoalsScreenLogic();
   const { goToDetails } = useGoalsScreenNavigation();
 
+  const handlePressContinue = () => {
+    if (selectedGoalId) {
+      goToDetails(selectedGoalId);
+    }
+  };
+
+  const renderHeader = () => (
+    <OnboardingHeader
+      title="What's your goal?"
+      subtitle="Select your primary goal and we'll customize your experience"
+    />
+  );
+
   return (
     <View style={styles.container}>
-      <ScrollView style={styles.scrollContainer} contentContainerStyle={styles.contentContainer}>
-        <OnboardingHeader
-          title="What's your goal?"
-          subtitle="Select your primary goal and we'll customize your experience"
-        />
-        <GoalsList
-          goals={goals}
-          selectedGoalId={selectedGoalId}
-          onSelectGoal={selectGoal}
-        />
-      </ScrollView>
+      <GoalsList
+        goals={goals}
+        selectedGoalId={selectedGoalId}
+        onSelectGoal={selectGoal}
+        ListHeaderComponent={renderHeader}
+        contentContainerStyle={styles.listContentContainer}
+      />
 
       <OnboardingFooter
-        onPress={goToDetails}
+        onPress={handlePressContinue}
         disabled={!selectedGoalId}
       />
     </View>
@@ -37,11 +46,9 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fff',
   },
-  scrollContainer: {
-    flex: 1,
-  },
-  contentContainer: {
-    padding: 24,
+  listContentContainer: {
+    paddingHorizontal: 24,
+    paddingTop: 24,
     paddingBottom: 40,
   },
 });

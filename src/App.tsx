@@ -1,42 +1,51 @@
-import * as React from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { createNativeStackNavigator, NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { View, Text, TouchableOpacity, StyleSheet, Platform, GestureResponderEvent } from 'react-native';
+import { View, TouchableOpacity, StyleSheet, Platform, GestureResponderEvent, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage'; // Import AsyncStorage
+import { useSelector } from 'react-redux'; // Import Redux hook
+import { selectAuthStatus } from '@/src/store/slices/authSlice'; // Import auth selector
 
-// Import Param List type
-import { RootStackParamList, MainTabParamList } from '@/src/types/navigation';
+// Import Param List types
+import {
+  RootStackParamList,
+  MainTabParamList,
+  OnboardingStackParamList,
+  AuthStackParamList, // Add Auth Stack Param List
+} from '@/src/types/navigation';
 
-// Import your screen components here
+// Import screen components
 import HomeScreen from '@/src/screens/Home';
-import FoodScreen from '@/src/screens/Food';
 import ProgressScreen from '@/src/screens/Progress';
 import ExerciseScreen from '@/src/screens/Exercise';
 import SettingsScreen from '@/src/screens/Settings';
 import ScanScreen from '@/src/screens/Scan';
 import WeightScreen from '@/src/screens/Weight';
-import AddMealScreen from '@/src/screens/Food/Add';
-import FoodDetailsScreen from '@/src/screens/Food/Details';
+import AddMealScreen from '@/src/screens/FoodDB/add';
+import FoodLogHubScreen from '@/src/screens/FoodDB';
+import FoodSearchScreen from '@/src/screens/FoodDB/search';
+import ScanConfirmScreen from '@/src/screens/Scan/confirm';
 import SubscriptionScreen from '@/src/screens/Subscription';
 
-/* // Commented out unused PlaceholderScreen
-function PlaceholderScreen({ route }: { route: any }) {
-  return (
-    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-      <Text>Screen: {route.name}</Text>
-      {route.params && <Text>Params: {JSON.stringify(route.params)}</Text>}
-    </View>
-  );
-}
-*/
+// Import Onboarding Screens
+import WelcomeScreen from '@/src/screens/Onboarding/Welcome';
+import GoalsScreen from '@/src/screens/Onboarding/Goals';
+import DetailsScreen from '@/src/screens/Onboarding/Details';
+
+// Import Auth Screens
+import { LoginScreen } from '@/src/screens/Auth/LoginScreen';
+import { SignUpScreen } from '@/src/screens/Auth/SignUpScreen';
 
 // Create Navigators
 const Tab = createBottomTabNavigator<MainTabParamList>();
-const Stack = createNativeStackNavigator<RootStackParamList>();
+const RootStack = createNativeStackNavigator<RootStackParamList>();
+const OnboardingStack = createNativeStackNavigator<OnboardingStackParamList>();
+const AuthStack = createNativeStackNavigator<AuthStackParamList>(); // Create Auth Navigator
 
-// Custom Tab Button Component
+// Custom Tab Button Component (remains the same)
 const CustomTabBarButton: React.FC<{ children: React.ReactNode; onPress?: (event: GestureResponderEvent) => void }> = ({ children, onPress }) => (
   <TouchableOpacity
     style={styles.customButtonContainer}
@@ -49,10 +58,10 @@ const CustomTabBarButton: React.FC<{ children: React.ReactNode; onPress?: (event
   </TouchableOpacity>
 );
 
-// Extracted dummy screen to avoid inline component definitions (prevents state loss & perf warnings)
+// Extracted dummy screen (remains the same)
 const AddPlaceholderScreen: React.FC = () => null;
 
-// Define the Bottom Tab Navigator component separately (SRP)
+// Define the Bottom Tab Navigator component (remains the same)
 function MainTabNavigator() {
   return (
     <Tab.Navigator
@@ -66,8 +75,6 @@ function MainTabNavigator() {
 
           if (route.name === 'Home') {
             iconName = focused ? 'home' : 'home-outline';
-          } else if (route.name === 'Food') {
-            iconName = focused ? 'restaurant' : 'restaurant-outline';
           } else if (route.name === 'Progress') {
             iconName = focused ? 'stats-chart' : 'stats-chart-outline';
           } else if (route.name === 'Exercise') {
@@ -81,30 +88,30 @@ function MainTabNavigator() {
         tabBarInactiveTintColor: 'gray',
       })}
     >
-        {/* Order: Home, Food, Add (custom), Progress, Exercise */}
         <Tab.Screen name="Home" component={HomeScreen} />
-        <Tab.Screen name="Food" component={FoodScreen} />
         <Tab.Screen
           name="Add"
-          component={AddPlaceholderScreen}
+          component={AddPlaceholderScreen} // Still uses placeholder
           options={{
             tabBarLabel: () => null,
             tabBarIcon: () => <Ionicons name="add" size={34} color="#fff" />,
-            // Provide a completely custom button so we keep FAB look & feel
             tabBarButton: (props) => (
               <CustomTabBarButton
                 {...props}
-                // Navigation is handled via listener to avoid multiple triggers
                 onPress={props.onPress as any}
               />
             ),
           }}
           listeners={({ navigation }) => ({
             tabPress: (e) => {
-              // Prevent navigation to the placeholder screen
               e.preventDefault();
-              // TODO: Replace with action-selector bottom sheet/modal when ready
-              navigation.navigate('Scan');
+              // Type assertion needed here for navigating from Tab to Stack parent
+              const parentNav = navigation.getParent();
+              if (parentNav) {
+                parentNav.navigate('FoodLogHub');
+              } else {
+                console.error("Could not find parent navigator to navigate to FoodLogHub");
+              }
             },
           })}
         />
@@ -114,38 +121,125 @@ function MainTabNavigator() {
   );
 }
 
-// Define the Root Stack Navigator
+// Define the Root Stack Navigator (remains largely the same)
 function RootStackNavigator() {
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="MainTabs" component={MainTabNavigator} />
-      {/* Actual screens */}
-      <Stack.Screen name="Scan" component={ScanScreen} />
-      <Stack.Screen name="Weight" component={WeightScreen} />
-      <Stack.Screen name="AddMeal" component={AddMealScreen} />
-      <Stack.Screen name="FoodDetails" component={FoodDetailsScreen} />
-      <Stack.Screen name="Settings" component={SettingsScreen} />
-      <Stack.Screen
+    <RootStack.Navigator screenOptions={{ headerShown: false }}>
+      <RootStack.Screen name="MainTabs" component={MainTabNavigator} />
+      {/* Other stack screens */}
+      <RootStack.Screen name="Scan" component={ScanScreen} />
+      <RootStack.Screen name="ScanConfirm" component={ScanConfirmScreen} />
+      <RootStack.Screen name="Weight" component={WeightScreen} />
+      <RootStack.Screen name="AddMeal" component={AddMealScreen} />
+      <RootStack.Screen name="Settings" component={SettingsScreen} />
+      <RootStack.Screen name="FoodLogHub" component={FoodLogHubScreen} />
+      <RootStack.Screen name="FoodSearch" component={FoodSearchScreen} />
+      <RootStack.Screen
         name="Subscription"
         component={SubscriptionScreen}
         options={{ presentation: 'modal' }}
       />
-    </Stack.Navigator>
+    </RootStack.Navigator>
   );
 }
 
-// Define the App component
+// Define the Onboarding Stack Navigator
+// Accept the callback prop
+function OnboardingStackNavigator({ onOnboardingComplete }: { onOnboardingComplete: () => void }) {
+  // TODO: Need a way to signal completion from DetailsScreen
+  // This could involve passing a callback, using context, or a state management library.
+  // For now, DetailsScreen will handle setting AsyncStorage.
+  return (
+    <OnboardingStack.Navigator screenOptions={{ headerShown: false }}>
+      <OnboardingStack.Screen name="Welcome" component={WelcomeScreen} />
+      <OnboardingStack.Screen name="Goals" component={GoalsScreen} />
+      {/* Pass the onComplete callback down to DetailsScreen */}
+      <OnboardingStack.Screen name="Details">
+        {(props) => <DetailsScreen route={props.route} onComplete={onOnboardingComplete} />}
+      </OnboardingStack.Screen>
+      {/* Add other onboarding screens here */}
+    </OnboardingStack.Navigator>
+  );
+}
+
+// Define the Auth Stack Navigator
+function AuthStackNavigator() {
+  return (
+    <AuthStack.Navigator screenOptions={{ headerShown: false }}>
+      <AuthStack.Screen name="Login" component={LoginScreen} />
+      <AuthStack.Screen name="SignUp" component={SignUpScreen} />
+    </AuthStack.Navigator>
+  );
+}
+
+// Define the main App component with conditional rendering based on Auth state
 export default function App() {
+  const authStatus = useSelector(selectAuthStatus); // Get auth status from Redux
+  const [isLoadingOnboarding, setIsLoadingOnboarding] = useState(true); // Renamed for clarity
+  const [isOnboardingComplete, setIsOnboardingComplete] = useState(false);
+
+  // Define the callback function
+  const handleOnboardingComplete = useCallback(() => {
+    setIsOnboardingComplete(true);
+    // Optionally, clear any sensitive onboarding state here if needed
+  }, []);
+
+  // Check onboarding status only if authenticated
+  useEffect(() => {
+    if (authStatus === 'authenticated') {
+      const checkOnboardingStatus = async () => {
+        setIsLoadingOnboarding(true); // Start loading check
+        try {
+          const value = await AsyncStorage.getItem('onboardingComplete');
+          if (value !== null && value === 'true') {
+            setIsOnboardingComplete(true);
+          } else {
+            setIsOnboardingComplete(false); // Explicitly set to false if not found or not 'true'
+          }
+        } catch (e) {
+          console.error('Failed to load onboarding status', e);
+          setIsOnboardingComplete(false); // Default to onboarding on error
+        } finally {
+          setIsLoadingOnboarding(false); // Finish loading check
+        }
+      };
+      checkOnboardingStatus();
+    } else {
+      // If not authenticated, no need to check onboarding status yet
+      setIsLoadingOnboarding(false);
+      setIsOnboardingComplete(false); // Reset onboarding status if user logs out
+    }
+  }, [authStatus]); // Re-run check when authStatus changes
+
+  // Loading state for initial auth check or onboarding check
+  if (authStatus === 'idle' || authStatus === 'loading' || (authStatus === 'authenticated' && isLoadingOnboarding)) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" />
+      </View>
+    );
+  }
+
   return (
     <SafeAreaProvider>
       <NavigationContainer>
-        <RootStackNavigator />
+        {authStatus === 'authenticated' ? (
+          // If authenticated, check onboarding status
+          isOnboardingComplete ? (
+            <RootStackNavigator />
+          ) : (
+            <OnboardingStackNavigator onOnboardingComplete={handleOnboardingComplete} />
+          )
+        ) : (
+          // If not authenticated, show Auth stack
+          <AuthStackNavigator />
+        )}
       </NavigationContainer>
     </SafeAreaProvider>
   );
 }
 
-// Add StyleSheet for the custom button and tab bar
+// Add StyleSheet (add loadingContainer)
 const styles = StyleSheet.create({
   tabBarStyle: {
     position: 'absolute',
@@ -156,27 +250,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#ffffff',
     borderRadius: 15,
     height: 70,
-    shadowColor: '#7F5DF0',
-    shadowOffset: {
-      width: 0,
-      height: 10,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.5,
     borderTopWidth: 0,
   },
   customButtonContainer: {
     top: -30,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#7F5DF0',
-    shadowOffset: {
-      width: 0,
-      height: 10,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.5,
-    elevation: 5,
   },
   customButton: {
     width: 70,
@@ -186,4 +265,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  }
 });

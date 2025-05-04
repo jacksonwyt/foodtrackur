@@ -1,18 +1,10 @@
 import React from 'react';
-import { View, Text, StyleSheet, Image } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import { FeatureItem } from './FeatureItem'; // Corrected import path
-
-// Assuming the illustration path is correct relative to the original WelcomeScreen
-const illustration = require('../../../../assets/images/welcome-illustration.png');
 
 export const WelcomeContent: React.FC = () => {
   return (
     <View style={styles.content}>
-      <Image
-        source={illustration}
-        style={styles.illustration}
-        resizeMode="contain"
-      />
       <Text style={styles.title}>Welcome to CalAI</Text>
       <Text style={styles.subtitle}>
         Your personal AI-powered nutrition assistant
@@ -45,12 +37,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingTop: 60, // Adjust as needed, or make dynamic
     paddingBottom: 40, // Add bottom padding
-  },
-  illustration: {
-    width: '80%',
-    maxWidth: 300, // Max width for larger screens
-    height: 240,
-    marginBottom: 40,
   },
   title: {
     fontSize: 30, // Slightly adjusted size

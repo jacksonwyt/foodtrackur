@@ -1,12 +1,11 @@
-import React from 'react';
+import React, { ComponentProps } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 interface MacroTileProps {
   label: string;
-  // Use keyof typeof MaterialCommunityIcons.glyphMap for stronger icon typing
-  // However, this can be complex, so using string for simplicity now.
-  iconName: string; 
+  // Use the actual type for icon names from MaterialCommunityIcons
+  iconName: ComponentProps<typeof MaterialCommunityIcons>['name'];
   consumed: number;
   goal: number;
   color: string;

@@ -1,8 +1,9 @@
 import React from 'react';
-import { View, TextInput, StyleSheet, TextInputProps } from 'react-native';
+import { View, TextInput, StyleSheet, TextInputProps, StyleProp, ViewStyle } from 'react-native';
 import { Ionicons } from '@expo/vector-icons'; // Assuming Ionicons is used
 
-interface FoodSearchBarProps extends TextInputProps {
+interface FoodSearchBarProps extends Omit<TextInputProps, 'style'> {
+  style?: StyleProp<ViewStyle>; // Style for the container View
   // Add any specific props needed for the search bar, e.g., onClear
 }
 

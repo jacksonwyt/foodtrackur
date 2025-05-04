@@ -3,58 +3,46 @@ import { Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { CameraView, CameraCapturedPicture } from 'expo-camera';
-import { analyzeFoodImage } from '../services/ai/geminiService';
 import { RootStackParamList } from '../types/navigation';
 
 export const useScanScreenActions = (cameraRef: CameraView | null) => {
-  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [analysisResult, setAnalysisResult] = useState<string | null>(null);
-  const [analysisError, setAnalysisError] = useState<string | null>(null);
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList, 'Scan'>>();
 
   const handleCapture = useCallback(async () => {
-    if (cameraRef && !isAnalyzing) {
-      setIsAnalyzing(true);
-      setAnalysisResult(null);
-      setAnalysisError(null);
+    if (cameraRef) {
       try {
-        const photo: CameraCapturedPicture = await cameraRef.takePictureAsync({ quality: 0.7 });
+        const photo: CameraCapturedPicture | undefined = await cameraRef.takePictureAsync({
+            quality: 0.7,
+            base64: true,
+        });
 
-        const result = await analyzeFoodImage(photo);
-
-        if (result.startsWith('Error:')) {
-          setAnalysisError(result);
-        } else {
-          setAnalysisResult(result);
-          console.log("Analysis Result:", result);
+        if (!photo?.uri) {
+          throw new Error("Captured photo is missing URI.");
+        }
+        if (!photo.base64) {
+            throw new Error("Captured photo is missing Base64 data.");
         }
 
+        navigation.navigate('ScanConfirm', {
+            imageUri: photo.uri,
+            imageBase64: photo.base64
+        });
+
       } catch (error) {
-        console.error('Error during capture or analysis:', error);
+        console.error('Error during capture:', error);
         const errorMessage = error instanceof Error ? error.message : String(error);
-        setAnalysisError(`Capture/Analysis failed: ${errorMessage}`);
-        Alert.alert('Error', 'Could not capture or analyze image. Please try again.');
-      } finally {
-        setIsAnalyzing(false);
+        const displayError = `Capture failed: ${errorMessage}`;
+        Alert.alert('Error', displayError);
       }
     }
-  }, [cameraRef, isAnalyzing]);
+  }, [cameraRef, navigation]);
 
   const handleClose = useCallback(() => {
     navigation.goBack();
   }, [navigation]);
 
-  const clearAnalysis = useCallback(() => {
-    setAnalysisResult(null);
-    setAnalysisError(null);
-  }, []);
-
   return {
     handleCapture,
     handleClose,
-    isAnalyzing,
-    analysisResult,
-    analysisError,
-    clearAnalysis,
   };
 }; 

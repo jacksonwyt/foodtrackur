@@ -61,7 +61,7 @@ const styles = StyleSheet.create({
   title: {
     marginBottom: theme.spacing.md,
     paddingHorizontal: theme.spacing.md,
-    fontSize: theme.fontSize?.h3 || 20,
+    fontSize: theme.typography.sizes.lg || 20,
     fontWeight: '600',
   },
   chart: {

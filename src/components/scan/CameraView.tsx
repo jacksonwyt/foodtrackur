@@ -7,10 +7,9 @@ interface CameraViewProps {
   setCameraRef: (ref: CameraView | null) => void;
   onClose: () => void;
   onCapture: () => void;
-  isAnalyzing: boolean;
 }
 
-const CameraViewComponent: React.FC<CameraViewProps> = ({ setCameraRef, onClose, onCapture, isAnalyzing }) => {
+const CameraViewComponent: React.FC<CameraViewProps> = ({ setCameraRef, onClose, onCapture }) => {
   return (
     <CameraView
       style={styles.camera}
@@ -35,9 +34,8 @@ const CameraViewComponent: React.FC<CameraViewProps> = ({ setCameraRef, onClose,
         {/* Controls with Capture Button */}
         <View style={styles.controls}>
           <TouchableOpacity
-            style={[styles.captureButton, isAnalyzing && styles.captureButtonDisabled]}
+            style={styles.captureButton}
             onPress={onCapture}
-            disabled={isAnalyzing}
           >
             <View style={styles.captureButtonInner} />
           </TouchableOpacity>
@@ -104,10 +102,6 @@ const styles = StyleSheet.create({
     height: 60,
     borderRadius: 30,
     backgroundColor: '#fff', // Inner circle
-  },
-  captureButtonDisabled: {
-    opacity: 0.5,
-    backgroundColor: 'rgba(128,128,128,0.3)', // Greyed out outer ring
   },
 });
 

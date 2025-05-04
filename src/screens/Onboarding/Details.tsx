@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -8,25 +8,42 @@ import {
   TextInput,
   KeyboardAvoidingView,
   Platform,
+  Alert
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useRoute, RouteProp } from '@react-navigation/native';
+import { useRouter, Href } from 'expo-router';
 import {
   useOnboardingDetailsForm,
-  OnboardingDetailsFormData,
   ActivityLevel,
-} from '../../hooks/useOnboardingDetailsForm'; // Adjusted path
-import { useOnboardingDetailsNavigation } from '../../hooks/useOnboardingDetailsNavigation'; // Adjusted path
-import { OnboardingHeader } from '../../components/onboarding/OnboardingHeader'; // Adjusted path
-import { OnboardingFooter } from '../../components/onboarding/OnboardingFooter'; // Adjusted path
-import { ActivityLevelItem } from '../../components/onboarding/ActivityLevelItem'; // Adjusted path
+} from '../../hooks/useOnboardingDetailsForm';
+import { OnboardingHeader } from '../../components/onboarding/OnboardingHeader';
+import { OnboardingFooter } from '../../components/onboarding/OnboardingFooter';
+import { ActivityLevelItem } from '../../components/onboarding/ActivityLevelItem';
+import {
+  OnboardingStackParamList,
+  OnboardingData,
+  GoalType,
+  GenderType,
+  ActivityLevelType
+} from '../../types/navigation';
+import {
+  calculateNutritionalGoals,
+  CalculatedGoals,
+} from '../../utils/calculations';
+import { updateProfile, Profile } from '../../services/profileService';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
-interface FormData {
-  name: string;
-  age: string;
-  height: string;
-  weight: string;
-  gender: 'male' | 'female' | 'other' | null;
-  activityLevel: 'sedentary' | 'light' | 'moderate' | 'very' | 'extra' | null;
+type DetailsScreenRouteProp = RouteProp<OnboardingStackParamList, 'Details'>;
+
+// Define navigation prop type for Details screen specifically
+type DetailsScreenNavigationProp = NativeStackNavigationProp<OnboardingStackParamList, 'Details'>;
+
+interface DetailsScreenProps {
+  route: DetailsScreenRouteProp;
+  // Remove navigation prop if using expo-router directly
+  // navigation: DetailsScreenNavigationProp; 
+  onComplete: () => void;
 }
 
 const ACTIVITY_LEVELS = [
@@ -57,7 +74,11 @@ const ACTIVITY_LEVELS = [
   },
 ];
 
-export const DetailsScreen: React.FC = () => {
+export const DetailsScreen: React.FC<DetailsScreenProps> = ({ route, onComplete }) => {
+  const { goal } = route.params;
+  const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
+
   const {
     formData,
     handleInputChange,
@@ -67,28 +88,83 @@ export const DetailsScreen: React.FC = () => {
     activityLevels,
   } = useOnboardingDetailsForm();
 
-  const {
-    goToNext
-  } = useOnboardingDetailsNavigation();
+  const handleSubmit = async () => {
+    if (!isFormValid() || !goal) {
+      Alert.alert("Missing Information", "Please fill out all fields and ensure a goal is selected.");
+      return;
+    }
 
-  const handleContinue = () => {
-    if (isFormValid()) {
-      // Logic to save data could be added to the form hook or called here
-      goToNext();
+    setIsLoading(true);
+
+    try {
+      const onboardingData: OnboardingData = {
+        name: formData.name.trim() || undefined,
+        goal: goal,
+        height: parseFloat(formData.height) || undefined,
+        weight: parseFloat(formData.weight) || undefined,
+        dob: formData.age ? `${new Date().getFullYear() - parseInt(formData.age, 10)}-01-01` : undefined,
+        gender: formData.gender === null ? undefined : formData.gender,
+        activityLevel: formData.activityLevel === null ? undefined : formData.activityLevel,
+      };
+
+      if (!onboardingData.height || !onboardingData.weight || !onboardingData.dob || !onboardingData.gender || !onboardingData.activityLevel) {
+         Alert.alert("Missing Information", "Please ensure all details (age, height, weight, gender, activity level) are entered correctly.");
+         setIsLoading(false);
+         return;
+      }
+
+      const calculatedGoals = calculateNutritionalGoals(onboardingData);
+      if (!calculatedGoals) {
+        Alert.alert("Calculation Error", "Could not calculate nutritional goals. Please check your inputs.");
+        setIsLoading(false);
+        return;
+      }
+      console.log("Calculated Goals:", calculatedGoals);
+
+      // Map OnboardingData and CalculatedGoals to the Profile interface fields
+      const profileUpdates: Partial<Omit<Profile, 'id' | 'created_at' | 'updated_at'>> = {
+        full_name: onboardingData.name,
+        // Add mappings for the new fields
+        height: onboardingData.height,
+        weight: onboardingData.weight,
+        dob: onboardingData.dob,
+        gender: onboardingData.gender,
+        activity_level: onboardingData.activityLevel,
+        // Goal fields
+        goal_calories: calculatedGoals.calories,
+        goal_protein: calculatedGoals.protein,
+        goal_carbs: calculatedGoals.carbs,
+        goal_fat: calculatedGoals.fat,
+      };
+
+      const updatedProfile = await updateProfile(profileUpdates);
+
+      if (!updatedProfile) {
+          Alert.alert("Error", "Could not save your profile. Please try again later.");
+      } else {
+          console.log("Profile updated successfully:", updatedProfile);
+          onComplete();
+      }
+
+    } catch (error: any) {
+      console.error("Error submitting onboarding data:", error);
+      Alert.alert("Error", error.message || "Could not save your profile. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
     <KeyboardAvoidingView
       style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'} // Adjusted behavior for better experience
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0} // Adjust offset if needed
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
     >
       <ScrollView
         style={styles.scrollContainer}
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled" // Dismiss keyboard on tap outside
+        keyboardShouldPersistTaps="handled"
       >
         <OnboardingHeader
             title="Personal Details"
@@ -96,7 +172,6 @@ export const DetailsScreen: React.FC = () => {
         />
 
         <View style={styles.form}>
-          {/* Name Input */}
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Name</Text>
             <TextInput
@@ -110,7 +185,6 @@ export const DetailsScreen: React.FC = () => {
             />
           </View>
 
-          {/* Row for Age, Height, Weight */}
           <View style={styles.row}>
             <View style={[styles.inputGroup, styles.flexInput]}>
               <Text style={styles.label}>Age</Text>
@@ -150,7 +224,6 @@ export const DetailsScreen: React.FC = () => {
             </View>
           </View>
 
-          {/* Gender Selection */}
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Gender</Text>
             <View style={styles.genderButtons}>
@@ -176,7 +249,6 @@ export const DetailsScreen: React.FC = () => {
             </View>
           </View>
 
-          {/* Activity Level Selection */}
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Activity Level</Text>
             <View style={styles.activityLevelsContainer}>
@@ -187,7 +259,6 @@ export const DetailsScreen: React.FC = () => {
                     description={level.description}
                     isSelected={formData.activityLevel === level.id}
                     onPress={() => handleActivitySelect(level.id)}
-                    // Use the styles from the component, remove inline styles here
                 />
               ))}
             </View>
@@ -196,18 +267,14 @@ export const DetailsScreen: React.FC = () => {
       </ScrollView>
 
       <OnboardingFooter
-        buttonText="Continue"
-        onPress={handleContinue}
-        disabled={!isFormValid()}
-        // Pass icon if needed, or handle within footer
+        buttonText="Finish Setup"
+        onPress={handleSubmit}
+        disabled={isLoading || !isFormValid()}
       />
     </KeyboardAvoidingView>
   );
 };
 
-// Styles remain largely the same, but can be simplified
-// by removing styles now handled in ActivityLevelItem.
-// Ensure paths in imports are correct.
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -218,17 +285,13 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: 24,
-    paddingBottom: 100, // Ensure space for the footer
+    paddingBottom: 100,
   },
-  // OnboardingHeader styles are now in that component
-  // OnboardingFooter styles are now in that component
-
   form: {
     gap: 24,
-    marginTop: 32, // Added margin after header
+    marginTop: 32,
   },
   inputGroup: {
-    // Kept for structure
   },
   label: {
     fontSize: 16,
@@ -250,24 +313,25 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   flexInput: {
-      flex: 1,
+    flex: 1,
   },
   genderButtons: {
     flexDirection: 'row',
-    gap: 10,
+    gap: 12,
   },
   genderButton: {
     flex: 1,
+    paddingVertical: 12,
+    borderRadius: 8,
     borderWidth: 1,
     borderColor: '#ddd',
-    borderRadius: 8,
-    paddingVertical: 12,
     alignItems: 'center',
+    justifyContent: 'center',
     backgroundColor: '#f9f9f9',
   },
   selectedGender: {
-    backgroundColor: '#6200EE',
-    borderColor: '#6200EE',
+    backgroundColor: '#007AFF',
+    borderColor: '#007AFF',
   },
   genderButtonText: {
     fontSize: 16,
@@ -278,11 +342,8 @@ const styles = StyleSheet.create({
     color: '#fff',
   },
   activityLevelsContainer: {
-      // Container for the activity level items
+    gap: 12,
   },
-  // Styles previously for individual activity buttons (activityButton, selectedActivity,
-  // activityTitle, activityDescription) are now in ActivityLevelItem.tsx
 });
 
-// Export the component if it wasn't already (assuming it's in index.tsx or similar)
-// export default DetailsScreen; // Or keep as named export if preferred 
+export default DetailsScreen; 

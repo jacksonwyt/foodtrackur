@@ -9,7 +9,7 @@ interface CameraPermissionDeniedProps {
 const CameraPermissionDenied: React.FC<CameraPermissionDeniedProps> = ({ onGoBack }) => {
   return (
     <View style={styles.permissionDenied}>
-      <Ionicons name="camera-off" size={64} color="#FF3B30" />
+      <Ionicons name="camera-reverse-outline" size={64} color="#FF3B30" />
       <Text style={styles.permissionTitle}>Camera Access Denied</Text>
       <Text style={styles.permissionText}>
         We need camera access to scan your food. Please enable it in your device settings.

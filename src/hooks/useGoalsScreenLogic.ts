@@ -1,53 +1,45 @@
 import { useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
+import { GoalType } from '@/src/types/navigation'; // Import GoalType
 
 export interface Goal {
-  id: string;
+  id: GoalType; // Use GoalType for the ID
   icon: keyof typeof Ionicons.glyphMap;
   title: string;
   description: string;
 }
 
-// Keep static data separate for clarity and potential future externalization
+// MVP focused goals as per MVP.md
 const GOALS_DATA: Goal[] = [
   {
-    id: 'weight-loss',
-    icon: 'trending-down-outline', // Use outline icons
+    id: 'lose',
+    icon: 'trending-down-outline',
     title: 'Lose Weight',
-    description: 'Achieve a healthy weight through balanced nutrition',
+    description: 'Reach your target weight with a caloric deficit',
   },
   {
-    id: 'muscle-gain',
-    icon: 'barbell-outline',
-    title: 'Build Muscle',
-    description: 'Gain muscle mass with proper protein intake',
-  },
-  {
-    id: 'maintenance',
+    id: 'maintain',
     icon: 'shield-checkmark-outline',
     title: 'Maintain Weight',
     description: 'Keep your current weight while eating healthy',
   },
   {
-    id: 'health',
-    icon: 'heart-outline',
-    title: 'Better Health',
-    description: 'Focus on nutrition for overall wellbeing',
+    id: 'gain',
+    icon: 'barbell-outline',
+    title: 'Gain Weight / Muscle',
+    description: 'Build mass with a caloric surplus and sufficient protein',
   },
-  {
-    id: 'performance',
-    icon: 'flash-outline',
-    title: 'Athletic Performance',
-    description: 'Optimize nutrition for sports and exercise',
-  },
+  // Removed other goals like health, performance for MVP onboarding focus
 ];
 
 export const useGoalsScreenLogic = () => {
-  const [selectedGoalId, setSelectedGoalId] = useState<string | null>(null);
+  // State now holds GoalType or null
+  const [selectedGoalId, setSelectedGoalId] = useState<GoalType | null>(null);
 
-  const goals: Goal[] = GOALS_DATA; // Provide the data
+  const goals: Goal[] = GOALS_DATA;
 
-  const selectGoal = (id: string) => {
+  // Parameter type updated to GoalType
+  const selectGoal = (id: GoalType) => {
     setSelectedGoalId(id);
   };
 

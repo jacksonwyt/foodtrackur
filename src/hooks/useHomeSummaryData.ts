@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
+import { getProfile, Profile } from '../services/profileService';
+import { getFoodLogsByDate, FoodLog } from '../services/foodLogService';
+import { formatISODate } from '../utils/dateUtils'; // Reverted: Removed .ts extension
 
-// Example data types (consider moving to src/types/ later)
+// Data types (can remain as is or be refined)
 interface MacroData {
   consumed: number;
   goal: number;
@@ -13,37 +16,28 @@ interface DailyData {
     carbs: MacroData;
     fat: MacroData;
   };
+  // Optionally include raw logs if needed by the UI
+  // logs: FoodLog[];
 }
 
-// TODO: Replace with actual data fetching logic (e.g., from API, store)
-// This simulation should ideally live elsewhere (e.g., API service layer)
-const fetchDailyData = async (date: Date): Promise<DailyData> => {
-  console.log('[Summary] Fetching data for:', date.toISOString().split('T')[0]);
-  // Simulate API call delay
-  await new Promise(resolve => setTimeout(resolve, 300)); 
-  
-  // Return example data for now
-  return {
-    calories: {
-      consumed: 1450 + Math.floor(Math.random() * 100), // Add randomness for demo
-      goal: 2000,
+// Helper function to calculate totals from logs
+function calculateConsumedTotals(logs: FoodLog[]): {
+  totalCalories: number;
+  totalProtein: number;
+  totalCarbs: number;
+  totalFat: number;
+} {
+  return logs.reduce(
+    (totals, log) => {
+      totals.totalCalories += log.calories * log.serving_size;
+      totals.totalProtein += log.protein * log.serving_size;
+      totals.totalCarbs += log.carbs * log.serving_size;
+      totals.totalFat += log.fat * log.serving_size;
+      return totals;
     },
-    macros: {
-      protein: {
-        consumed: 85 + Math.floor(Math.random() * 10), // Add randomness for demo
-        goal: 150,
-      },
-      carbs: {
-        consumed: 165 + Math.floor(Math.random() * 20), // Add randomness for demo
-        goal: 250,
-      },
-      fat: {
-        consumed: 45 + Math.floor(Math.random() * 5), // Add randomness for demo
-        goal: 65,
-      },
-    },
-  };
-};
+    { totalCalories: 0, totalProtein: 0, totalCarbs: 0, totalFat: 0 }
+  );
+}
 
 export const useHomeSummaryData = (selectedDate: Date) => {
   const [dailyData, setDailyData] = useState<DailyData | null>(null);
@@ -51,19 +45,70 @@ export const useHomeSummaryData = (selectedDate: Date) => {
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
-    let isMounted = true; // Prevent state update on unmounted component
+    let isMounted = true;
     const loadData = async () => {
+      if (!isMounted) return;
       setIsLoading(true);
       setError(null);
+
       try {
-        const data = await fetchDailyData(selectedDate);
-        if (isMounted) {
-          setDailyData(data);
+        const dateString = formatISODate(selectedDate); // Format date to YYYY-MM-DD
+
+        // Fetch profile and logs in parallel
+        const [profileResult, logsResult] = await Promise.all([
+          getProfile(),
+          getFoodLogsByDate(dateString),
+        ]);
+
+        if (!isMounted) return;
+
+        // Handle potential errors or null results
+        if (!profileResult) {
+          throw new Error('Failed to load user profile.');
         }
+        if (logsResult === null) {
+          // Treat null logs as an error or just empty logs?
+          // Let's assume an error for now, but could be [] if preferred
+          throw new Error('Failed to load food logs.');
+        }
+
+        const logs = logsResult; // logsResult is FoodLog[] | null, handled above
+        const profile = profileResult;
+
+        // Calculate consumed totals
+        const { totalCalories, totalProtein, totalCarbs, totalFat } = calculateConsumedTotals(logs);
+
+        // Construct the DailyData object using profile goals and calculated totals
+        const newDailyData: DailyData = {
+          calories: {
+            consumed: Math.round(totalCalories),
+            goal: profile.goal_calories ?? 0,
+          },
+          macros: {
+            protein: {
+              consumed: Math.round(totalProtein),
+              goal: profile.goal_protein ?? 0,
+            },
+            carbs: {
+              consumed: Math.round(totalCarbs),
+              goal: profile.goal_carbs ?? 0,
+            },
+            fat: {
+              consumed: Math.round(totalFat),
+              goal: profile.goal_fat ?? 0,
+            },
+          },
+          // logs: logs, // Optionally include raw logs
+        };
+
+        setDailyData(newDailyData);
+
       } catch (err) {
-        if (isMounted) {
-          setError(err instanceof Error ? err : new Error('Failed to fetch summary data'));
-        }
+        if (!isMounted) return;
+        // Log the full error object for better debugging
+        console.error('Error loading home summary data. Original error:', err); 
+        setError(err instanceof Error ? err : new Error('Failed to load summary data'));
+        setDailyData(null); // Clear data on error
       } finally {
         if (isMounted) {
           setIsLoading(false);
@@ -74,9 +119,9 @@ export const useHomeSummaryData = (selectedDate: Date) => {
     loadData();
 
     return () => {
-      isMounted = false; // Cleanup function to set isMounted to false
+      isMounted = false;
     };
-  }, [selectedDate]); // Re-run effect when selectedDate changes
+  }, [selectedDate]);
 
   return { dailyData, isLoading, error };
 }; 

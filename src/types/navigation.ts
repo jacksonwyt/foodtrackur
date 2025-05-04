@@ -1,45 +1,69 @@
-import type { NativeStackScreenProps, NativeStackNavigationProp } from '@react-navigation/native-stack';
-import type { NavigatorScreenParams, RouteProp } from '@react-navigation/native'; // Import NavigatorScreenParams
-import type { ParamListBase } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { NavigatorScreenParams, RouteProp } from '@react-navigation/native';
 
 // Define ParamList for the Main Tab Navigator
-export interface MainTabParamList extends ParamListBase {
+export type MainTabParamList = {
   Home: undefined;
-  Food: undefined;
-  Add: undefined;
+  Add: undefined; // Placeholder for the central button action
   Progress: undefined;
-  Exercise: undefined;
-}
-
-// Define ParamList for the Root Stack Navigator
-// Add all screens and their expected params here
-// Changed from interface to type as suggested by React Navigation docs, might help with ParamListBase error
-export type RootStackParamList = {
-  // Use NavigatorScreenParams for nested navigators
-  MainTabs: NavigatorScreenParams<MainTabParamList>;
-  Scan: undefined; // Or define params like { scanType: 'barcode' | 'image' } if needed
-  Weight: undefined; // Or { entryId: string } if navigating to a specific entry
-  // AddMeal needs optional itemId for editing and optional mealCategory
-  AddMeal: { mealCategory?: string; itemId?: string }; 
-  FoodDetails: { foodId: string }; // Param to specify which food item to show details for
-  Subscription: undefined; // Assuming the modal subscription screen needs no params
-  Settings: undefined;
-  // Removed FoodDB - it's not a screen in the RootStack anymore
+  Exercise: undefined; // Retained as per user request
 };
 
-// --- Type Helpers --- 
+// Define ParamList for the Root Stack Navigator
+// This includes screens accessible OUTSIDE the main tabs, like modals or hubs.
+export type RootStackParamList = {
+  MainTabs: NavigatorScreenParams<MainTabParamList>;
+  Scan: undefined;
+  ScanConfirm: { imageUri: string; imageBase64: string };
+  ScanResults: { analysis: string };
+  Weight: undefined;
+  AddMeal: { mealCategory?: string; itemId?: string };
+  Settings: undefined;
+  FoodLogHub: undefined;
+  FoodSearch: undefined;
+  Subscription: undefined; // Modal screen
+};
 
-// Prop type for the Root Stack navigator itself
-export type RootStackNavigationProp = NativeStackNavigationProp<RootStackParamList>;
+// Types for user data collected during onboarding
+export type GoalType = 'lose' | 'maintain' | 'gain';
+export type GenderType = 'male' | 'female' | 'other';
+export type ActivityLevelType = 'sedentary' | 'light' | 'moderate' | 'very' | 'extra';
 
-// Generic type for screen props in the Root Stack
-export type RootStackScreenProps<T extends keyof RootStackParamList> = 
-  NativeStackScreenProps<RootStackParamList, T>;
+export interface OnboardingData {
+  name?: string; // Add name field
+  goal?: GoalType;
+  height?: number; // Consider storing units (cm/in) separately or converting on input
+  weight?: number; // Consider storing units (kg/lb) separately or converting on input
+  dob?: string; // Store as ISO string (YYYY-MM-DD) for consistency
+  gender?: GenderType;
+  desiredWeight?: number; // If goal is lose/gain
+  goalPace?: number; // e.g., kg/week or lbs/week
+  activityLevel?: ActivityLevelType;
+}
 
-// Example: Prop type for FoodDetails screen
-// export type FoodDetailsScreenProps = RootStackScreenProps<'FoodDetails'>;
+// Parameter list for the dedicated Onboarding stack
+export type OnboardingStackParamList = {
+  Welcome: undefined;
+  Goals: undefined;
+  Details: { goal: GoalType }; // Receive the chosen goal from GoalsScreen
+  // Add other screens like DesiredWeight, GoalPace if they become separate steps
+};
 
-// If you need navigation prop type specific to a screen within the stack:
-// export type FoodDetailsNavigationProp = NativeStackNavigationProp<RootStackParamList, 'FoodDetails'>;
-// If you need route prop type specific to a screen within the stack:
-// export type FoodDetailsRouteProp = RouteProp<RootStackParamList, 'FoodDetails'>; 
+// Parameter list for the dedicated Auth stack
+export type AuthStackParamList = {
+  Login: undefined;
+  SignUp: undefined;
+};
+
+// --- Utility Type Helpers --- 
+
+// Generic type for navigation props in the Root Stack
+export type RootStackNavigationProp<T extends keyof RootStackParamList> = 
+  NativeStackNavigationProp<RootStackParamList, T>;
+
+// Generic type for route props in the Root Stack
+export type RootStackRouteProp<T extends keyof RootStackParamList> = 
+  RouteProp<RootStackParamList, T>;
+
+// You might need composite types if navigating between nested stacks/tabs frequently,
+// but start simple and add them if required by TypeScript errors.

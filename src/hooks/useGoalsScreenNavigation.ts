@@ -1,19 +1,31 @@
-import { useRouter } from 'expo-router';
+import { useNavigation } from '@react-navigation/native';
 import { useCallback } from 'react';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { OnboardingStackParamList, GoalType } from '@/src/types/navigation'; // Import GoalType
+
+// Define the specific navigation prop type for the Onboarding stack
+type OnboardingNavigationProp = NativeStackNavigationProp<OnboardingStackParamList, 'Goals'>;
 
 export const useGoalsScreenNavigation = () => {
-  const router = useRouter();
+  const navigation = useNavigation<OnboardingNavigationProp>();
 
-  const goToDetails = useCallback(() => {
-    // Optionally pass selected goal ID if needed by the next screen
-    router.push('/onboarding/details');
-  }, [router]);
+  const goToDetails = useCallback((goal: GoalType | undefined) => {
+    if (!goal) {
+      console.warn('Goal must be selected before proceeding.');
+      return; // Don't navigate if no goal is selected
+    }
+    navigation.navigate('Details', { goal: goal });
+  }, [navigation]);
 
-  // Add goBack if needed later
-  // const goBack = useCallback(() => router.back(), [router]);
+  // Optional: Add goBack if needed
+  const goBack = useCallback(() => {
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+    }
+  }, [navigation]);
 
   return {
     goToDetails,
-    // goBack,
+    goBack,
   };
 }; 

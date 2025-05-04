@@ -16,9 +16,9 @@ const MOCK_CHART_DATA: ProgressChartData = {
   }],
 };
 
-// Accept timeFrame as arg for future use, even if not used in mock data
-export const useProgressChartData = (timeFrame: TimeFrame) => {
-    // TODO: Implement actual fetching/filtering based on timeFrame
+// Remove timeFrame as arg for MVP, assuming default view
+export const useProgressChartData = () => {
+    // TODO: Implement actual fetching/filtering (e.g., default to last 30 days or all)
     const chartData = MOCK_CHART_DATA;
     const isLoading = false; // Add loading/error states if fetching is async
     const error = null;

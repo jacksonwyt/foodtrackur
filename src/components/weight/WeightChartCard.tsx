@@ -7,7 +7,20 @@ import {
   Dimensions,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { LineChart, LineChartData } from 'react-native-chart-kit';
+import { LineChart } from 'react-native-chart-kit';
+
+// Define the expected structure for the chart data
+interface LineChartDataset {
+  data: number[];
+  color?: (opacity: number) => string; // Optional color function
+  strokeWidth?: number; // Optional stroke width
+}
+
+interface LineChartData {
+  labels: string[];
+  datasets: LineChartDataset[];
+  legend?: string[]; // Optional legend
+}
 
 interface Props {
   chartData: LineChartData;

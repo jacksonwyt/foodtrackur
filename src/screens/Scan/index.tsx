@@ -19,10 +19,6 @@ const ScanScreen: React.FC = () => {
   const {
     handleCapture,
     handleClose,
-    isAnalyzing,
-    analysisResult,
-    analysisError,
-    clearAnalysis,
   } = useScanScreenActions(cameraRef);
 
   if (permissionStatus === 'checking') {
@@ -47,41 +43,7 @@ const ScanScreen: React.FC = () => {
         setCameraRef={setCameraRef}
         onClose={handleClose}
         onCapture={handleCapture}
-        isAnalyzing={isAnalyzing}
       />
-
-      {(isAnalyzing || analysisResult || analysisError) && (
-        <View style={styles.overlayContainer}>
-          {isAnalyzing && (
-            <View style={styles.analysisBox}>
-              <ActivityIndicator size="large" color="#fff" />
-              <Text style={styles.overlayText}>Analyzing...</Text>
-            </View>
-          )}
-          {analysisResult && (
-            <View style={styles.analysisBox}>
-              <Text style={styles.overlayTitle}>Analysis Result:</Text>
-              <ScrollView style={styles.resultScrollView}>
-                 <Text style={styles.overlayText}>{analysisResult}</Text>
-              </ScrollView>
-              <TouchableOpacity style={styles.dismissButton} onPress={clearAnalysis}>
-                <Text style={styles.dismissButtonText}>Dismiss</Text>
-              </TouchableOpacity>
-            </View>
-          )}
-          {analysisError && (
-            <View style={styles.analysisBox}>
-              <Text style={styles.overlayTitle}>Analysis Error:</Text>
-               <ScrollView style={styles.resultScrollView}>
-                  <Text style={[styles.overlayText, styles.errorText]}>{analysisError}</Text>
-              </ScrollView>
-              <TouchableOpacity style={styles.dismissButton} onPress={clearAnalysis}>
-                <Text style={styles.dismissButtonText}>Dismiss</Text>
-              </TouchableOpacity>
-            </View>
-          )}
-        </View>
-      )}
     </View>
   );
 };
@@ -117,38 +79,13 @@ const styles = StyleSheet.create({
     borderRadius: 15,
     padding: 25,
     alignItems: 'center',
-    width: '100%',
-    maxHeight: '70%',
-  },
-  overlayTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#fff',
-    marginBottom: 15,
-  },
-   resultScrollView: {
-    maxHeight: 200,
-    marginBottom: 20,
+    width: '80%',
   },
   overlayText: {
     color: '#fff',
     fontSize: 16,
     textAlign: 'center',
-    marginBottom: 5,
-  },
-  errorText: {
-    color: '#ffdddd',
-  },
-  dismissButton: {
-    marginTop: 10,
-    backgroundColor: '#555',
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-  },
-  dismissButtonText: {
-    color: '#fff',
-    fontSize: 16,
+    marginTop: 15,
   },
 });
 

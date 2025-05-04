@@ -4,12 +4,9 @@ import { Screen } from '../../components/Screen';
 import { CalendarStrip } from '../../components/items/CalendarStrip';
 import { CalorieSummary } from '../../components/cards/CalorieSummary';
 import { MacroTiles } from '../../components/cards/MacroTiles';
-import { SubscriptionBanner } from '../../components/cards/SubscriptionBanner';
-import { RecentlyLogged } from '../../components/cards/RecentlyLogged';
 import { Logo } from '../../components/items/Logo';
 import { Streaks } from '../../components/items/Streaks';
 import { useHomeSummaryData } from '../../hooks/useHomeSummaryData';
-import { useHomeRecentItems } from '../../hooks/useHomeRecentItems';
 import { useHomeNavigation } from '../../hooks/useHomeNavigation';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -17,17 +14,12 @@ const HomeScreen: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState(new Date());
   
   const { dailyData, isLoading: isLoadingSummary, error: errorSummary } = useHomeSummaryData(selectedDate);
-  const { recentItems, isLoading: isLoadingRecent, error: errorRecent } = useHomeRecentItems(selectedDate);
   const {
-    navigateToSubscription,
-    navigateToFoodLog,
-    navigateToAddMeal,
-    navigateToFoodItem,
     navigateToSettings,
   } = useHomeNavigation();
 
-  const isLoading = isLoadingSummary || isLoadingRecent;
-  const error = errorSummary || errorRecent;
+  const isLoading = isLoadingSummary;
+  const error = errorSummary;
 
   if (isLoading) {
     return (
@@ -41,7 +33,7 @@ const HomeScreen: React.FC = () => {
     );
   }
   
-  if (!dailyData || !recentItems) {
+  if (!dailyData) {
       return (
         <Screen style={styles.centered}><Text>No data available.</Text></Screen>
       );
@@ -73,12 +65,6 @@ const HomeScreen: React.FC = () => {
           />
         </View>
 
-        <SubscriptionBanner 
-          onPress={navigateToSubscription}
-          trialEndsAt={new Date(Date.now() + 3 * 24 * 60 * 60 * 1000)}
-          discount={80}
-        />
-
         <View style={styles.macrosContainer}>
           <MacroTiles
             protein={dailyData.macros.protein}
@@ -86,13 +72,6 @@ const HomeScreen: React.FC = () => {
             fat={dailyData.macros.fat}
           />
         </View>
-
-        <RecentlyLogged
-          items={recentItems}
-          onItemPress={navigateToFoodItem}
-          onViewAllPress={navigateToFoodLog}
-          onAddPress={navigateToAddMeal}
-        />
       </ScrollView>
     </Screen>
   );

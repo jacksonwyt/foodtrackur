@@ -92,10 +92,11 @@ Enable users to track daily calorie and macronutrient intake, log their weight, 
 * **Exclusions for MVP**: Financial/Referral section, Preference toggles (rollover, live activity), Widget instructions, Language change.
 
 ## 8. Core Technical Backend/Infrastructure (MVP Needs)
-* **Database**: To store user profiles, goals, food logs, weight logs (e.g., Firebase Firestore).
+* **Database**: To store user profiles, goals, food logs, weight logs (e.g., Supabase used here).
 * **Basic Food Database**: Access to a public API (like Open Food Facts) or a curated initial database for search.
 * **AI Service Integration**: API endpoint for the food scanning feature (e.g., Google Cloud Vision or Gemini).
 * **React Native Setup**: Basic navigation, state management (Context API or Redux Toolkit), core components.
+* **Technical Debt Note**: The current service layer (`src/services/*`) directly depends on the concrete Supabase client (`./supabaseClient`), violating the Dependency Inversion Principle (DIP). For MVP simplicity, this direct dependency is accepted. Future refactoring could introduce an abstraction (e.g., `IDatabaseService`) and use dependency injection to decouple services from the specific database implementation, improving testability and flexibility.
 
 ---
 

@@ -1,15 +1,23 @@
 import React from 'react';
-import { View, StyleSheet, FlatList } from 'react-native';
+import { View, StyleSheet, FlatList, FlatListProps } from 'react-native';
 import { GoalItem } from './GoalItem';
 import type { Goal } from '../../hooks/useGoalsScreenLogic'; // Import type
+import { GoalType } from '@/src/types/navigation'; // Import GoalType
 
-interface GoalsListProps {
+// Extend the props to include standard FlatList props we want to pass through
+// We use Omit to prevent conflicts with props we define ourselves (like data, renderItem)
+interface GoalsListProps extends Omit<FlatListProps<Goal>, 'data' | 'renderItem'> {
   goals: Goal[];
-  selectedGoalId: string | null;
-  onSelectGoal: (id: string) => void;
+  selectedGoalId: GoalType | null;
+  onSelectGoal: (id: GoalType) => void;
 }
 
-export const GoalsList: React.FC<GoalsListProps> = ({ goals, selectedGoalId, onSelectGoal }) => {
+export const GoalsList: React.FC<GoalsListProps> = ({ 
+  goals, 
+  selectedGoalId, 
+  onSelectGoal, 
+  ...rest // Capture remaining FlatList props
+}) => {
   return (
     <FlatList
       data={goals}
@@ -23,14 +31,13 @@ export const GoalsList: React.FC<GoalsListProps> = ({ goals, selectedGoalId, onS
       keyExtractor={(item) => item.id}
       style={styles.list}
       showsVerticalScrollIndicator={false}
-      // Remove contentContainerStyle if FlatList is inside a ScrollView with padding
+      {...rest} // Spread the rest of the props onto FlatList
     />
   );
 };
 
 const styles = StyleSheet.create({
   list: {
-    // Add styles if needed, e.g., padding
-    // paddingVertical: 10, // Example
+    // Styles for the list itself, if needed
   },
 }); 
