@@ -1,8 +1,8 @@
 import React from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { FoodLogListItem, FoodLogItem } from '../items/FoodLogListItem';
-import { RecentlyLoggedEmptyState } from '../items/RecentlyLoggedEmptyState';
+import {View, Text, StyleSheet, FlatList, TouchableOpacity} from 'react-native';
+import {Ionicons} from '@expo/vector-icons';
+import {FoodLogListItem, FoodLogItem} from '../items/FoodLogListItem';
+import {RecentlyLoggedEmptyState} from '../items/RecentlyLoggedEmptyState';
 
 interface RecentlyLoggedProps {
   items: FoodLogItem[];
@@ -17,7 +17,7 @@ export const RecentlyLogged: React.FC<RecentlyLoggedProps> = ({
   onViewAllPress,
   onAddPress,
 }) => {
-  const renderItem = ({ item }: { item: FoodLogItem }) => (
+  const renderItem = ({item}: {item: FoodLogItem}) => (
     <FoodLogListItem item={item} onPress={onItemPress} />
   );
 
@@ -26,18 +26,20 @@ export const RecentlyLogged: React.FC<RecentlyLoggedProps> = ({
       <View style={styles.header}>
         <Text style={styles.title}>Recently Logged</Text>
         {items.length > 0 && (
-          <TouchableOpacity onPress={onViewAllPress} style={styles.viewAllButton}>
+          <TouchableOpacity
+            onPress={onViewAllPress}
+            style={styles.viewAllButton}>
             <Text style={styles.viewAll}>View All</Text>
             <Ionicons name="chevron-forward" size={16} color="#007AFF" />
           </TouchableOpacity>
         )}
       </View>
-      
+
       {items.length > 0 ? (
         <FlatList
           data={items.slice(0, 3)}
           renderItem={renderItem}
-          keyExtractor={(item) => item.id}
+          keyExtractor={item => item.id}
           scrollEnabled={false}
           ItemSeparatorComponent={() => <View style={styles.separator} />}
         />
@@ -93,4 +95,4 @@ const styles = StyleSheet.create({
     marginLeft: 16 + 32 + 12,
     marginRight: 16,
   },
-}); 
+});

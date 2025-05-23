@@ -1,8 +1,5 @@
 {
-  "compilerOptions": {
-  },
-  "lint": {
-  },
-  "fmt": {
-  }
+  "compilerOptions": {},
+  "lint": {},
+  "fmt": {}
 }

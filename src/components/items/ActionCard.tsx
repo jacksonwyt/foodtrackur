@@ -1,19 +1,24 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import {View, Text, TouchableOpacity, StyleSheet} from 'react-native';
+import {Ionicons} from '@expo/vector-icons';
 
 interface ActionCardProps {
   id: string;
   label: string;
-  icon: string; // Consider using keyof typeof Ionicons.glyphMap for stricter typing if possible
+  icon: keyof typeof Ionicons.glyphMap;
   onPress: () => void;
 }
 
-export const ActionCard: React.FC<ActionCardProps> = ({ id, label, icon, onPress }) => {
+export const ActionCard: React.FC<ActionCardProps> = ({
+  id,
+  label,
+  icon,
+  onPress,
+}) => {
   return (
     <TouchableOpacity key={id} style={styles.card} onPress={onPress}>
       <View style={styles.cardIcon}>
-        <Ionicons name={icon as any} size={40} color="#007AFF" />
+        <Ionicons name={icon} size={40} color="#007AFF" />
       </View>
       <Text style={styles.cardLabel}>{label}</Text>
     </TouchableOpacity>
@@ -48,4 +53,4 @@ const styles = StyleSheet.create({
     color: '#333',
     textAlign: 'center',
   },
-}); 
+});

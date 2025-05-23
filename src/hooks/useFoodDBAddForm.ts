@@ -1,5 +1,7 @@
-import { useState, useCallback } from 'react';
-import { useRouter } from 'expo-router';
+import {useState, useCallback} from 'react';
+import {useNavigation} from '@react-navigation/native';
+import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
+import type {FoodDBStackParamList} from '@/types/navigation';
 
 // Helper to check if a string is a valid non-negative number
 const isValidNumber = (value: string): boolean => {
@@ -9,7 +11,8 @@ const isValidNumber = (value: string): boolean => {
 };
 
 export const useFoodDBAddForm = () => {
-  const router = useRouter();
+  const navigation =
+    useNavigation<NativeStackNavigationProp<FoodDBStackParamList>>();
   const [foodName, setFoodName] = useState('');
   const [calories, setCalories] = useState('');
   const [protein, setProtein] = useState('');
@@ -40,14 +43,15 @@ export const useFoodDBAddForm = () => {
   }, [foodName, calories, protein, carbs, fat]);
 
   const isFormValid = useCallback(() => {
-      return (
-          foodName.trim() !== '' &&
-          calories.trim() !== '' && isValidNumber(calories) &&
-          isValidNumber(protein) &&
-          isValidNumber(carbs) &&
-          isValidNumber(fat)
-      );
-  }, [foodName, calories, protein, carbs, fat])
+    return (
+      foodName.trim() !== '' &&
+      calories.trim() !== '' &&
+      isValidNumber(calories) &&
+      isValidNumber(protein) &&
+      isValidNumber(carbs) &&
+      isValidNumber(fat)
+    );
+  }, [foodName, calories, protein, carbs, fat]);
 
   const handleSave = useCallback(() => {
     if (validateForm()) {
@@ -60,30 +64,30 @@ export const useFoodDBAddForm = () => {
       };
       // Replace console.log with actual saving logic (e.g., API call)
       console.log('Saving food data:', foodData);
-      router.back();
+      navigation.goBack();
     }
-  }, [validateForm, foodName, calories, protein, carbs, fat, router]);
+  }, [validateForm, foodName, calories, protein, carbs, fat, navigation]);
 
   // Input handlers that also clear errors on change
   const handleFoodNameChange = (text: string) => {
     setFoodName(text);
-    if (errors.foodName) setErrors(prev => ({ ...prev, foodName: '' }));
+    if (errors.foodName) setErrors(prev => ({...prev, foodName: ''}));
   };
-    const handleCaloriesChange = (text: string) => {
+  const handleCaloriesChange = (text: string) => {
     setCalories(text);
-    if (errors.calories) setErrors(prev => ({ ...prev, calories: '' }));
+    if (errors.calories) setErrors(prev => ({...prev, calories: ''}));
   };
-    const handleProteinChange = (text: string) => {
+  const handleProteinChange = (text: string) => {
     setProtein(text);
-    if (errors.protein) setErrors(prev => ({ ...prev, protein: '' }));
+    if (errors.protein) setErrors(prev => ({...prev, protein: ''}));
   };
-    const handleCarbsChange = (text: string) => {
+  const handleCarbsChange = (text: string) => {
     setCarbs(text);
-    if (errors.carbs) setErrors(prev => ({ ...prev, carbs: '' }));
+    if (errors.carbs) setErrors(prev => ({...prev, carbs: ''}));
   };
-    const handleFatChange = (text: string) => {
+  const handleFatChange = (text: string) => {
     setFat(text);
-    if (errors.fat) setErrors(prev => ({ ...prev, fat: '' }));
+    if (errors.fat) setErrors(prev => ({...prev, fat: ''}));
   };
 
   return {
@@ -101,4 +105,4 @@ export const useFoodDBAddForm = () => {
     handleSave,
     isFormValid: isFormValid(), // Provide the current boolean value
   };
-}; 
+};

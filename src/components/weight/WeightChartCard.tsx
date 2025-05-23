@@ -1,13 +1,7 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  Platform,
-  Dimensions,
-} from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { LineChart } from 'react-native-chart-kit';
+import {View, Text, StyleSheet, Platform, Dimensions} from 'react-native';
+import {Ionicons} from '@expo/vector-icons';
+import {LineChart} from 'react-native-chart-kit';
 
 // Define the expected structure for the chart data
 interface LineChartDataset {
@@ -30,7 +24,11 @@ interface Props {
 
 const chartWidth = Dimensions.get('window').width - 48; // padding * 2
 
-export const WeightChartCard: React.FC<Props> = ({ chartData, weightTrend, currentWeight }) => {
+export const WeightChartCard: React.FC<Props> = ({
+  chartData,
+  weightTrend,
+  currentWeight,
+}) => {
   const trendColor = weightTrend <= 0 ? '#4CAF50' : '#FF6B6B';
   const trendIcon = weightTrend <= 0 ? 'trending-down' : 'trending-up';
 
@@ -40,7 +38,7 @@ export const WeightChartCard: React.FC<Props> = ({ chartData, weightTrend, curre
     }
     // react-native-chart-kit requires at least one data point
     if (chartData.datasets[0].data.length === 0) {
-        return <Text style={styles.noDataText}>Waiting for data...</Text>;
+      return <Text style={styles.noDataText}>Waiting for data...</Text>;
     }
 
     return (
@@ -61,14 +59,14 @@ export const WeightChartCard: React.FC<Props> = ({ chartData, weightTrend, curre
           propsForDots: {
             r: '4',
             strokeWidth: '2',
-            stroke: '#000'
-          }
+            stroke: '#000',
+          },
         }}
         bezier
         style={styles.chart}
       />
     );
-  }
+  };
 
   return (
     <View style={styles.chartCard}>
@@ -76,14 +74,16 @@ export const WeightChartCard: React.FC<Props> = ({ chartData, weightTrend, curre
         <View>
           <Text style={styles.chartTitle}>7-Day Progress</Text>
           {chartData.labels && chartData.labels.length >= 2 && (
-            <Text style={[styles.trendText, { color: trendColor }]}>
+            <Text style={[styles.trendText, {color: trendColor}]}>
               {weightTrend.toFixed(1)} kg
               <Ionicons name={trendIcon} size={16} color={trendColor} />
             </Text>
           )}
         </View>
         {currentWeight !== null && (
-          <Text style={styles.currentWeight}>{currentWeight.toFixed(1)} kg</Text>
+          <Text style={styles.currentWeight}>
+            {currentWeight.toFixed(1)} kg
+          </Text>
         )}
       </View>
       {renderChart()}
@@ -100,7 +100,7 @@ const styles = StyleSheet.create({
     ...Platform.select({
       ios: {
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
+        shadowOffset: {width: 0, height: 2},
         shadowOpacity: 0.1,
         shadowRadius: 8,
       },
@@ -141,4 +141,4 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#666',
   },
-}); 
+});

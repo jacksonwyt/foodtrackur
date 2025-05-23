@@ -4,12 +4,16 @@ import {
   Text,
   StyleSheet,
   TouchableOpacityProps,
+  ViewStyle,
+  TextStyle,
 } from 'react-native';
+import theme from '../../constants/theme'; // Import theme
 
 interface ActivityLevelItemProps extends TouchableOpacityProps {
   title: string;
   description: string;
   isSelected: boolean;
+  // onPress is inherited from TouchableOpacityProps
 }
 
 export const ActivityLevelItem: React.FC<ActivityLevelItemProps> = ({
@@ -17,23 +21,25 @@ export const ActivityLevelItem: React.FC<ActivityLevelItemProps> = ({
   description,
   isSelected,
   style,
-  ...props
+  onPress, // Use onPress from props
+  ...props // Spread other TouchableOpacityProps
 }) => {
   return (
     <TouchableOpacity
       style={[
         styles.activityButton,
         isSelected && styles.selectedActivity,
-        style,
+        style, // Allow custom styles to be passed
       ]}
-      {...props}
+      onPress={onPress} // Use the passed onPress handler
+      activeOpacity={0.7} // Consistent active opacity
+      {...props} // Spread remaining props
     >
       <Text style={[styles.activityTitle, isSelected && styles.selectedText]}>
         {title}
       </Text>
       <Text
-        style={[styles.activityDescription, isSelected && styles.selectedText]}
-      >
+        style={[styles.activityDescription, isSelected && styles.selectedText]}>
         {description}
       </Text>
     </TouchableOpacity>
@@ -42,29 +48,33 @@ export const ActivityLevelItem: React.FC<ActivityLevelItemProps> = ({
 
 const styles = StyleSheet.create({
   activityButton: {
+    backgroundColor: theme.colors.surface,
     borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 10,
-    padding: 15,
-    marginBottom: 10,
-    alignItems: 'center',
-    backgroundColor: '#fff',
-  },
+    borderColor: theme.colors.border,
+    borderRadius: theme.borderRadius.md,
+    paddingVertical: theme.spacing.md,
+    paddingHorizontal: theme.spacing.lg,
+    marginBottom: theme.spacing.md,
+    alignItems: 'flex-start', // Align text to the left for better readability
+    ...theme.shadows.sm, // Added shadow
+  } as ViewStyle,
   selectedActivity: {
-    backgroundColor: '#6200EE',
-    borderColor: '#6200EE',
-  },
+    backgroundColor: theme.colors.primary,
+    borderColor: theme.colors.primary,
+  } as ViewStyle,
   activityTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 4,
-  },
+    fontSize: theme.typography.sizes.bodyLarge,
+    fontWeight: theme.typography.weights.semibold,
+    color: theme.colors.text,
+    marginBottom: theme.spacing.xs,
+    fontFamily: theme.typography.fontFamily,
+  } as TextStyle,
   activityDescription: {
-    fontSize: 14,
-    color: '#666',
-  },
+    fontSize: theme.typography.sizes.body,
+    color: theme.colors.textSecondary,
+    fontFamily: theme.typography.fontFamily,
+  } as TextStyle,
   selectedText: {
-    color: '#fff',
-  },
-}); 
+    color: theme.colors.onPrimary,
+  } as TextStyle,
+});

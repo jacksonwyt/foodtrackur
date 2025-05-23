@@ -1,6 +1,6 @@
 import React from 'react';
-import { View, StyleSheet, Animated } from 'react-native';
-import { ActionCard } from './ActionCard'; // Import the new ActionCard component
+import {View, StyleSheet, Animated} from 'react-native';
+import {ActionCard} from './ActionCard'; // Import the new ActionCard component
 
 interface QuickAction {
   id: string;
@@ -42,7 +42,7 @@ export const ActionCardGrid: React.FC<ActionCardGridProps> = ({
       // pointerEvents="box-none" // Allow clicks to pass through container if needed, handled by cards
     >
       <View style={styles.cardsGrid}>
-        {actions.map((action) => (
+        {actions.map(action => (
           <ActionCard
             key={action.id}
             id={action.id}
@@ -60,7 +60,7 @@ const styles = StyleSheet.create({
   cardsContainer: {
     // Position is handled by the parent FAB component
     // position: 'absolute',
-    // bottom: 80, 
+    // bottom: 80,
     // left: -100,
     // right: -100,
     paddingHorizontal: 16,
@@ -77,4 +77,4 @@ const styles = StyleSheet.create({
     maxWidth: 340, // Example max width to contain 2 cards per row
   },
   // ActionCard styles are now in ActionCard.tsx
-}); 
+});

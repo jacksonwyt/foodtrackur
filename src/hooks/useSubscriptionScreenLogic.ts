@@ -1,7 +1,7 @@
-import { useState, useCallback } from 'react';
-import { useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../types/navigation';
+import {useState, useCallback} from 'react';
+import {useNavigation} from '@react-navigation/native';
+import {NativeStackNavigationProp} from '@react-navigation/native-stack';
+import {RootStackParamList} from '../types/navigation';
 
 const FEATURES = [
   {
@@ -44,23 +44,24 @@ const PLANS = [
 ];
 
 export const useSubscriptionScreenLogic = () => {
-  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const navigation =
+    useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const [selectedPlanId, setSelectedPlanId] = useState(PLANS[1].id);
 
   const handleSubscribe = useCallback(() => {
     // TODO: Implement actual subscription logic (e.g., API call, purchase flow)
     console.log(`Subscribing to plan: ${selectedPlanId}`);
     // Navigate home after successful subscription
-    navigation.navigate('MainTabs', { screen: 'Home' });
+    navigation.navigate('MainTabs', {screen: 'Home'});
   }, [selectedPlanId, navigation]);
 
   const handleClose = useCallback(() => {
     if (navigation.canGoBack()) {
-        navigation.goBack();
+      navigation.goBack();
     } else {
-        // Fallback if cannot go back (e.g., navigate home)
-        navigation.navigate('MainTabs', { screen: 'Home' });
-        console.warn('Cannot go back from SubscriptionScreen, navigating home.');
+      // Fallback if cannot go back (e.g., navigate home)
+      navigation.navigate('MainTabs', {screen: 'Home'});
+      console.warn('Cannot go back from SubscriptionScreen, navigating home.');
     }
   }, [navigation]);
 
@@ -72,4 +73,4 @@ export const useSubscriptionScreenLogic = () => {
     handleSubscribe,
     handleClose,
   };
-}; 
+};

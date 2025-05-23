@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import {useState, useEffect, useMemo, useCallback} from 'react';
 
 // Placeholder for food item structure (reuse from FoodDB or define specific)
 interface FoodListItem {
@@ -13,12 +13,12 @@ const fetchFoodList = async (): Promise<FoodListItem[]> => {
   await new Promise(resolve => setTimeout(resolve, 500)); // Simulate network delay
   // In a real app, fetch from an API
   return [
-    { id: '1', name: 'Apple', calories: 95 },
-    { id: '2', name: 'Banana', calories: 105 },
-    { id: '3', name: 'Chicken Breast (100g)', calories: 165 },
-    { id: '4', name: 'Broccoli (1 cup)', calories: 55 },
-    { id: '5', name: 'Salmon (100g)', calories: 208 },
-    { id: '6', name: 'Rice (1 cup cooked)', calories: 206 },
+    {id: '1', name: 'Apple', calories: 95},
+    {id: '2', name: 'Banana', calories: 105},
+    {id: '3', name: 'Chicken Breast (100g)', calories: 165},
+    {id: '4', name: 'Broccoli (1 cup)', calories: 55},
+    {id: '5', name: 'Salmon (100g)', calories: 208},
+    {id: '6', name: 'Rice (1 cup cooked)', calories: 206},
   ];
 };
 
@@ -42,7 +42,12 @@ export const useFoodScreenLogic = () => {
         setIsLoading(false);
       }
     };
-    loadData();
+    loadData().catch(err => {
+      // Errors are handled inside loadData, this is for promise rejection itself
+      console.error('Error invoking loadData:', err);
+      setError('An unexpected error occurred during data loading.'); // General fallback
+      setIsLoading(false); // Ensure loading state is reset
+    });
   }, []);
 
   const filteredItems = useMemo(() => {
@@ -50,7 +55,7 @@ export const useFoodScreenLogic = () => {
       return foodItems;
     }
     return foodItems.filter(item =>
-      item.name.toLowerCase().includes(searchTerm.toLowerCase())
+      item.name.toLowerCase().includes(searchTerm.toLowerCase()),
     );
   }, [foodItems, searchTerm]);
 
@@ -80,4 +85,4 @@ export const useFoodScreenLogic = () => {
     handleSearchChange,
     refreshData,
   };
-}; 
+};

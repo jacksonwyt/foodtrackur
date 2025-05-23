@@ -1,326 +1,398 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, {useState, useCallback, useEffect} from 'react';
 import {
   View,
-  Text,
-  TextInput,
   FlatList,
   StyleSheet,
   TouchableOpacity,
   ActivityIndicator,
   Keyboard,
-  // Alert, // Keep Alert if needed for error display
+  Alert,
 } from 'react-native';
-import { Screen } from '../../components/Screen';
-import { Ionicons } from '@expo/vector-icons';
-import { useCustomFoodList } from '../../hooks/useCustomFoodList';
-import { CustomFood } from '../../services/customFoodService';
+import {Screen} from '../../components/Screen';
+import {Ionicons} from '@expo/vector-icons';
+import {useCustomFoodList} from '../../hooks/useCustomFoodList';
+import {CustomFood} from '../../services/customFoodService';
 // Import FatSecret search function and types
-import { searchFatSecretFood, FatSecretFoodSearchResult } from '../../services/fatsecretService';
-import { useNavigation } from '@react-navigation/native'; // Import useNavigation
-import { NativeStackNavigationProp } from '@react-navigation/native-stack'; // Import prop type
+import {
+  searchFatSecretFood,
+  FatSecretFoodSearchResult,
+} from '../../services/fatsecretService';
+import {useNavigation, useRoute, RouteProp} from '@react-navigation/native';
+import {NativeStackScreenProps, NativeStackNavigationProp} from '@react-navigation/native-stack';
+import {FoodDBStackParamList} from '../../types/navigation'; // Import from global types
+import {FoodLogItemData} from './LogEntryScreen'; // Import the interface
+import {useTheme} from '../../hooks/useTheme';
+import {AppText} from '../../components/common/AppText';
+import {AppTextInput} from '../../components/common/AppTextInput';
+import {Theme} from '../../constants/theme';
+import {AppStackParamList} from '../../types/navigation'; // Import AppStack param list
 
-// Define stack param list including the new details screen
-// IMPORTANT: Update this with your actual root stack param list
-type FoodDBStackParamList = {
-    FoodSearch: undefined;
-    FoodDetails: { foodId: string; source: 'fatsecret' }; // Screen for FatSecret details
-    AddFood: { mealType: string; date: string; item?: CustomFood }; // For custom food (editing or maybe logging)
-    // ... other screens in this stack
-};
+// Define stack param list
+// This should align with your global navigation types if possible, or be specific to this screen context
 
-type FoodSearchScreenNavigationProp = NativeStackNavigationProp<
-    FoodDBStackParamList,
-    'FoodSearch'
+// Type for FoodSearchScreen's own route props
+type FoodSearchScreenRouteProp = RouteProp<FoodDBStackParamList, 'FoodSearch'>;
+type FoodSearchScreenNavigationProp = NativeStackScreenProps<
+  FoodDBStackParamList,
+  'FoodSearch'
 >;
 
 // Interface for unified search results
 interface FoodSearchResult {
-  id: string; // Ensure ID is always string for FlatList key
+  id: string;
   name: string;
   description?: string;
-  source: 'custom' | 'external'; // Indicate the source
-  originalData?: any; // Optionally keep original data (CustomFood or FatSecretFoodSearchResult)
+  source: 'custom' | 'external';
+  originalData?: CustomFood | FatSecretFoodSearchResult;
 }
 
 // Function to map CustomFood to FoodSearchResult
 function mapCustomFoodToSearchResult(food: CustomFood): FoodSearchResult {
-    return {
-        id: `custom-${food.id}`, // Prefix ID for uniqueness
-        name: food.food_name,
-        description: `${food.serving_size} ${food.serving_unit} - ${food.calories} kcal | P:${food.protein}g C:${food.carbs}g F:${food.fat}g`,
-        source: 'custom',
-        originalData: food,
-    };
+  return {
+    id: `custom-${food.id}`,
+    name: food.food_name,
+    description: `${food.serving_size} ${food.serving_unit} - ${food.calories} kcal | P:${food.protein}g C:${food.carbs}g F:${food.fat}g`,
+    source: 'custom',
+    originalData: food,
+  };
 }
 
 // Function to map FatSecretFoodSearchResult to FoodSearchResult
-function mapFatSecretFoodToSearchResult(food: FatSecretFoodSearchResult): FoodSearchResult {
-    return {
-        id: `external-${food.food_id}`, // Prefix ID for uniqueness
-        name: food.food_name,
-        description: food.food_description, // Use the description provided by FatSecret
-        source: 'external',
-        originalData: food,
-    };
+function mapFatSecretFoodToSearchResult(
+  food: FatSecretFoodSearchResult,
+): FoodSearchResult {
+  return {
+    id: `external-${food.food_id}`,
+    name: food.food_name,
+    description: food.food_description,
+    source: 'external',
+    originalData: food,
+  };
 }
 
-const FoodSearchScreen: React.FC = () => {
+const FoodSearchScreen: React.FC<FoodSearchScreenNavigationProp> = ({
+  route,
+}) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<FoodSearchResult[]>([]);
-  // Rename state for FatSecret search
   const [isLoadingFatSecret, setIsLoadingFatSecret] = useState(false);
   const [errorFatSecret, setErrorFatSecret] = useState<Error | null>(null);
   const [hasSearched, setHasSearched] = useState(false);
 
-  // Use the custom hook to get custom foods
+  const theme = useTheme();
+  const styles = makeStyles(theme);
+
   const {
-      customFoods,
-      isLoading: isLoadingCustom,
-      error: errorCustom,
-      refetch: refetchCustomFoods
+    customFoods,
+    isLoading: isLoadingCustom,
+    error: errorCustom,
+    refetch: refetchCustomFoods,
   } = useCustomFoodList();
 
-  const navigation = useNavigation<FoodSearchScreenNavigationProp>(); // Initialize navigation
+  const navigation =
+    useNavigation<FoodSearchScreenNavigationProp['navigation']>();
+  const {dateToLog} = route.params;
 
-  // Effect to display custom foods initially or on error
   useEffect(() => {
-      if (!hasSearched && !isLoadingCustom && !errorCustom) {
-           // Pre-populate results with custom foods only if no search has been performed yet
-           setSearchResults(customFoods.map(mapCustomFoodToSearchResult));
-      }
-      if (errorCustom) {
-          console.error("Error loading custom foods:", errorCustom);
-          // Optionally set an error message state to display to user, perhaps merge with errorFatSecret?
-      }
-  }, [customFoods, isLoadingCustom, errorCustom, hasSearched]); // Add hasSearched dependency
-
+    if (!hasSearched && !isLoadingCustom && !errorCustom) {
+      setSearchResults(customFoods.map(mapCustomFoodToSearchResult));
+    }
+    if (errorCustom) {
+      console.error('Error loading custom foods:', errorCustom);
+    }
+  }, [customFoods, isLoadingCustom, errorCustom, hasSearched]);
 
   const handleSearch = useCallback(async () => {
     const trimmedQuery = searchQuery.trim();
-
     if (!trimmedQuery) {
-      // Show all custom foods when search is cleared
       setSearchResults(customFoods.map(mapCustomFoodToSearchResult));
       setHasSearched(false);
-      setErrorFatSecret(null); // Clear FatSecret error too
+      setErrorFatSecret(null);
       Keyboard.dismiss();
       return;
     }
-
     Keyboard.dismiss();
-    // Use renamed state setters
     setIsLoadingFatSecret(true);
     setErrorFatSecret(null);
     setHasSearched(true);
-    setSearchResults([]); // Clear previous results immediately
-
+    setSearchResults([]);
     try {
-      // 1. Filter local custom foods (case-insensitive)
       const lowerCaseQuery = trimmedQuery.toLowerCase();
       const filteredCustom = customFoods.filter(food =>
-        food.food_name.toLowerCase().includes(lowerCaseQuery)
+        food.food_name.toLowerCase().includes(lowerCaseQuery),
       );
       const customResults = filteredCustom.map(mapCustomFoodToSearchResult);
-
-      // 2. Fetch FatSecret results
       const fatSecretResponse = await searchFatSecretFood(trimmedQuery);
-      // Ensure 'food' is an array before mapping
-      const fatSecretFoods = Array.isArray(fatSecretResponse.foods_search.results.food)
+      const fatSecretFoods = Array.isArray(
+        fatSecretResponse.foods_search.results.food,
+      )
         ? fatSecretResponse.foods_search.results.food
         : [];
-      const externalResults = fatSecretFoods.map(mapFatSecretFoodToSearchResult);
-
-
-      // 3. Combine results (custom first)
+      const externalResults = fatSecretFoods.map(
+        mapFatSecretFoodToSearchResult,
+      );
       setSearchResults([...customResults, ...externalResults]);
-
     } catch (error) {
       console.error('Food search failed (FatSecret):', error);
-      // Use renamed state setter
-      setErrorFatSecret(error instanceof Error ? error : new Error('FatSecret search failed'));
-      // Optionally display an Alert here or rely on renderListEmptyComponent
-      // Alert.alert('Search Error', error instanceof Error ? error.message : 'Could not perform search');
+      setErrorFatSecret(
+        error instanceof Error ? error : new Error('FatSecret search failed'),
+      );
     } finally {
-      // Use renamed state setter
       setIsLoadingFatSecret(false);
     }
-  }, [searchQuery, customFoods]); // Depend on customFoods
+  }, [searchQuery, customFoods]);
 
   const handleSelectFood = (item: FoodSearchResult) => {
-    console.log('Selected food:', item);
-
-    if (item.source === 'external' && item.originalData?.food_id) {
-        // Navigate to a details screen for FatSecret items
-        navigation.navigate('FoodDetails', {
-            foodId: item.originalData.food_id,
-            source: 'fatsecret'
-        });
-    } else if (item.source === 'custom' && item.originalData?.id) {
-        // Option 1: Navigate to AddFood screen in a 'logging' mode (if supported)
-        // navigation.navigate('AddFood', { item: item.originalData, mode: 'log' });
-
-        // Option 2: Navigate to AddFood screen for editing (current behavior seems more like edit)
-        // navigation.navigate('AddFood', { item: item.originalData });
-
-        // Option 3: For now, just log, assuming logging happens elsewhere or on a dedicated screen
-        console.log('Selected custom food, implement logging navigation:', item.originalData);
-        // Example: navigation.navigate('LogEntryScreen', { foodItem: item.originalData });
+    if (
+      item.source === 'external' &&
+      item.originalData &&
+      'food_id' in item.originalData
+    ) {
+      const externalFoodData = item.originalData;
+      navigation.navigate('FoodDetails', {
+        foodId: externalFoodData.food_id,
+        source: 'fatsecret',
+        dateToLog,
+      });
+    } else if (
+      item.source === 'custom' &&
+      item.originalData &&
+      'serving_size' in item.originalData
+    ) {
+      const customFoodData = item.originalData;
+      const foodLogItem: FoodLogItemData = {
+        food_name: customFoodData.food_name,
+        calories: customFoodData.calories,
+        protein: customFoodData.protein,
+        carbs: customFoodData.carbs,
+        fat: customFoodData.fat,
+        serving_unit: customFoodData.serving_unit,
+      };
+      navigation.navigate('LogEntry', {foodItem: foodLogItem, dateToLog});
     } else {
-        console.warn('Selected item has missing data or unknown source:', item);
+      console.warn('Selected item has missing data or unknown source:', item);
+      // Provide more specific feedback if possible
+      if (!item.originalData) {
+        Alert.alert('Error', 'Selected food item is missing critical data.');
+      } else if (
+        item.source === 'external' &&
+        !('food_id' in item.originalData)
+      ) {
+        Alert.alert(
+          'Error',
+          'External food data is malformed. Missing food_id.',
+        );
+      } else if (
+        item.source === 'custom' &&
+        !('serving_size' in item.originalData)
+      ) {
+        Alert.alert(
+          'Error',
+          'Custom food data is malformed. Missing serving_size.',
+        );
+      }
     }
   };
 
-  const renderItem = ({ item }: { item: FoodSearchResult }) => (
-    <TouchableOpacity style={styles.resultItem} onPress={() => handleSelectFood(item)}>
+  const navigateToCreateCustomFood = () => {
+    // Use getParent to navigate to a screen in the parent navigator (AppStack)
+    const parentNavigation = navigation.getParent<NativeStackNavigationProp<AppStackParamList>>();
+    if (parentNavigation) {
+      parentNavigation.navigate('AddFood', {initialDate: dateToLog});
+    } else {
+      console.warn("Could not get parent navigator to navigate to AddFood screen");
+      // Fallback or error handling if parent navigator isn't found, though unlikely with correct setup
+      // Alert.alert("Navigation Error", "Could not open the add custom food screen.");
+    }
+  };
+
+  const renderItem = ({item}: {item: FoodSearchResult}) => (
+    <TouchableOpacity
+      style={styles.resultItem}
+      onPress={() => handleSelectFood(item)}>
       <View style={styles.resultTextContainer}>
-        <Text style={styles.resultName}>{item.name} <Text style={styles.sourceText}>({item.source})</Text></Text>
-        {item.description && <Text style={styles.resultDescription}>{item.description}</Text>}
+        <AppText style={styles.resultName}>
+          {item.name} <AppText style={styles.sourceText}>({item.source})</AppText>
+        </AppText>
+        {item.description && (
+          <AppText style={styles.resultDescription}>{item.description}</AppText>
+        )}
       </View>
-      <Ionicons name="add-circle-outline" size={24} color="#007AFF" />
+      <Ionicons name="add-circle-outline" size={24} color={theme.colors.primary} />
     </TouchableOpacity>
   );
 
   const renderListEmptyComponent = () => {
-      // Loading states
-      if (isLoadingCustom && !hasSearched) return null; // Handled by main loader
-      if (isLoadingFatSecret) return null; // Handled by main loader
-
-      // Error states - Show FatSecret error first if it exists after a search
-       if (hasSearched && errorFatSecret) return <Text style={styles.emptyText}>Error during search: {errorFatSecret.message}. Please try again.</Text>;
-       // Show custom food error if it occurred and wasn't overwritten by a search error
-      if (errorCustom) return <Text style={styles.emptyText}>Error loading your custom foods. Pull to refresh?</Text>; // Basic error display
-
-      // Search/Empty states
-      if (!hasSearched && customFoods.length > 0 && searchQuery === '') return <Text style={styles.emptyText}>Your custom foods are shown below. Enter a search term to search the database.</Text>;
-      if (!hasSearched) return <Text style={styles.emptyText}>Enter a food name to search.</Text>;
-      if (searchResults.length === 0) return <Text style={styles.emptyText}>No results found for "{searchQuery}".</Text>; // No results after search
-
-      return null;
+    if (isLoadingCustom && !hasSearched) return null;
+    if (isLoadingFatSecret) return null;
+    if (hasSearched && errorFatSecret)
+      return (
+        <AppText style={styles.emptyText}>
+          Error during search: {errorFatSecret.message}. Please try again.
+        </AppText>
+      );
+    if (errorCustom)
+      return (
+        <AppText style={styles.emptyText}>
+          Error loading your custom foods. Pull to refresh?
+        </AppText>
+      );
+    if (!hasSearched && customFoods.length > 0 && searchQuery === '')
+      return (
+        <AppText style={styles.emptyText}>
+          Your custom foods are shown below. Enter a search term to search the
+          database.
+        </AppText>
+      );
+    if (!hasSearched)
+      return <AppText style={styles.emptyText}>Enter a food name to search.</AppText>;
+    if (searchResults.length === 0)
+      return (
+        <AppText style={styles.emptyText}>
+          {`No results found for "${searchQuery}".`}
+        </AppText>
+      );
+    return null;
   };
-
-  // Update overall loading state check
-  const showLoadingIndicator = isLoadingCustom || isLoadingFatSecret;
 
   return (
     <Screen style={styles.screen}>
-      <View style={styles.searchContainer}>
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Search custom foods or FatSecret..." // Updated placeholder
+      <View style={styles.searchSectionContainer}>
+        <AppTextInput
+          style={styles.searchBar}
+          placeholder="Search foods..."
           value={searchQuery}
           onChangeText={setSearchQuery}
-          onSubmitEditing={handleSearch}
           returnKeyType="search"
-          clearButtonMode="while-editing"
+          containerStyle={styles.searchBarContainer}
         />
-        {/* Disable button only when a search is actively running */}
-        <TouchableOpacity style={styles.searchButton} onPress={handleSearch} disabled={isLoadingFatSecret}>
-           {/* Show loader specifically for FatSecret search if it's running */}
-           {isLoadingFatSecret ? <ActivityIndicator size="small" color="#007AFF" /> : <Ionicons name="search" size={20} color="#007AFF" />}
+        <TouchableOpacity style={styles.searchButton} onPress={() => { void handleSearch(); }}>
+          <Ionicons name="search" size={24} color={theme.colors.onPrimary} />
         </TouchableOpacity>
       </View>
 
-      {/* Show main loading indicator if loading custom foods initially OR during search with no results yet */}
-      {(isLoadingCustom && !hasSearched) || (isLoadingFatSecret && searchResults.length === 0) ? (
-        <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#007AFF" />
-            <Text style={styles.loadingText}>{isLoadingCustom && !hasSearched ? 'Loading custom foods...' : 'Searching FatSecret...'}</Text>
-        </View>
-      ) : (
-        <FlatList
-          data={searchResults}
-          renderItem={renderItem}
-          keyExtractor={(item) => item.id} // Use prefixed ID
-          style={styles.resultsList}
-          contentContainerStyle={styles.resultsListContent}
-          ListEmptyComponent={renderListEmptyComponent}
-          keyboardShouldPersistTaps="handled"
-          // Optional: Add pull-to-refresh to refetch custom foods
-           onRefresh={refetchCustomFoods}
-           refreshing={isLoadingCustom}
-        />
+      {isLoadingCustom && !hasSearched && (
+        <ActivityIndicator style={styles.centeredLoader} size="large" color={theme.colors.primary} />
       )}
+      
+      <FlatList
+        data={searchResults}
+        renderItem={renderItem}
+        keyExtractor={item => item.id}
+        style={styles.list}
+        contentContainerStyle={styles.listContentContainer}
+        ListEmptyComponent={renderListEmptyComponent()}
+        ListFooterComponent={
+          isLoadingFatSecret ? (
+            <ActivityIndicator style={styles.listLoader} size="large" color={theme.colors.primary} />
+          ) : null
+        }
+        keyboardShouldPersistTaps="handled"
+      />
+
+      <TouchableOpacity
+        style={styles.fab}
+        onPress={navigateToCreateCustomFood}>
+        <Ionicons name="add" size={30} color={theme.colors.onPrimary} />
+      </TouchableOpacity>
     </Screen>
   );
 };
 
-const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: '#f8f8f8',
-  },
-  searchContainer: {
-    flexDirection: 'row',
-    padding: 15,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-    alignItems: 'center',
-  },
-  searchInput: {
-    flex: 1,
-    height: 40,
-    backgroundColor: '#f0f0f0',
-    borderRadius: 8,
-    paddingHorizontal: 15,
-    fontSize: 16,
-    marginRight: 10,
-  },
-  searchButton: {
-    padding: 8,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-   loadingText: { // Added style for loading text
-      marginTop: 10,
-      fontSize: 14,
-      color: '#666',
-  },
-  resultsList: {
-    flex: 1,
-  },
-  resultsListContent: {
-    paddingBottom: 20, // Added padding at the bottom
-  },
-  resultItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 15,
-    paddingHorizontal: 20,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-  },
-  resultTextContainer: {
-    flex: 1,
-    marginRight: 10,
-  },
-  resultName: {
-    fontSize: 16,
-    fontWeight: '500',
-  },
-  sourceText: { // Added style for source indicator
-      fontSize: 12,
-      color: '#888',
-      fontWeight: 'normal',
-  },
-  resultDescription: {
-    fontSize: 14,
-    color: '#666',
-    marginTop: 2,
-  },
-  emptyText: {
+const makeStyles = (theme: Theme) =>
+  StyleSheet.create({
+    screen: {
+      flex: 1,
+      backgroundColor: theme.colors.background,
+    },
+    searchSectionContainer: {
+      flexDirection: 'row',
+      padding: theme.spacing.md,
+      alignItems: 'center',
+      backgroundColor: theme.colors.surface,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.colors.border,
+    },
+    searchBarContainer: {
+      flex: 1,
+      marginRight: theme.spacing.sm,
+    },
+    searchBar: {
+    },
+    searchButton: {
+      backgroundColor: theme.colors.primary,
+      padding: theme.spacing.sm,
+      borderRadius: theme.borderRadius.md,
+      justifyContent: 'center',
+      alignItems: 'center',
+      ...theme.shadows.sm,
+    },
+    list: {
+      flex: 1,
+    },
+    listContentContainer: {
+      paddingVertical: theme.spacing.md,
+    },
+    resultItem: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingVertical: theme.spacing.md,
+      paddingHorizontal: theme.spacing.lg,
+      backgroundColor: theme.colors.surface,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.colors.border,
+      marginHorizontal: theme.spacing.md,
+      borderRadius: theme.borderRadius.md,
+      marginBottom: theme.spacing.sm,
+      ...theme.shadows.sm,
+    },
+    resultTextContainer: {
+      flex: 1,
+      marginRight: theme.spacing.sm,
+    },
+    resultName: {
+      fontSize: theme.typography.sizes.bodyLarge,
+      fontWeight: theme.typography.weights.medium,
+      color: theme.colors.onSurface,
+    },
+    sourceText: {
+      fontSize: theme.typography.sizes.caption,
+      color: theme.colors.onSurfaceMedium,
+    },
+    resultDescription: {
+      fontSize: theme.typography.sizes.bodySmall,
+      color: theme.colors.onSurfaceMedium,
+      marginTop: theme.spacing.xs,
+    },
+    emptyText: {
       textAlign: 'center',
-      marginTop: 50,
-      fontSize: 16,
-      color: '#888',
-      paddingHorizontal: 20, // Add padding for longer messages
-  }
-});
+      marginTop: theme.spacing.xl,
+      fontSize: theme.typography.sizes.body,
+      color: theme.colors.onSurfaceMedium,
+      paddingHorizontal: theme.spacing.lg,
+    },
+    centeredLoader: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      padding: theme.spacing.md,
+    },
+    listLoader: {
+      marginVertical: theme.spacing.md,
+    },
+    fab: {
+      position: 'absolute',
+      right: theme.spacing.lg,
+      bottom: theme.spacing.lg,
+      backgroundColor: theme.colors.secondary,
+      width: 56,
+      height: 56,
+      borderRadius: 28,
+      justifyContent: 'center',
+      alignItems: 'center',
+      ...theme.shadows.md,
+    },
+  });
 
-export default FoodSearchScreen; 
+export default FoodSearchScreen;

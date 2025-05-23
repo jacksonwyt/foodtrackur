@@ -1,60 +1,162 @@
-import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView, ActivityIndicator, Text, TouchableOpacity } from 'react-native';
-import { Screen } from '../../components/Screen';
-import { CalendarStrip } from '../../components/items/CalendarStrip';
-import { CalorieSummary } from '../../components/cards/CalorieSummary';
-import { MacroTiles } from '../../components/cards/MacroTiles';
-import { Logo } from '../../components/items/Logo';
-import { Streaks } from '../../components/items/Streaks';
-import { useHomeSummaryData } from '../../hooks/useHomeSummaryData';
-import { useHomeNavigation } from '../../hooks/useHomeNavigation';
-import { Ionicons } from '@expo/vector-icons';
+import React, {useState, useEffect, useMemo} from 'react';
+import {
+  View,
+  ScrollView,
+  ActivityIndicator,
+  TouchableOpacity,
+  StyleSheet,
+  TextStyle,
+  ViewStyle,
+} from 'react-native';
+import {SafeAreaView} from 'react-native-safe-area-context';
+import {CalendarStrip} from '../../components/items/CalendarStrip';
+import {CalorieSummary} from '../../components/cards/CalorieSummary';
+import {MacroTiles} from '../../components/cards/MacroTiles';
+import {Logo} from '../../components/items/Logo';
+import {Streaks} from '../../components/items/Streaks';
+import {useHomeSummaryData} from '../../hooks/useHomeSummaryData';
+import {useHomeNavigation} from '../../hooks/useHomeNavigation';
+import {Ionicons} from '@expo/vector-icons';
+import {
+  useNavigation,
+  useRoute,
+  RouteProp,
+} from '@react-navigation/native';
+import {NativeStackNavigationProp} from '@react-navigation/native-stack';
+import {HomeStackParamList} from '../../types/navigation';
+import {formatISODate, parseISODate} from '../../utils/dateUtils';
+import {useTheme} from '../../hooks/useTheme';
+import {AppText as Text} from '../../components/common/AppText';
+
+type HomeScreenNavigationProp = NativeStackNavigationProp<
+  HomeStackParamList,
+  'Home'
+>;
+type HomeScreenRouteProp = RouteProp<HomeStackParamList, 'Home'>;
 
 const HomeScreen: React.FC = () => {
-  const [selectedDate, setSelectedDate] = useState(new Date());
-  
-  const { dailyData, isLoading: isLoadingSummary, error: errorSummary } = useHomeSummaryData(selectedDate);
+  const navigation = useNavigation<HomeScreenNavigationProp>();
+  const route = useRoute<HomeScreenRouteProp>();
+  const theme = useTheme();
+
+  // Derive selected date from route params, defaulting to today
+  const routeSelectedDateISO = route.params?.selectedDateISO;
+  // Memoize initial date string to avoid re-calculating `new Date()` on every render before params are set
+  const initialDefaultDateISO = useMemo(() => formatISODate(new Date()), []);
+  const currentSelectedISO = routeSelectedDateISO || initialDefaultDateISO;
+  // Memoize the parsed Date object
+  const currentDisplayDate = useMemo(() => parseISODate(currentSelectedISO), [currentSelectedISO]);
+
   const {
-    navigateToSettings,
-  } = useHomeNavigation();
+    dailyData,
+    isLoading: isLoadingSummary,
+    error: errorSummary,
+    refetchData, // Kept for potential future use with refreshTimestamp
+  } = useHomeSummaryData(currentDisplayDate); // Pass the derived Date object
+
+  const {navigateToSettings} = useHomeNavigation();
+
+  // Handler for CalendarStrip date selection
+  const handleDateSelect = (dateFromCalendar: Date) => {
+    const newSelectedDateISO = formatISODate(dateFromCalendar);
+    // Only set params if the date string actually changes to prevent unnecessary re-renders/loops
+    if (newSelectedDateISO !== currentSelectedISO) {
+      navigation.setParams({selectedDateISO: newSelectedDateISO});
+    }
+  };
+  
+  // Simplified useEffect for refreshTimestamp if it's passed via params.
+  // This needs careful handling to avoid loops if refetchData itself causes param changes.
+  // For now, it assumes refetchData is idempotent or the timestamp is cleared by the caller.
+  useEffect(() => {
+    if (route.params?.refreshTimestamp) {
+      // console.log('HomeScreen: refreshTimestamp detected, refetching data for', currentDisplayDate);
+      void refetchData();
+      // Clear the timestamp to prevent re-triggering
+      navigation.setParams({ refreshTimestamp: undefined });
+    }
+  }, [route.params?.refreshTimestamp, refetchData, navigation]); // Added navigation
+
+  // Commenting out the old useEffects that managed selectedDate state and param syncing
+  // useEffect(() => {
+  //   const newSelectedDateISO = formatISODate(selectedDate);
+  //   if (route.params?.selectedDateISO !== newSelectedDateISO) {
+  //     navigation.setParams({selectedDateISO: newSelectedDateISO});
+  //   }
+  // }, [selectedDate, navigation, route.params?.selectedDateISO]);
+
+  // useEffect(() => {
+  //   const {selectedDateISO, refreshTimestamp} = route.params || {};
+  //   if (selectedDateISO) {
+  //     const newSelectedDate = parseISODate(selectedDateISO);
+  //     if (newSelectedDate.getTime() !== selectedDate.getTime()) {
+  //       setSelectedDate(newSelectedDate);
+  //     } else if (refreshTimestamp) {
+  //       void refetchData();
+  //     }
+  //   } else if (refreshTimestamp) {
+  //     void refetchData();
+  //   }
+  // }, [route.params, selectedDate, refetchData]);
 
   const isLoading = isLoadingSummary;
   const error = errorSummary;
 
+  const styles = makeStyles(theme);
+
   if (isLoading) {
     return (
-      <Screen style={styles.centered}><ActivityIndicator size="large" /></Screen>
+      <SafeAreaView style={styles.centeredContainer}>
+        <ActivityIndicator size="large" color={theme.colors.primary} />
+      </SafeAreaView>
     );
   }
 
   if (error) {
     return (
-      <Screen style={styles.centered}><Text>Error loading data: {error.message}</Text></Screen>
+      <SafeAreaView style={styles.centeredContainer}>
+        <Text style={styles.errorText}>
+          Error loading data: {error.message}
+        </Text>
+      </SafeAreaView>
     );
   }
-  
+
   if (!dailyData) {
-      return (
-        <Screen style={styles.centered}><Text>No data available.</Text></Screen>
-      );
+    return (
+      <SafeAreaView style={styles.centeredContainer}>
+        <Ionicons name="leaf-outline" size={48} color={theme.colors.onSurfaceMedium} />
+        <Text style={styles.noDataText}>No data available for this day.</Text>
+        <Text style={styles.noDataSubText}>Try selecting another date or logging your meals.</Text>
+      </SafeAreaView>
+    );
   }
 
   return (
-    <Screen style={styles.screenContainer}>
+    <SafeAreaView style={styles.screenContainer}>
       <View style={styles.header}>
         <Logo />
         <View style={styles.headerRight}>
           <Streaks currentStreak={12} />
-          <TouchableOpacity onPress={navigateToSettings} style={styles.settingsButton}>
-            <Ionicons name="settings-outline" size={24} color="#007AFF" />
+          <TouchableOpacity
+            onPress={navigateToSettings}
+            style={styles.settingsButton}>
+            <Ionicons
+              name="settings-outline"
+              size={24}
+              color={theme.colors.primary}
+            />
           </TouchableOpacity>
         </View>
       </View>
-      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollViewContent}
+        showsVerticalScrollIndicator={false}>
         <View style={styles.calendarContainer}>
           <CalendarStrip
-            selectedDate={selectedDate}
-            onDateSelect={setSelectedDate}
+            selectedDate={currentDisplayDate}
+            onDateSelect={handleDateSelect}
           />
         </View>
 
@@ -73,52 +175,121 @@ const HomeScreen: React.FC = () => {
           />
         </View>
       </ScrollView>
-    </Screen>
+    </SafeAreaView>
   );
 };
 
-const styles = StyleSheet.create({
-  screenContainer: {
-    flex: 1,
-    backgroundColor: '#fff',
-  },
-  container: {
-    flex: 1,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
-  },
-  headerRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 16,
-  },
-  settingsButton: {
-    padding: 4,
-  },
-  calendarContainer: {
-    marginTop: 10,
-  },
-  summaryContainer: {
-    marginHorizontal: 20,
-    marginTop: 20,
-  },
-  macrosContainer: {
-    marginHorizontal: 20,
-    marginTop: 20,
-  },
-  centered: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-});
+interface HomeStyles {
+  screenContainer: ViewStyle;
+  scrollView: ViewStyle;
+  scrollViewContent: ViewStyle;
+  header: ViewStyle;
+  headerRight: ViewStyle;
+  settingsButton: ViewStyle;
+  calendarContainer: ViewStyle;
+  summaryContainer: ViewStyle;
+  macrosContainer: ViewStyle;
+  centeredContainer: ViewStyle;
+  errorText: TextStyle;
+  noDataText: TextStyle;
+  noDataSubText: TextStyle;
+}
 
-export default HomeScreen; 
+const makeStyles = (theme: ReturnType<typeof useTheme>): HomeStyles => {
+  console.log('[HomeScreen makeStyles] theme:', JSON.stringify(theme, null, 2));
+  return StyleSheet.create<HomeStyles>({
+    screenContainer: {
+      flex: 1,
+      backgroundColor: theme.colors.background,
+    },
+    scrollView: {
+      flex: 1,
+    },
+    scrollViewContent: {
+      paddingBottom: theme.spacing.lg,
+      paddingHorizontal: theme.spacing.lg,
+    },
+    header: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingVertical: theme.spacing.md,
+      paddingHorizontal: theme.spacing.lg,
+      backgroundColor: theme.colors.surface,
+      shadowColor: theme.shadows.sm.shadowColor,
+      shadowOffset: theme.shadows.sm.shadowOffset,
+      shadowOpacity: theme.shadows.sm.shadowOpacity,
+      shadowRadius: theme.shadows.sm.shadowRadius,
+      elevation: theme.shadows.sm.elevation,
+    },
+    headerRight: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: theme.spacing.md,
+      backgroundColor: theme.colors.surface,
+      borderRadius: theme.borderRadius.md,
+      padding: theme.spacing.md,
+      shadowColor: theme.shadows.sm.shadowColor,
+      shadowOffset: theme.shadows.sm.shadowOffset,
+      shadowOpacity: theme.shadows.sm.shadowOpacity,
+      shadowRadius: theme.shadows.sm.shadowRadius,
+      elevation: theme.shadows.sm.elevation,
+    },
+    settingsButton: {
+      padding: theme.spacing.xs,
+      borderRadius: theme.borderRadius.sm,
+    },
+    calendarContainer: {
+      marginTop: theme.spacing.md,
+      marginBottom: theme.spacing.lg,
+    },
+    summaryContainer: {
+      marginBottom: theme.spacing.lg,
+      backgroundColor: theme.colors.surface,
+      borderRadius: theme.borderRadius.md,
+      padding: theme.spacing.md,
+      shadowColor: theme.shadows.sm.shadowColor,
+      shadowOffset: theme.shadows.sm.shadowOffset,
+      shadowOpacity: theme.shadows.sm.shadowOpacity,
+      shadowRadius: theme.shadows.sm.shadowRadius,
+      elevation: theme.shadows.sm.elevation,
+    },
+    macrosContainer: {
+      marginBottom: theme.spacing.lg,
+      backgroundColor: theme.colors.surface,
+      borderRadius: theme.borderRadius.md,
+      padding: theme.spacing.md,
+      shadowColor: theme.shadows.sm.shadowColor,
+      shadowOffset: theme.shadows.sm.shadowOffset,
+      shadowOpacity: theme.shadows.sm.shadowOpacity,
+      shadowRadius: theme.shadows.sm.shadowRadius,
+      elevation: theme.shadows.sm.elevation,
+    },
+    centeredContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: theme.colors.background,
+      padding: theme.spacing.lg,
+    },
+    errorText: {
+      color: theme.colors.error,
+      fontSize: theme.typography.sizes.body,
+      textAlign: 'center',
+    },
+    noDataText: {
+      marginTop: theme.spacing.md,
+      fontSize: theme.typography.sizes.bodyLarge,
+      color: theme.colors.text,
+      textAlign: 'center',
+    },
+    noDataSubText: {
+      marginTop: theme.spacing.sm,
+      fontSize: theme.typography.sizes.body,
+      color: theme.colors.onSurfaceMedium,
+      textAlign: 'center',
+    },
+  });
+};
+
+export default HomeScreen;

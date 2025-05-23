@@ -1,6 +1,8 @@
 import React from 'react';
-import { View, Text, StyleSheet, Dimensions } from 'react-native';
-import Svg, { Circle, G } from 'react-native-svg';
+import {View, StyleSheet, Dimensions} from 'react-native';
+import Svg, {Circle, G} from 'react-native-svg';
+import {useTheme} from '../../hooks/useTheme';
+import {AppText as Text} from '../common/AppText';
 
 interface CalorieSummaryProps {
   consumed: number;
@@ -18,65 +20,59 @@ const calculateProgressValues = (consumed: number, goal: number) => {
   const progress = Math.min(safeConsumed / safeGoal, 1); // Progress capped at 100%
   const remaining = Math.max(safeGoal - safeConsumed, 0);
   const strokeDashoffset = CIRCLE_LENGTH * (1 - progress);
-  return { progress, remaining, strokeDashoffset, safeConsumed, safeGoal }; // Return safe values too
+  return {progress, remaining, strokeDashoffset, safeConsumed, safeGoal}; // Return safe values too
 };
 
 export const CalorieSummary: React.FC<CalorieSummaryProps> = ({
   consumed,
   goal,
 }) => {
-  // Call the helper function to get calculated values including safe defaults
-  const { remaining, strokeDashoffset, safeConsumed, safeGoal } = calculateProgressValues(consumed, goal);
+  const theme = useTheme();
+  const styles = makeStyles(theme);
 
-  // Removed direct calculations from the component body
-  // const progress = Math.min(consumed / goal, 1);
-  // const remaining = Math.max(goal - consumed, 0);
-  // const progressAngle = progress * 360; // This was calculated but not used
-  // const strokeDashoffset = CIRCLE_LENGTH * (1 - progress);
+  // Call the helper function to get calculated values including safe defaults
+  const {remaining, strokeDashoffset, safeConsumed, safeGoal} =
+    calculateProgressValues(consumed, goal);
 
   return (
     <View style={styles.container}>
       <View style={styles.circleContainer}>
         <Svg width="100%" height="100%" viewBox="0 0 180 180">
           <G rotation="-90" origin="90, 90">
-            {/* Background Circle */}
             <Circle
               cx="90"
               cy="90"
               r={CIRCLE_RADIUS}
-              stroke="#f0f0f0" // Use a consistent style guide color later
+              stroke={theme.colors.border}
               strokeWidth={STROKE_WIDTH}
               fill="none"
             />
-            {/* Progress Circle */}
             <Circle
               cx="90"
               cy="90"
               r={CIRCLE_RADIUS}
-              stroke="#34C759" // Use a consistent style guide color later (e.g., primary green)
+              stroke={theme.colors.primary}
               strokeWidth={STROKE_WIDTH}
               fill="none"
               strokeDasharray={CIRCLE_LENGTH}
-              strokeDashoffset={strokeDashoffset} // Use calculated value
+              strokeDashoffset={strokeDashoffset}
               strokeLinecap="round"
             />
           </G>
         </Svg>
         <View style={styles.textContainer}>
-          {/* Use safeConsumed */}
           <Text style={styles.consumedText}>{safeConsumed}</Text>
           <Text style={styles.labelText}>calories</Text>
         </View>
       </View>
       <View style={styles.statsContainer}>
         <View style={styles.statItem}>
-          {/* Use safeGoal */}
           <Text style={styles.statValue}>{safeGoal}</Text>
           <Text style={styles.statLabel}>Daily Goal</Text>
         </View>
         <View style={styles.divider} />
         <View style={styles.statItem}>
-          <Text style={styles.statValue}>{remaining}</Text> {/* Use calculated remaining */}
+          <Text style={styles.statValue}>{remaining}</Text>
           <Text style={styles.statLabel}>Remaining</Text>
         </View>
       </View>
@@ -84,16 +80,12 @@ export const CalorieSummary: React.FC<CalorieSummaryProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
+const makeStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
   container: {
-    backgroundColor: '#fff',
-    borderRadius: 20,
-    padding: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.borderRadius.lg,
+    padding: theme.spacing.md,
+    ...theme.shadows.sm,
   },
   circleContainer: {
     width: 180,
@@ -101,7 +93,7 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 10, // Add some space below the circle
+    marginBottom: theme.spacing.sm,
   },
   textContainer: {
     position: 'absolute',
@@ -109,43 +101,42 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   consumedText: {
-    fontSize: 34, // Slightly smaller
-    fontWeight: 'bold',
-    color: '#1C1C1E',
-    lineHeight: 40, // Adjust line height accordingly
+    fontSize: theme.typography.sizes.h1,
+    fontWeight: theme.typography.weights.bold,
+    color: theme.colors.text,
+    lineHeight: theme.typography.sizes.h1 * 1.2,
   },
   labelText: {
-    fontSize: 14, // Slightly smaller
-    color: '#8E8E93',
-    marginTop: 0, // Adjust spacing
+    fontSize: theme.typography.sizes.bodySmall,
+    color: theme.colors.textSecondary,
+    marginTop: theme.spacing.xxs,
   },
   statsContainer: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    alignItems: 'center', // Align items vertically
-    marginTop: 10,
-    paddingTop: 15,
+    alignItems: 'center',
+    marginTop: theme.spacing.sm,
+    paddingTop: theme.spacing.md,
     borderTopWidth: 1,
-    borderTopColor: '#E5E5EA', // Use a slightly different color
+    borderTopColor: theme.colors.border,
   },
   statItem: {
     alignItems: 'center',
-    flex: 1, // Allow items to take equal space
+    flex: 1,
   },
   statValue: {
-    fontSize: 18, // Adjust size
-    fontWeight: '600',
-    color: '#1C1C1E',
-    marginBottom: 2, // Add space below value
+    fontSize: theme.typography.sizes.bodyLarge,
+    fontWeight: theme.typography.weights.semibold,
+    color: theme.colors.text,
+    marginBottom: theme.spacing.xxs,
   },
   statLabel: {
-    fontSize: 13,
-    color: '#8E8E93',
-    marginTop: 0,
+    fontSize: theme.typography.sizes.caption,
+    color: theme.colors.textSecondary,
   },
   divider: {
     width: 1,
-    height: 40, // Set a fixed height for the divider
-    backgroundColor: '#E5E5EA',
+    height: '70%',
+    backgroundColor: theme.colors.border,
   },
-}); 
+});

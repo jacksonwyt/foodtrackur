@@ -1,6 +1,6 @@
-import { useMemo } from 'react';
-import { Dimensions } from 'react-native';
-import { ChartConfig } from 'react-native-chart-kit/dist/HelperTypes'; // Approximate type
+import {useMemo} from 'react';
+import {Dimensions} from 'react-native';
+import {ChartConfig} from 'react-native-chart-kit/dist/HelperTypes'; // Approximate type
 import theme from '../constants/theme'; // Assuming theme path
 
 interface DataPoint {
@@ -72,4 +72,4 @@ export const useProgressChartLogic = ({
     chartConfig,
     chartWidth,
   };
-}; 
+};

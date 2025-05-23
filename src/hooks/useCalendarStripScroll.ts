@@ -1,5 +1,5 @@
-import { useEffect, RefObject } from 'react';
-import { ScrollView, Dimensions } from 'react-native';
+import {useEffect, RefObject} from 'react';
+import {ScrollView, Dimensions} from 'react-native';
 
 interface UseCalendarStripScrollProps {
   scrollViewRef: RefObject<ScrollView>;
@@ -19,12 +19,13 @@ export const useCalendarStripScroll = ({
   useEffect(() => {
     if (selectedIndex !== -1 && scrollViewRef.current) {
       const totalItemWidth = itemWidth + itemMargin * 2;
-      const scrollToX = totalItemWidth * selectedIndex - windowWidth / 2 + itemWidth / 2;
-      
+      const scrollToX =
+        totalItemWidth * selectedIndex - windowWidth / 2 + itemWidth / 2;
+
       scrollViewRef.current.scrollTo({
         x: scrollToX,
         animated: true,
       });
     }
   }, [selectedIndex, scrollViewRef, itemWidth, itemMargin]); // Dependency array includes all props used
-}; 
+};

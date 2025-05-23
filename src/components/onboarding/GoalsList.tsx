@@ -1,43 +1,60 @@
 import React from 'react';
-import { View, StyleSheet, FlatList, FlatListProps } from 'react-native';
-import { GoalItem } from './GoalItem';
-import type { Goal } from '../../hooks/useGoalsScreenLogic'; // Import type
-import { GoalType } from '@/src/types/navigation'; // Import GoalType
+import {
+  View,
+  StyleSheet,
+  FlatList,
+  FlatListProps,
+  StyleProp,
+  ViewStyle,
+} from 'react-native';
+import {GoalItem} from './GoalItem';
+import type {Goal} from '../../hooks/useGoalsScreenLogic'; // Import type
+import {GoalType} from '../../types/navigation'; // Import GoalType using relative path
+import theme from '../../constants/theme'; // Import the centralized theme
 
-// Extend the props to include standard FlatList props we want to pass through
-// We use Omit to prevent conflicts with props we define ourselves (like data, renderItem)
-interface GoalsListProps extends Omit<FlatListProps<Goal>, 'data' | 'renderItem'> {
+// We only define props specific to GoalsList or those we want to override type for.
+// Standard FlatListProps like ListHeaderComponent, contentContainerStyle will be passed via ...rest
+interface GoalsListProps
+  extends Omit<FlatListProps<Goal>, 'data' | 'renderItem'> {
   goals: Goal[];
   selectedGoalId: GoalType | null;
   onSelectGoal: (id: GoalType) => void;
+  // ListHeaderComponent and contentContainerStyle are implicitly part of FlatListProps<Goal>
+  // and will be passed correctly with {...rest}
 }
 
-export const GoalsList: React.FC<GoalsListProps> = ({ 
-  goals, 
-  selectedGoalId, 
-  onSelectGoal, 
-  ...rest // Capture remaining FlatList props
+export const GoalsList: React.FC<GoalsListProps> = ({
+  goals,
+  selectedGoalId,
+  onSelectGoal,
+  // ListHeaderComponent, contentContainerStyle, etc., are captured by ...rest
+  ...rest
 }) => {
   return (
     <FlatList
       data={goals}
-      renderItem={({ item }) => (
+      renderItem={({item}) => (
         <GoalItem
           goal={item}
           isSelected={selectedGoalId === item.id}
           onPress={() => onSelectGoal(item.id)}
         />
       )}
-      keyExtractor={(item) => item.id}
+      keyExtractor={item => item.id}
       style={styles.list}
       showsVerticalScrollIndicator={false}
-      {...rest} // Spread the rest of the props onto FlatList
+      ItemSeparatorComponent={() => <View style={styles.separator} />} // Add separator
+      // ListHeaderComponent and contentContainerStyle are passed via {...rest}
+      {...rest}
     />
   );
 };
 
 const styles = StyleSheet.create({
   list: {
-    // Styles for the list itself, if needed
+    flex: 1, // Ensure list takes available space within its container
   },
-}); 
+  separator: {
+    height: theme.spacing.md, // Use theme spacing for separation between items
+  },
+});

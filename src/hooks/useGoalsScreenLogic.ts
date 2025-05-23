@@ -1,6 +1,6 @@
-import { useState } from 'react';
-import { Ionicons } from '@expo/vector-icons';
-import { GoalType } from '@/src/types/navigation'; // Import GoalType
+import {useState} from 'react';
+import {Ionicons} from '@expo/vector-icons';
+import {GoalType} from '@/types/navigation'; // Import GoalType
 
 export interface Goal {
   id: GoalType; // Use GoalType for the ID
@@ -48,4 +48,4 @@ export const useGoalsScreenLogic = () => {
     selectedGoalId,
     selectGoal,
   };
-}; 
+};

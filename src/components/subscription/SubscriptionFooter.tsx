@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import {View, Text, StyleSheet, TouchableOpacity} from 'react-native';
 
 interface SubscriptionFooterProps {
   subscribeButtonText: string;
@@ -59,4 +59,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default SubscriptionFooter; 
+export default SubscriptionFooter;

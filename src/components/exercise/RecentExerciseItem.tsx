@@ -1,9 +1,8 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-} from 'react-native';
+import {View} from 'react-native';
+import {useTheme} from '../../hooks/useTheme';
+import {AppText} from '../common/AppText';
+import {Theme} from '../../constants/theme';
 
 interface Exercise {
   id: string;
@@ -17,44 +16,48 @@ interface Props {
   exercise: Exercise;
 }
 
-export const RecentExerciseItem: React.FC<Props> = ({ exercise }) => {
-  return (
-    <View style={styles.exerciseCard}>
-      <View style={styles.exerciseInfo}>
-        <Text style={styles.exerciseName}>{exercise.name}</Text>
-        <Text style={styles.exerciseDetails}>
-          {exercise.duration} mins • {exercise.calories} cal
-        </Text>
-      </View>
-      <Text style={styles.exerciseDate}>
-        {new Date(exercise.timestamp).toLocaleDateString()}
-      </Text>
-    </View>
-  );
-};
-
-const styles = StyleSheet.create({
+const makeStyles = (theme: Theme) => ({
   exerciseCard: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 16,
-    backgroundColor: '#f5f5f5',
-    borderRadius: 12,
+    padding: theme.spacing.md,
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.borderRadius.md,
   },
   exerciseInfo: {
-    gap: 4,
+    gap: theme.spacing.xs,
   },
   exerciseName: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: theme.typography.sizes.bodyLarge,
+    fontWeight: theme.typography.weights.semibold,
+    color: theme.colors.text,
   },
   exerciseDetails: {
-    fontSize: 14,
-    color: '#666',
+    fontSize: theme.typography.sizes.bodySmall,
+    color: theme.colors.textSecondary,
   },
   exerciseDate: {
-    fontSize: 14,
-    color: '#666',
+    fontSize: theme.typography.sizes.caption,
+    color: theme.colors.textSecondary,
   },
-}); 
+});
+
+export const RecentExerciseItem: React.FC<Props> = ({exercise}) => {
+  const theme = useTheme();
+  const styles = makeStyles(theme);
+
+  return (
+    <View style={styles.exerciseCard}>
+      <View style={styles.exerciseInfo}>
+        <AppText style={styles.exerciseName}>{exercise.name}</AppText>
+        <AppText style={styles.exerciseDetails}>
+          {exercise.duration} mins • {exercise.calories} cal
+        </AppText>
+      </View>
+      <AppText style={styles.exerciseDate}>
+        {new Date(exercise.timestamp).toLocaleDateString()}
+      </AppText>
+    </View>
+  );
+};

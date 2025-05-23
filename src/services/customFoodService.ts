@@ -1,6 +1,6 @@
-import { supabase } from './supabaseClient';
-import { getCurrentUser } from './auth/authService';
-import { User } from '@supabase/supabase-js'; // Added for explicit user type
+import {supabase} from './supabaseClient';
+import {getCurrentUser} from './auth/authService';
+import {User, PostgrestError} from '@supabase/supabase-js'; // Added for explicit user type
 
 // --- Custom Food Interface ---
 // Represents the structure of data in the 'custom_foods' table
@@ -18,7 +18,10 @@ export interface CustomFood {
 }
 
 // Type for data needed when *adding* a new custom food
-export type AddCustomFoodData = Omit<CustomFood, 'id' | 'user_id' | 'created_at'>;
+export type AddCustomFoodData = Omit<
+  CustomFood,
+  'id' | 'user_id' | 'created_at'
+>;
 
 // Type for data needed when *updating* a custom food
 export type UpdateCustomFoodData = Partial<AddCustomFoodData>; // All add fields are optional
@@ -28,10 +31,15 @@ export type UpdateCustomFoodData = Partial<AddCustomFoodData>; // All add fields
 /**
  * Adds a new custom food entry for the current user.
  */
-export async function addCustomFood(foodData: AddCustomFoodData): Promise<CustomFood | null> {
-  const { user: authUser, error: authError } = await getCurrentUser();
+export async function addCustomFood(
+  foodData: AddCustomFoodData,
+): Promise<CustomFood | null> {
+  const {user: authUser, error: authError} = await getCurrentUser();
   if (authError || !authUser) {
-    console.error('Authentication error:', authError?.message || 'User not authenticated.');
+    console.error(
+      'Authentication error:',
+      authError?.message || 'User not authenticated.',
+    );
     return null;
   }
 
@@ -41,8 +49,11 @@ export async function addCustomFood(foodData: AddCustomFoodData): Promise<Custom
   };
 
   try {
-    const { data, error } = await supabase
-      .from('custom_foods')
+    const {
+      data,
+      error,
+    }: {data: CustomFood | null; error: PostgrestError | null} = await supabase
+      .from<CustomFood>('custom_foods')
       .insert(foodToInsert)
       .select()
       .single();
@@ -63,18 +74,25 @@ export async function addCustomFood(foodData: AddCustomFoodData): Promise<Custom
  * Retrieves all custom foods created by the current user.
  */
 export async function getCustomFoods(): Promise<CustomFood[] | null> {
-  const { user: authUser, error: authError } = await getCurrentUser();
+  const {user: authUser, error: authError} = await getCurrentUser();
   if (authError || !authUser) {
-    console.error('Authentication error:', authError?.message || 'User not authenticated.');
+    console.error(
+      'Authentication error:',
+      authError?.message || 'User not authenticated.',
+    );
     return null;
   }
 
   try {
-    const { data, error } = await supabase
-      .from('custom_foods')
-      .select('*')
-      .eq('user_id', authUser.id)
-      .order('created_at', { ascending: false }); // Optional: order by creation date
+    const {
+      data,
+      error,
+    }: {data: CustomFood[] | null; error: PostgrestError | null} =
+      await supabase
+        .from<CustomFood>('custom_foods')
+        .select('*')
+        .eq('user_id', authUser.id)
+        .order('created_at', {ascending: false}); // Optional: order by creation date
 
     if (error) {
       console.error('Error fetching custom foods:', error);
@@ -93,16 +111,24 @@ export async function getCustomFoods(): Promise<CustomFood[] | null> {
  * Ensures the user can only retrieve their own entries.
  * @param foodId - The ID of the custom food to retrieve.
  */
-export async function getCustomFoodById(foodId: number): Promise<CustomFood | null> {
-  const { user: authUser, error: authError } = await getCurrentUser();
+export async function getCustomFoodById(
+  foodId: number,
+): Promise<CustomFood | null> {
+  const {user: authUser, error: authError} = await getCurrentUser();
   if (authError || !authUser) {
-    console.error('Authentication error:', authError?.message || 'User not authenticated.');
+    console.error(
+      'Authentication error:',
+      authError?.message || 'User not authenticated.',
+    );
     return null;
   }
 
   try {
-    const { data, error } = await supabase
-      .from('custom_foods')
+    const {
+      data,
+      error,
+    }: {data: CustomFood | null; error: PostgrestError | null} = await supabase
+      .from<CustomFood>('custom_foods')
       .select('*')
       .eq('id', foodId)
       .eq('user_id', authUser.id) // Ensure user owns the food
@@ -113,7 +139,7 @@ export async function getCustomFoodById(foodId: number): Promise<CustomFood | nu
       return null;
     }
 
-    return data; // Returns the food item or null if not found/not owned
+    return data;
   } catch (error) {
     console.error('Database error fetching custom food by ID:', error);
     return null;
@@ -126,18 +152,24 @@ export async function getCustomFoodById(foodId: number): Promise<CustomFood | nu
  * @param foodId - The ID of the custom food to update.
  * @param updates - An object containing the fields to update.
  */
-export async function updateCustomFood(foodId: number, updates: UpdateCustomFoodData): Promise<CustomFood | null> {
-  const { user: authUser, error: authError } = await getCurrentUser();
+export async function updateCustomFood(
+  foodId: number,
+  updates: UpdateCustomFoodData,
+): Promise<CustomFood | null> {
+  const {user: authUser, error: authError} = await getCurrentUser();
   if (authError || !authUser) {
-    console.error('Authentication error:', authError?.message || 'User not authenticated.');
+    console.error(
+      'Authentication error:',
+      authError?.message || 'User not authenticated.',
+    );
     return null;
   }
 
   // Ensure no forbidden fields are accidentally included in updates
-  const validUpdates: Partial<CustomFood> = { ...updates };
-  delete (validUpdates as any).id;
-  delete (validUpdates as any).user_id;
-  delete (validUpdates as any).created_at;
+  const validUpdates: Partial<CustomFood> = {...updates};
+  delete validUpdates.id;
+  delete validUpdates.user_id;
+  delete validUpdates.created_at;
 
   if (Object.keys(validUpdates).length === 0) {
     console.warn('No valid fields provided for custom food update.');
@@ -145,8 +177,11 @@ export async function updateCustomFood(foodId: number, updates: UpdateCustomFood
   }
 
   try {
-    const { data, error } = await supabase
-      .from('custom_foods')
+    const {
+      data,
+      error,
+    }: {data: CustomFood | null; error: PostgrestError | null} = await supabase
+      .from<CustomFood>('custom_foods')
       .update(validUpdates)
       .eq('id', foodId)
       .eq('user_id', authUser.id) // Ensure user owns the food
@@ -159,7 +194,9 @@ export async function updateCustomFood(foodId: number, updates: UpdateCustomFood
     }
 
     if (!data) {
-      console.warn(`Custom food with id ${foodId} not found or user mismatch for update.`);
+      console.warn(
+        `Custom food with id ${foodId} not found or user mismatch for update.`,
+      );
     }
 
     return data;
@@ -175,18 +212,22 @@ export async function updateCustomFood(foodId: number, updates: UpdateCustomFood
  * @param foodId - The ID of the custom food to delete.
  */
 export async function deleteCustomFood(foodId: number): Promise<boolean> {
-  const { user: authUser, error: authError } = await getCurrentUser();
+  const {user: authUser, error: authError} = await getCurrentUser();
   if (authError || !authUser) {
-    console.error('Authentication error:', authError?.message || 'User not authenticated.');
+    console.error(
+      'Authentication error:',
+      authError?.message || 'User not authenticated.',
+    );
     return false;
   }
 
   try {
-    const { error, count } = await supabase
-      .from('custom_foods')
-      .delete()
-      .eq('id', foodId)
-      .eq('user_id', authUser.id); // Ensure user owns the food
+    const {error, count}: {error: PostgrestError | null; count: number | null} =
+      await supabase
+        .from('custom_foods')
+        .delete()
+        .eq('id', foodId)
+        .eq('user_id', authUser.id); // Ensure user owns the food
 
     if (error) {
       console.error('Error deleting custom food:', error);
@@ -194,14 +235,15 @@ export async function deleteCustomFood(foodId: number): Promise<boolean> {
     }
 
     const success = count === 1;
-     if (!success) {
-        console.warn(`Custom food with id ${foodId} not found or user mismatch for delete. Count: ${count}`);
+    if (!success) {
+      console.warn(
+        `Custom food with id ${foodId} not found or user mismatch for delete. Count: ${count}`,
+      );
     }
 
     return success;
-
   } catch (error) {
     console.error('Database error deleting custom food:', error);
     return false;
   }
-} 
+}

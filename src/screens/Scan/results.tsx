@@ -1,19 +1,26 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, {useState, useMemo, useCallback} from 'react';
 import {
   View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  ScrollView,
+  // Removed Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView, FlatList, Alert
   SafeAreaView,
   FlatList,
   Alert,
+  TouchableOpacity, // Keep for now, will style it or replace with AppButton if available
+  ActivityIndicator, // Added for loading state during logging
 } from 'react-native';
-import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../../types/navigation';
-import { Ionicons } from '@expo/vector-icons';
-import { addFoodLog, AddFoodLogData } from '../../services/foodLogService';
+import {useNavigation, useRoute, RouteProp} from '@react-navigation/native';
+import {NativeStackNavigationProp} from '@react-navigation/native-stack';
+import {ScanStackParamList, AppStackParamList} from '../../types/navigation';
+import {Ionicons} from '@expo/vector-icons';
+import {
+  addFoodLog,
+  AddFoodLogData,
+  FoodLog,
+} from '../../services/foodLogService';
+import {useTheme} from '../../hooks/useTheme';
+import {AppText} from '../../components/common/AppText';
+// import {AppButton} from '../../components/buttons/AppButton'; // Assuming AppButton might be used later
+import {Theme} from '../../constants/theme';
 
 // Define the structure of a parsed food item from the analysis
 interface ParsedFoodItem {
@@ -23,47 +30,209 @@ interface ParsedFoodItem {
   protein?: number;
   carbs?: number;
   fat?: number;
-  serving_size?: number; // Add serving size if provided by AI
-  serving_unit?: string; // Add serving unit if provided by AI
+  serving_size?: number;
+  serving_unit?: string;
 }
 
-// Update the route prop type for this screen
-type ScanResultsScreenRouteProp = RouteProp<RootStackParamList, 'ScanResults'>;
+// Interface for the expected raw structure from AI analysis
+interface RawAnalyzedItem {
+  id?: string | number;
+  name?: string;
+  calories?: string | number | undefined;
+  protein?: string | number | undefined;
+  carbs?: string | number | undefined;
+  fat?: string | number | undefined;
+  serving_size?: string | number | undefined;
+  serving_unit?: string | undefined;
+}
+
+type ScanResultsScreenRouteProp = RouteProp<
+  ScanStackParamList,
+  'ScanResults'
+>;
+
+const makeStyles = (theme: Theme) => ({
+  container: {
+    flex: 1,
+    backgroundColor: theme.colors.background,
+  },
+  header: {
+    paddingHorizontal: theme.spacing.md,
+    paddingTop: theme.spacing.md,
+    paddingBottom: theme.spacing.sm,
+    flexDirection: 'row' as const,
+    justifyContent: 'space-between' as const,
+    alignItems: 'center' as const,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.border,
+  },
+  headerTitle: {
+    fontSize: theme.typography.sizes.h3,
+    fontWeight: theme.typography.weights.semibold,
+    color: theme.colors.text,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center' as const,
+    alignItems: 'center' as const,
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center' as const,
+    alignItems: 'center' as const,
+    padding: theme.spacing.lg,
+  },
+  errorText: {
+    fontSize: theme.typography.sizes.body,
+    color: theme.colors.error,
+    textAlign: 'center' as const,
+    marginBottom: theme.spacing.md,
+  },
+  foodCard: {
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.borderRadius.md,
+    padding: theme.spacing.md,
+    marginVertical: theme.spacing.sm,
+    marginHorizontal: theme.spacing.md,
+    flexDirection: 'row' as const,
+    justifyContent: 'space-between' as const,
+    alignItems: 'center' as const,
+    ...theme.shadows.sm,
+  },
+  foodCardSelected: {
+    backgroundColor: theme.colors.primaryRGB
+      ? `rgba(${theme.colors.primaryRGB}, 0.1)`
+      : theme.colors.primary, // Fallback if RGB is not defined
+    borderColor: theme.colors.primary,
+    borderWidth: 1,
+  },
+  foodInfo: {
+    flex: 1,
+    marginRight: theme.spacing.sm,
+  },
+  foodName: {
+    fontSize: theme.typography.sizes.bodyLarge,
+    fontWeight: theme.typography.weights.medium,
+    color: theme.colors.text,
+    marginBottom: theme.spacing.xs,
+  },
+  macros: {
+    flexDirection: 'row' as const,
+    flexWrap: 'wrap' as const,
+    gap: theme.spacing.sm, // For spacing between macro items
+  },
+  macro: {
+    fontSize: theme.typography.sizes.bodySmall,
+    color: theme.colors.textSecondary,
+  },
+  checkbox: {
+    width: 24,
+    height: 24,
+    borderRadius: theme.borderRadius.sm,
+    borderWidth: 2,
+    borderColor: theme.colors.border,
+    justifyContent: 'center' as const,
+    alignItems: 'center' as const,
+  },
+  checkboxSelected: {
+    backgroundColor: theme.colors.primary,
+    borderColor: theme.colors.primary,
+  },
+  checkboxIcon: {
+    color: theme.colors.onPrimary,
+  },
+  listContentContainer: {
+    paddingBottom: theme.spacing.xxl, // Ensure space for log button
+  },
+  footer: {
+    padding: theme.spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: theme.colors.border,
+    backgroundColor: theme.colors.background, // Match screen background
+  },
+  logButton: { // Using TouchableOpacity for now
+    backgroundColor: theme.colors.primary,
+    padding: theme.spacing.md,
+    borderRadius: theme.borderRadius.md,
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
+  },
+  logButtonText: {
+    color: theme.colors.onPrimary,
+    fontSize: theme.typography.button.fontSize,
+    fontWeight: theme.typography.button.fontWeight,
+  },
+  disabledLogButton: {
+    backgroundColor: theme.colors.surfaceDisabled,
+  },
+  disabledLogButtonText: {
+    color: theme.colors.onSurfaceDisabled,
+  },
+  emptyListContainer: {
+    flex: 1,
+    justifyContent: 'center' as const,
+    alignItems: 'center' as const,
+    padding: theme.spacing.lg,
+  },
+  emptyListText: {
+    fontSize: theme.typography.sizes.body,
+    color: theme.colors.textSecondary,
+    textAlign: 'center' as const,
+  },
+});
 
 const ScanResultsScreen: React.FC = () => {
-  // Use react-navigation hooks
-  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const theme = useTheme();
+  const styles = makeStyles(theme);
+  const navigation =
+    useNavigation<NativeStackNavigationProp<AppStackParamList>>();
   const route = useRoute<ScanResultsScreenRouteProp>();
-  const { analysis } = route.params; // Get analysis text
+  const {analysis, dateToLog} = route.params; // Added dateToLog from params
 
-  // Parse the analysis string, handle errors
-  const { parsedItems, parseError } = useMemo(() => {
+  const {parsedItems, parseError} = useMemo(() => {
     try {
       if (!analysis) {
-          return { parsedItems: [], parseError: 'No analysis data received.' };
+        return {parsedItems: [], parseError: 'No analysis data received.'};
       }
-      const items = JSON.parse(analysis);
-      if (!Array.isArray(items)) {
-          throw new Error('Analysis data is not an array.');
+      const rawItems = JSON.parse(analysis) as RawAnalyzedItem[];
+      if (!Array.isArray(rawItems)) {
+        throw new Error('Analysis data is not an array.');
       }
-      // Add an 'id' based on index for selection tracking if not present
-      const itemsWithId: ParsedFoodItem[] = items.map((item, index) => ({
-          ...item,
-          id: item.id || `item-${index}`, // Use provided id or generate one
-          name: item.name || 'Unknown Item', // Add fallback name
-      }));
-      return { parsedItems: itemsWithId, parseError: null };
+      const itemsWithId: ParsedFoodItem[] = rawItems.map(
+        (item, index: number) => ({
+          id: String(item?.id ?? `item-${index}`),
+          name: String(item?.name ?? 'Unknown Item'),
+          calories:
+            typeof item?.calories === 'number' ? item.calories : undefined,
+          protein: typeof item?.protein === 'number' ? item.protein : undefined,
+          carbs: typeof item?.carbs === 'number' ? item.carbs : undefined,
+          fat: typeof item?.fat === 'number' ? item.fat : undefined,
+          serving_size:
+            typeof item?.serving_size === 'number'
+              ? item.serving_size
+              : undefined,
+          serving_unit:
+            typeof item?.serving_unit === 'string'
+              ? item.serving_unit
+              : undefined,
+        }),
+      );
+      return {parsedItems: itemsWithId, parseError: null};
     } catch (e) {
-      console.error("Failed to parse analysis JSON:", e);
-      const message = e instanceof Error ? e.message : 'Invalid analysis format.';
-      return { parsedItems: [], parseError: `Failed to process results: ${message}` };
+      console.error('Failed to parse analysis JSON:', e);
+      const message =
+        e instanceof Error ? e.message : 'Invalid analysis format.';
+      return {
+        parsedItems: [],
+        parseError: `Failed to process results: ${message}`,
+      };
     }
   }, [analysis]);
 
-  // State to track selected item IDs
-  const [selectedItemIds, setSelectedItemIds] = useState<Set<string>>(new Set());
+  const [selectedItemIds, setSelectedItemIds] = useState<Set<string>>(
+    new Set(),
+  );
 
-  // Toggle selection state for an item
   const toggleItemSelection = (itemId: string) => {
     setSelectedItemIds(prevSelectedIds => {
       const newSelectedIds = new Set(prevSelectedIds);
@@ -76,318 +245,202 @@ const ScanResultsScreen: React.FC = () => {
     });
   };
 
-  // State for logging process
   const [isLogging, setIsLogging] = useState(false);
 
   const handleLogItems = useCallback(async () => {
-    const selectedItems = parsedItems.filter(item => selectedItemIds.has(item.id));
+    const selectedItems = parsedItems.filter(item =>
+      selectedItemIds.has(item.id),
+    );
 
     if (selectedItems.length === 0) {
-      Alert.alert("No Items Selected", "Please select items to log.");
+      Alert.alert('No Items Selected', 'Please select items to log.');
       return;
     }
 
-    if (isLogging) return; // Prevent double taps
+    if (isLogging) return;
     setIsLogging(true);
 
-    console.log("Attempting to log selected items:", selectedItems);
-
-    const logPromises: Promise<any>[] = [];
+    const logPromises: Promise<FoodLog | null>[] = [];
     let successfulLogs = 0;
     let failedLogs = 0;
 
     for (const item of selectedItems) {
-      // Construct the data payload for the foodLogService
-      // Use defaults if specific values are missing from the analysis
       const logData: AddFoodLogData = {
         food_name: item.name,
         calories: item.calories ?? 0,
         protein: item.protein ?? 0,
         carbs: item.carbs ?? 0,
         fat: item.fat ?? 0,
-        serving_size: item.serving_size ?? 1, // Default to 1 serving if not specified
-        serving_unit: item.serving_unit ?? 'item', // Default unit
-        log_date: new Date().toISOString(), // Log for the current time
+        serving_size: item.serving_size ?? 1,
+        serving_unit: item.serving_unit ?? 'item',
+        log_date: dateToLog, // Use dateToLog from route params
       };
-
-      // Add the promise to the array
       logPromises.push(addFoodLog(logData));
     }
 
     try {
-      // Wait for all logging attempts to complete
       const results = await Promise.allSettled(logPromises);
-
       results.forEach((result, index) => {
         if (result.status === 'fulfilled' && result.value) {
           successfulLogs++;
         } else {
           failedLogs++;
           const failedItem = selectedItems[index];
-          console.error(`Failed to log item '${failedItem.name}':`, result.status === 'rejected' ? result.reason : 'Service returned null');
+          console.error(
+            `Failed to log item '${failedItem.name}':`,
+            result.status === 'rejected'
+              ? result.reason
+              : 'Service returned null',
+          );
         }
       });
 
-      // Show summary alert
       let alertMessage = `${successfulLogs} item(s) logged successfully.`;
       if (failedLogs > 0) {
         alertMessage += `\n${failedLogs} item(s) failed to log. Check console for details.`;
       }
-      Alert.alert("Log Complete", alertMessage);
-
-      // Navigate back to the top of the stack (e.g., Home screen)
-      navigation.popToTop();
-
+      Alert.alert('Log Complete', alertMessage, [
+        {text: 'OK', onPress: () => navigation.popToTop()},
+      ]);
     } catch (error) {
-      // This catch block might not be strictly necessary with Promise.allSettled
-      // but good for catching unexpected errors in the setup loop itself.
-      console.error("Unexpected error during batch logging:", error);
-      Alert.alert("Logging Error", "An unexpected error occurred while trying to log items.");
+      console.error('Unexpected error during batch logging:', error);
+      Alert.alert(
+        'Logging Error',
+        'An unexpected error occurred while trying to log items.',
+      );
     } finally {
       setIsLogging(false);
     }
-  }, [parsedItems, selectedItemIds, isLogging, navigation]);
+  }, [parsedItems, selectedItemIds, isLogging, navigation, dateToLog, theme]); // Added theme to dependencies
 
-  // Function to go back (e.g., to confirm screen if needed, though we used replace)
   const handleGoBack = () => {
-      if (navigation.canGoBack()) {
-          navigation.goBack();
-      }
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+    }
   };
 
-  // Render item function for FlatList
-  const renderFoodItem = ({ item }: { item: ParsedFoodItem }) => {
+  const renderFoodItem = ({item}: {item: ParsedFoodItem}) => {
     const isSelected = selectedItemIds.has(item.id);
     return (
       <TouchableOpacity
         style={[styles.foodCard, isSelected && styles.foodCardSelected]}
         onPress={() => toggleItemSelection(item.id)}
-        activeOpacity={0.7}
-      >
+        activeOpacity={0.7}>
         <View style={styles.foodInfo}>
-            <Text style={styles.foodName}>{item.name}</Text>
-            {/* Display nutritional info if available */}
-            {(item.calories !== undefined || item.protein !== undefined || item.carbs !== undefined || item.fat !== undefined) && (
-              <View style={styles.macros}>
-                {item.calories !== undefined && <Text style={styles.macro}>🔥 {item.calories.toFixed(0)} cal</Text>}
-                {item.protein !== undefined && <Text style={styles.macro}> P: {item.protein.toFixed(1)}g</Text>}
-                {item.carbs !== undefined && <Text style={styles.macro}> C: {item.carbs.toFixed(1)}g</Text>}
-                {item.fat !== undefined && <Text style={styles.macro}> F: {item.fat.toFixed(1)}g</Text>}
-              </View>
-            )}
+          <AppText style={styles.foodName}>{item.name}</AppText>
+          {(item.calories !== undefined ||
+            item.protein !== undefined ||
+            item.carbs !== undefined ||
+            item.fat !== undefined) && (
+            <View style={styles.macros}>
+              {item.calories !== undefined && (
+                <AppText style={styles.macro}>
+                  🔥 {item.calories.toFixed(0)} cal
+                </AppText>
+              )}
+              {item.protein !== undefined && (
+                <AppText style={styles.macro}> P: {item.protein.toFixed(1)}g</AppText>
+              )}
+              {item.carbs !== undefined && (
+                <AppText style={styles.macro}> C: {item.carbs.toFixed(1)}g</AppText>
+              )}
+              {item.fat !== undefined && (
+                <AppText style={styles.macro}> F: {item.fat.toFixed(1)}g</AppText>
+              )}
+            </View>
+          )}
         </View>
         <View style={[styles.checkbox, isSelected && styles.checkboxSelected]}>
-            {isSelected && <Ionicons name="checkmark" size={18} color="#ffffff" />}
+          {isSelected && (
+            <Ionicons name="checkmark" size={18} style={styles.checkboxIcon} />
+          )}
         </View>
       </TouchableOpacity>
     );
   };
 
+  if (parseError) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.errorContainer}>
+          <AppText style={styles.errorText}>{parseError}</AppText>
+          {/* Replace Button with themed TouchableOpacity */}
+          <TouchableOpacity style={styles.logButton} onPress={handleGoBack}>
+            <AppText style={styles.logButtonText}>Go Back</AppText>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (parsedItems.length === 0 && !parseError) {
+    return (
+      <SafeAreaView style={styles.container}>
+         <View style={styles.header}>
+          <TouchableOpacity onPress={handleGoBack} hitSlop={{top:10, bottom:10, left:10, right:10}}>
+            <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
+          </TouchableOpacity>
+          <AppText style={styles.headerTitle}>Scan Results</AppText>
+          <View style={{width: 24}} />{/* Spacer */}
+        </View>
+        <View style={styles.emptyListContainer}>
+          <AppText style={styles.emptyListText}>
+            No food items were identified in the scan.
+          </AppText>
+          <TouchableOpacity style={styles.logButton} onPress={handleGoBack}>
+            <AppText style={styles.logButtonText}>Try Again</AppText>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   return (
-    // Use SafeAreaView
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.closeButton}
-          // Use handleGoBack or handleDone depending on desired flow
-          onPress={handleGoBack} // Changed from router.back()
-        >
-          <Ionicons name="chevron-back" size={28} color="#333" />
+        <TouchableOpacity onPress={handleGoBack} hitSlop={{top:10, bottom:10, left:10, right:10}}>
+          <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
         </TouchableOpacity>
-        <Text style={styles.title}>Select Items to Log</Text>
+        <AppText style={styles.headerTitle}>Select Items to Log</AppText>
+        <View style={{width: 24}} />{/* Spacer */}
       </View>
-
-      <ScrollView style={styles.content}>
-         {/* Display the raw analysis text */}
-         <View style={styles.analysisContainer}>
-            <Text style={styles.analysisLabel}>Raw Analysis:</Text>
-            <Text style={styles.analysisText}>{analysis || 'No analysis available.'}</Text>
-         </View>
-
-         {/* Placeholder for future parsed results/logging actions */}
-         <Text style={styles.todoText}>
-           TODO: Parse the analysis text above and allow user to select/confirm items to log.
-         </Text>
-
-         {/* Removed complex UI based on simulated predictions */}
-
-      </ScrollView>
-
-      {/* Footer Button - updated disabled state and text */}
-      <View style={styles.footer}>
-        <TouchableOpacity
-          style={[styles.button, (selectedItemIds.size === 0 || isLogging) && styles.buttonDisabled]}
-          onPress={handleLogItems}
-          disabled={selectedItemIds.size === 0 || isLogging}
-        >
-          <Text style={styles.buttonText}>
-            {isLogging ? 'Logging...' : `Log ${selectedItemIds.size > 0 ? `${selectedItemIds.size} Selected Item(s)` : 'Selected Items'}`}
-          </Text>
-        </TouchableOpacity>
-      </View>
+      <FlatList
+        data={parsedItems}
+        renderItem={renderFoodItem}
+        keyExtractor={item => item.id}
+        contentContainerStyle={styles.listContentContainer}
+        ListEmptyComponent={
+          <View style={styles.emptyListContainer}>
+            <AppText style={styles.emptyListText}>
+              No items to display. This shouldn&apos;t happen if parseError is null and parsedItems is not empty.
+            </AppText>
+          </View>
+        }
+      />
+      {parsedItems.length > 0 && (
+        <View style={styles.footer}>
+          <TouchableOpacity
+            style={[
+              styles.logButton,
+              (isLogging || selectedItemIds.size === 0) && styles.disabledLogButton,
+            ]}
+            onPress={() => { void handleLogItems(); }}
+            disabled={isLogging || selectedItemIds.size === 0}>
+            {isLogging ? (
+              <ActivityIndicator color={theme.colors.onPrimary} />
+            ) : (
+              <AppText style={[
+                styles.logButtonText,
+                (isLogging || selectedItemIds.size === 0) && styles.disabledLogButtonText,
+              ]}>
+                Log Selected ({selectedItemIds.size})
+              </AppText>
+            )}
+          </TouchableOpacity>
+        </View>
+      )}
     </SafeAreaView>
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f8f8f8', // Changed background
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 10, // Reduced horizontal padding
-    paddingVertical: 10,
-    paddingTop: 10, // Adjusted padding for SafeAreaView
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0', // Changed border color
-    backgroundColor: '#ffffff', // Added header background
-  },
-  closeButton: {
-    padding: 5, // Reduced padding
-  },
-  title: {
-    fontSize: 18, // Adjusted font size
-    fontWeight: '600',
-    marginLeft: 10, // Reduced margin
-    color: '#333',
-    flex: 1, // Allow title to take space
-    textAlign: 'center', // Center title
-    marginRight: 30, // Offset for the back button space
-  },
-  content: {
-    flex: 1,
-  },
-  analysisContainer: {
-      margin: 20,
-      padding: 15,
-      backgroundColor: '#ffffff',
-      borderRadius: 8,
-      borderWidth: 1,
-      borderColor: '#e0e0e0',
-  },
-  analysisLabel: {
-      fontSize: 16,
-      fontWeight: '600',
-      marginBottom: 10,
-      color: '#555',
-  },
-  analysisText: {
-      fontSize: 15,
-      lineHeight: 22,
-      color: '#333',
-  },
-  todoText: {
-      margin: 20,
-      marginTop: 10,
-      fontSize: 14,
-      color: '#888',
-      textAlign: 'center',
-      fontStyle: 'italic',
-  },
-  // Removed styles related to predictions, image, loading, errors
-  footer: {
-    padding: 15, // Reduced padding
-    paddingBottom: 30, // Extra padding for home bar
-    borderTopWidth: 1,
-    borderTopColor: '#e0e0e0',
-    backgroundColor: '#ffffff',
-  },
-  button: {
-    backgroundColor: '#007AFF', // Changed button color to standard blue
-    height: 50, // Adjusted height
-    borderRadius: 12, // Adjusted radius
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  buttonDisabled: {
-    backgroundColor: '#a0cfff', // Lighter blue when disabled
-  },
-  buttonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  // Removed error container styles
-  foodCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 15,
-    backgroundColor: '#ffffff',
-    borderRadius: 12,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.05,
-    shadowRadius: 2.22,
-    elevation: 2,
-  },
-  foodCardSelected: {
-    borderColor: '#007AFF',
-    backgroundColor: '#e7f0ff',
-  },
-  foodInfo: {
-    flex: 1,
-    marginRight: 10,
-  },
-  foodName: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 5,
-    color: '#333',
-  },
-  macros: {
-    flexDirection: 'row',
-    flexWrap: 'wrap', // Allow macros to wrap
-    gap: 10,
-    marginTop: 5,
-  },
-  macro: {
-    fontSize: 13,
-    color: '#555',
-  },
-  checkbox: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    borderWidth: 2,
-    borderColor: '#007AFF',
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#fff',
-  },
-  checkboxSelected: {
-    backgroundColor: '#007AFF',
-    borderColor: '#007AFF',
-  },
-  listContentContainer: {
-      padding: 15,
-      paddingBottom: 80, // Ensure space above footer
-  },
-  listHeader: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 15,
-    textAlign: 'center',
-  },
-  emptyListContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 50,
-    padding: 20,
-  },
-  emptyListText: {
-    fontSize: 16,
-    color: '#666',
-    textAlign: 'center',
-  },
-});
-
-export default ScanResultsScreen; 
+export default ScanResultsScreen;

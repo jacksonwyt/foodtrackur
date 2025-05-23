@@ -1,42 +1,52 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import SettingsListItem, { SettingsItemData } from './SettingsListItem';
+import {View, StyleSheet} from 'react-native';
+import SettingsListItem, {SettingsItemData} from './SettingsListItem';
+import { useTheme } from '../../hooks/useTheme';
+import { AppText } from '../common/AppText';
+import type { Theme } from '../../constants/theme';
 
 interface SettingsSectionProps {
   title: string;
   items: SettingsItemData[];
 }
 
-const SettingsSection: React.FC<SettingsSectionProps> = ({ title, items }) => (
-  <View style={styles.section}>
-    <Text style={styles.sectionTitle}>{title}</Text>
-    <View style={styles.sectionItemsContainer}>
-      {items.map((item, index) => (
-        <SettingsListItem key={index} item={item} />
-      ))}
-    </View>
-  </View>
-);
+const SettingsSection: React.FC<SettingsSectionProps> = ({title, items}) => {
+  const theme = useTheme();
+  const styles = makeStyles(theme);
 
-const styles = StyleSheet.create({
+  return (
+    <View style={styles.section}>
+      <AppText style={styles.sectionTitle}>{title}</AppText>
+      <View style={styles.sectionItemsContainer}>
+        {items.map((item, index) => (
+          <SettingsListItem 
+            key={index} 
+            item={item} 
+            isLast={index === items.length - 1}
+          />
+        ))}
+      </View>
+    </View>
+  );
+};
+
+const makeStyles = (theme: Theme) => StyleSheet.create({
   section: {
-    marginBottom: 24, // Reduced margin slightly
+    marginBottom: theme.spacing.lg,
   },
   sectionTitle: {
-    fontSize: 16, // Smaller section title
-    fontWeight: '600',
-    marginBottom: 8,
-    color: '#555',
-    paddingHorizontal: 4, // Slight horizontal padding
+    fontSize: theme.typography.sizes.h3,
+    fontWeight: theme.typography.weights.semibold,
+    marginBottom: theme.spacing.sm,
+    color: theme.colors.textSecondary,
+    paddingHorizontal: theme.spacing.xs,
   },
   sectionItemsContainer: {
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: '#d0d0d0',
-    overflow: 'hidden', // Clip items to rounded border
-    paddingHorizontal: 16, // Padding inside the container
+    backgroundColor: theme.colors.card,
+    borderRadius: theme.borderRadius.md,
+    ...theme.shadows.sm,
+    overflow: 'hidden',
   },
 });
 
-export default SettingsSection; 
+export default SettingsSection;

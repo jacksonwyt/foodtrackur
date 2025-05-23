@@ -1,17 +1,22 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-} from 'react-native';
-import { useSubscriptionScreenLogic } from '../../hooks/useSubscriptionScreenLogic';
+import {View, Text, StyleSheet, ScrollView} from 'react-native';
+import {useSubscriptionScreenLogic} from '../../hooks/useSubscriptionScreenLogic';
 import FeatureListItem from '../../components/subscription/FeatureListItem';
 import PlanCard from '../../components/subscription/PlanCard';
 import SubscriptionHeader from '../../components/subscription/SubscriptionHeader';
 import SubscriptionFooter from '../../components/subscription/SubscriptionFooter';
+import type {NativeStackScreenProps} from '@react-navigation/native-stack';
+import type {SubscriptionStackParamList} from '../../types/navigation';
 
-const SubscriptionScreen: React.FC = () => {
+type SubscriptionScreenProps = NativeStackScreenProps<
+  SubscriptionStackParamList,
+  'SubscriptionMain'
+>;
+
+const SubscriptionScreen: React.FC<SubscriptionScreenProps> = ({
+  navigation,
+  route,
+}) => {
   const {
     features,
     plans,
@@ -34,7 +39,7 @@ const SubscriptionScreen: React.FC = () => {
           {features.map((feature, index) => (
             <FeatureListItem
               key={index}
-              icon={feature.icon as any}
+              icon={feature.icon}
               title={feature.title}
               description={feature.description}
             />
@@ -42,7 +47,7 @@ const SubscriptionScreen: React.FC = () => {
         </View>
 
         <View style={styles.plans}>
-          {plans.map((plan) => (
+          {plans.map(plan => (
             <PlanCard
               key={plan.id}
               id={plan.id}
@@ -91,4 +96,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default SubscriptionScreen; 
+export default SubscriptionScreen;

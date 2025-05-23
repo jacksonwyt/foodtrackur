@@ -1,12 +1,14 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import {View, Text, StyleSheet, TouchableOpacity} from 'react-native';
+import {Ionicons} from '@expo/vector-icons';
 
 interface RecentlyLoggedEmptyStateProps {
   onAddPress: () => void;
 }
 
-export const RecentlyLoggedEmptyState: React.FC<RecentlyLoggedEmptyStateProps> = ({ onAddPress }) => {
+export const RecentlyLoggedEmptyState: React.FC<
+  RecentlyLoggedEmptyStateProps
+> = ({onAddPress}) => {
   return (
     <View style={styles.emptyContainer}>
       <View style={styles.emptyIconContainer}>
@@ -62,7 +64,7 @@ const styles = StyleSheet.create({
     borderRadius: 25, // More rounded
     elevation: 2,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
+    shadowOffset: {width: 0, height: 1},
     shadowOpacity: 0.2,
     shadowRadius: 2,
   },
@@ -74,4 +76,4 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
-}); 
+});

@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import {useState, useCallback} from 'react';
 
 export const useWeightFormData = () => {
   const [weight, setWeight] = useState('');
@@ -22,4 +22,4 @@ export const useWeightFormData = () => {
     isFormValid,
     resetForm,
   };
-}; 
+};

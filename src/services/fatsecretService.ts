@@ -1,5 +1,5 @@
-import { FATSECRET_CLIENT_ID, FATSECRET_CLIENT_SECRET } from '@env';
-import { encode as btoa } from 'base-64'; // Need to install base-64
+import {FATSECRET_CLIENT_ID, FATSECRET_CLIENT_SECRET} from '@env';
+import {encode as btoa} from 'base-64'; // Need to install base-64
 
 const TOKEN_ENDPOINT = 'https://oauth.fatsecret.com/connect/token';
 
@@ -48,13 +48,16 @@ export async function getFatSecretAccessToken(): Promise<string> {
     if (!response.ok) {
       const errorBody = await response.text();
       console.error('FatSecret Token Error Response:', errorBody);
-      throw new Error(`Failed to fetch FatSecret token: ${response.status} ${response.statusText}`);
+      throw new Error(
+        `Failed to fetch FatSecret token: ${response.status} ${response.statusText}`,
+      );
     }
 
-    const data: FatSecretTokenResponse = await response.json();
+    const data =
+      (await response.json()) as FatSecretTokenResponse;
 
     if (!data.access_token) {
-        throw new Error('FatSecret token response did not contain access_token');
+      throw new Error('FatSecret token response did not contain access_token');
     }
 
     cachedToken = data.access_token;
@@ -75,7 +78,7 @@ export async function getFatSecretAccessToken(): Promise<string> {
 
 // Interface for the structure of a food item returned by the search API
 // Adjust based on the actual response structure from FatSecret v3 search
-interface FatSecretFoodSearchResult {
+export interface FatSecretFoodSearchResult {
   food_id: string;
   food_name: string;
   food_type: string; // e.g., "Generic" or "Brand"
@@ -105,10 +108,11 @@ const API_BASE_URL = 'https://platform.fatsecret.com/rest';
  * @returns A promise that resolves to the parsed search results from FatSecret.
  */
 export async function searchFatSecretFood(
-    query: string,
-    pageNumber: number = 0,
-    maxResults: number = 20
-): Promise<FatSecretSearchResponse> { // Return the whole response for now
+  query: string,
+  pageNumber: number = 0,
+  maxResults: number = 20,
+): Promise<FatSecretSearchResponse> {
+  // Return the whole response for now
   if (!query) {
     throw new Error('Search query cannot be empty.');
   }
@@ -132,30 +136,44 @@ export async function searchFatSecretFood(
     if (!response.ok) {
       const errorBody = await response.text();
       console.error('FatSecret Search Error Response:', errorBody);
-      throw new Error(`FatSecret search request failed: ${response.status} ${response.statusText}`);
+      throw new Error(
+        `FatSecret search request failed: ${response.status} ${response.statusText}`,
+      );
     }
 
-    const data: FatSecretSearchResponse = await response.json();
+    const data = (await response.json()) as FatSecretSearchResponse;
 
-    // --- Data Handling/Normalization --- 
+    // --- Data Handling/Normalization ---
     // The API might return a single object instead of an array if there's only one result.
     // Let's normalize it to always be an array for consistent handling downstream.
-    if (data.foods_search && data.foods_search.results && data.foods_search.results.food) {
-        if (!Array.isArray(data.foods_search.results.food)) {
-            data.foods_search.results.food = [data.foods_search.results.food];
-        }
+    if (
+      data.foods_search &&
+      data.foods_search.results &&
+      data.foods_search.results.food
+    ) {
+      if (!Array.isArray(data.foods_search.results.food)) {
+        data.foods_search.results.food = [data.foods_search.results.food];
+      }
     } else if (data.foods_search && data.foods_search.results) {
-        // If 'food' key is missing but results exist, initialize as empty array
-        data.foods_search.results.food = [];
+      // If 'food' key is missing but results exist, initialize as empty array
+      data.foods_search.results.food = [];
     } else {
-        // Handle cases where the structure might be unexpected (e.g., error in response structure)
-        console.warn('Unexpected FatSecret search response structure:', data);
-        // Ensure a default structure exists if possible, or handle as appropriate
-        if (!data.foods_search) data.foods_search = { results: { food: [] }, max_results: '0', total_results: '0', page_number: '0'}; 
-        else if (!data.foods_search.results) data.foods_search.results = { food: [] };
-        else if (!data.foods_search.results.food) data.foods_search.results.food = [];
+      // Handle cases where the structure might be unexpected (e.g., error in response structure)
+      console.warn('Unexpected FatSecret search response structure:', data);
+      // Ensure a default structure exists if possible, or handle as appropriate
+      if (!data.foods_search)
+        data.foods_search = {
+          results: {food: []},
+          max_results: '0',
+          total_results: '0',
+          page_number: '0',
+        };
+      else if (!data.foods_search.results)
+        data.foods_search.results = {food: []};
+      else if (!data.foods_search.results.food)
+        data.foods_search.results.food = [];
     }
-    // --- End Data Handling --- 
+    // --- End Data Handling ---
 
     return data;
   } catch (error) {
@@ -192,7 +210,7 @@ interface FatSecretServingNutrition {
   // Add other potential nutrients
 }
 
-interface FatSecretServing {
+export interface FatSecretServing {
   serving_id: string;
   serving_description: string; // e.g., "1 cup", "100 g"
   serving_url?: string;
@@ -223,15 +241,18 @@ interface FatSecretServing {
   // Add other potential nutrients
 }
 
-interface FatSecretFoodDetails {
+export interface FatSecretFoodDetails {
   food_id: string;
   food_name: string;
   food_type: string; // "Brand", "Generic", etc.
   food_url?: string;
   brand_name?: string;
-  servings: {
-    // Can be a single serving object or an array of servings
-    serving: FatSecretServing[] | FatSecretServing;
+  servings?: {
+    serving: FatSecretServing[]; // Changed from FatSecretServing | FatSecretServing[]
+    // Consider adding other pagination fields if the API includes them here
+    // e.g., max_results?: string;
+    // total_results?: string;
+    // page_number?: string;
   };
 }
 
@@ -244,13 +265,15 @@ interface FatSecretFoodDetailsResponse {
  * @param foodId The unique identifier of the FatSecret food item.
  * @returns A promise that resolves to the detailed food information.
  */
-export async function getFatSecretFoodDetails(foodId: string): Promise<FatSecretFoodDetailsResponse> {
+export async function getFatSecretFoodDetails(
+  foodId: string,
+): Promise<FatSecretFoodDetailsResponse> {
   if (!foodId) {
     throw new Error('Food ID cannot be empty.');
   }
 
   const token = await getFatSecretAccessToken();
-  const apiUrl = `${API_BASE_URL}/food/v4?food_id=${foodId}&format=json`;
+  const apiUrl = `${API_BASE_URL}/food/get/v4?food_id=${foodId}&format=json`;
 
   console.log(`Fetching details for FatSecret food ID: ${foodId}`);
 
@@ -266,37 +289,37 @@ export async function getFatSecretFoodDetails(foodId: string): Promise<FatSecret
     if (!response.ok) {
       const errorBody = await response.text();
       console.error('FatSecret Food Details Error Response:', errorBody);
-      throw new Error(`FatSecret food details request failed: ${response.status} ${response.statusText}`);
+      throw new Error(
+        `FatSecret food.get.v4 request failed: ${response.status} ${response.statusText}`,
+      );
     }
 
-    const data: FatSecretFoodDetailsResponse = await response.json();
+    const data = (await response.json()) as FatSecretFoodDetailsResponse;
 
-    // --- Data Handling/Normalization ---
-    // Normalize the 'serving' field to always be an array
-    if (data.food && data.food.servings && data.food.servings.serving) {
-      if (!Array.isArray(data.food.servings.serving)) {
+    // --- Serving Normalization ---
+    // Ensure data.food.servings.serving is always an array if it exists.
+    if (data.food && data.food.servings) {
+      if (
+        data.food.servings.serving &&
+        !Array.isArray(data.food.servings.serving)
+      ) {
+        // If serving exists and is not an array, wrap it in an array.
         data.food.servings.serving = [data.food.servings.serving];
-      }
-    } else if (data.food && data.food.servings) {
-        // If serving key is missing but servings exist, initialize as empty array
+      } else if (!data.food.servings.serving) {
+        // If serving does not exist, initialize it as an empty array.
         data.food.servings.serving = [];
-    } else if (data.food) {
-        // If servings object itself is missing, create it with empty serving array
-        data.food.servings = { serving: [] };
-    } else {
-         console.warn('Unexpected FatSecret food details response structure:', data);
-         // Handle case where 'food' might be missing
-         // Depending on requirements, you might throw an error or return a default structure
-         throw new Error('Invalid food details response structure received from FatSecret.');
+      }
+    } else if (data.food && !data.food.servings) {
+      // If food exists but servings object itself is missing, create it with an empty serving array.
+      data.food.servings = {serving: []};
     }
-    // --- End Data Handling ---
+    // --- End Serving Normalization ---
 
     return data;
   } catch (error) {
-    console.error(`Error fetching FatSecret food details for ID ${foodId}:`, error);
-    // Re-throw the error for the caller to handle
-    throw error;
+    console.error('Error fetching FatSecret food details:', error);
+    throw error; // Re-throw for the caller to handle
   }
 }
 
-// --- TODO: Add function for getting detailed food info by ID (e.g., /food/v4) --- 
+// --- TODO: Add function for getting detailed food info by ID (e.g., /food/v4) ---

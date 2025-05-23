@@ -1,6 +1,7 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import { MacroTile } from '../items/MacroTile';
+import {View, StyleSheet} from 'react-native';
+import {MacroTile} from '../items/MacroTile';
+import {useTheme} from '../../hooks/useTheme';
 
 interface MacroData {
   consumed: number;
@@ -13,34 +14,37 @@ interface MacroTilesProps {
   fat: MacroData;
 }
 
-const macroConfig = {
-  protein: { label: 'Protein', iconName: 'food-steak', color: '#E74C3C' },
-  carbs: { label: 'Carbs', iconName: 'bread-slice', color: '#3498DB' },
-  fat: { label: 'Fat', iconName: 'oil', color: '#F1C40F' },
-};
-
 export const MacroTiles: React.FC<MacroTilesProps> = ({
   protein,
   carbs,
   fat,
 }) => {
+  const theme = useTheme();
+  const styles = makeStyles(theme);
+
+  const macroConfig = {
+    protein: {label: 'Protein', iconName: 'food-steak', color: theme.colors.protein},
+    carbs: {label: 'Carbs', iconName: 'bread-slice', color: theme.colors.carbs},
+    fat: {label: 'Fat', iconName: 'oil', color: theme.colors.fat},
+  };
+
   return (
     <View style={styles.container}>
-      <MacroTile 
+      <MacroTile
         label={macroConfig.protein.label}
         iconName={macroConfig.protein.iconName}
         consumed={protein.consumed}
         goal={protein.goal}
         color={macroConfig.protein.color}
       />
-      <MacroTile 
+      <MacroTile
         label={macroConfig.carbs.label}
         iconName={macroConfig.carbs.iconName}
         consumed={carbs.consumed}
         goal={carbs.goal}
         color={macroConfig.carbs.color}
       />
-      <MacroTile 
+      <MacroTile
         label={macroConfig.fat.label}
         iconName={macroConfig.fat.iconName}
         consumed={fat.consumed}
@@ -51,20 +55,9 @@ export const MacroTiles: React.FC<MacroTilesProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
+const makeStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
   container: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    paddingVertical: 16,
-    paddingHorizontal: 10,
-    marginHorizontal: 20,
-    marginVertical: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 3,
   },
-}); 
+});

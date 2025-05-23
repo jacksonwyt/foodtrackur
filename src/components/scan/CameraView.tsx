@@ -1,7 +1,7 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
-import { CameraView } from 'expo-camera';
-import { Ionicons } from '@expo/vector-icons';
+import {View, Text, StyleSheet, TouchableOpacity, Platform} from 'react-native';
+import {CameraView} from 'expo-camera';
+import {Ionicons} from '@expo/vector-icons';
 
 interface CameraViewProps {
   setCameraRef: (ref: CameraView | null) => void;
@@ -9,7 +9,11 @@ interface CameraViewProps {
   onCapture: () => void;
 }
 
-const CameraViewComponent: React.FC<CameraViewProps> = ({ setCameraRef, onClose, onCapture }) => {
+const CameraViewComponent: React.FC<CameraViewProps> = ({
+  setCameraRef,
+  onClose,
+  onCapture,
+}) => {
   return (
     <CameraView
       style={styles.camera}
@@ -33,10 +37,7 @@ const CameraViewComponent: React.FC<CameraViewProps> = ({ setCameraRef, onClose,
 
         {/* Controls with Capture Button */}
         <View style={styles.controls}>
-          <TouchableOpacity
-            style={styles.captureButton}
-            onPress={onCapture}
-          >
+          <TouchableOpacity style={styles.captureButton} onPress={onCapture}>
             <View style={styles.captureButtonInner} />
           </TouchableOpacity>
         </View>
@@ -105,4 +106,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default CameraViewComponent; 
+export default CameraViewComponent;

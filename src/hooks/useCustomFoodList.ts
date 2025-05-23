@@ -1,11 +1,11 @@
-import { useState, useEffect } from 'react';
-import { CustomFood, getCustomFoods } from '../services/customFoodService';
+import {useState, useEffect} from 'react';
+import {CustomFood, getCustomFoods} from '../services/customFoodService';
 
 interface UseCustomFoodListReturn {
   customFoods: CustomFood[];
   isLoading: boolean;
   error: Error | null;
-  refetch: () => void; // Function to manually refetch data
+  refetch: () => Promise<void>; // Function to manually refetch data
 }
 
 export function useCustomFoodList(): UseCustomFoodListReturn {
@@ -20,16 +20,18 @@ export function useCustomFoodList(): UseCustomFoodListReturn {
       const data = await getCustomFoods();
       setCustomFoods(data || []); // Handle null case from service
     } catch (err) {
-      console.error("Error fetching custom foods in hook:", err);
-      setError(err instanceof Error ? err : new Error('Failed to fetch custom foods'));
+      console.error('Error fetching custom foods in hook:', err);
+      setError(
+        err instanceof Error ? err : new Error('Failed to fetch custom foods'),
+      );
     } finally {
       setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchCustomFoods();
+    void fetchCustomFoods();
   }, []); // Fetch on initial mount
 
-  return { customFoods, isLoading, error, refetch: fetchCustomFoods };
-} 
+  return {customFoods, isLoading, error, refetch: fetchCustomFoods};
+}

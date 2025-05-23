@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import {View, Text, StyleSheet, TouchableOpacity} from 'react-native';
 
 interface PlanCardProps {
   id: string;
@@ -23,8 +23,7 @@ const PlanCard: React.FC<PlanCardProps> = ({
   return (
     <TouchableOpacity
       style={[styles.planCard, isSelected && styles.selectedPlan]}
-      onPress={() => onSelect(id)}
-    >
+      onPress={() => onSelect(id)}>
       <View style={styles.planHeader}>
         <Text style={styles.planTitle}>{title}</Text>
         {isPopular && (
@@ -89,4 +88,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default PlanCard; 
+export default PlanCard;

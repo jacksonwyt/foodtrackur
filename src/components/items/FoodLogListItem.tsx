@@ -1,6 +1,6 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import {View, Text, StyleSheet, TouchableOpacity} from 'react-native';
+import {Ionicons} from '@expo/vector-icons';
 
 // Consider moving this to a shared types file (e.g., src/types/food.ts) later
 export interface FoodLogItem {
@@ -52,25 +52,43 @@ const getCategoryColor = (category: FoodLogItem['category']) => {
   }
 };
 
-export const FoodLogListItem: React.FC<FoodLogListItemProps> = ({ item, onPress }) => {
+export const FoodLogListItem: React.FC<FoodLogListItemProps> = ({
+  item,
+  onPress,
+}) => {
   return (
     <TouchableOpacity
       style={styles.itemContainer}
-      onPress={() => onPress(item)}
-    >
+      onPress={() => onPress(item)}>
       <View style={styles.itemContent}>
-        <View style={[styles.categoryIcon, { backgroundColor: getCategoryColor(item.category) }]}>
-          <Ionicons name={getCategoryIcon(item.category)} size={16} color="#fff" />
+        <View
+          style={[
+            styles.categoryIcon,
+            {backgroundColor: getCategoryColor(item.category)},
+          ]}>
+          <Ionicons
+            name={getCategoryIcon(item.category)}
+            size={16}
+            color="#fff"
+          />
         </View>
         <View style={styles.itemLeft}>
-          <Text style={styles.itemName} numberOfLines={1} ellipsizeMode="tail">{item.name}</Text>
+          <Text style={styles.itemName} numberOfLines={1} ellipsizeMode="tail">
+            {item.name}
+          </Text>
           <View style={styles.itemDetails}>
             <Text style={styles.itemTime}>{item.time}</Text>
-            {item.macros && (item.macros.protein !== undefined || item.macros.carbs !== undefined || item.macros.fat !== undefined) && (
-              <Text style={styles.macros} numberOfLines={1} ellipsizeMode="tail">
-                {` • P:${item.macros.protein ?? '-'} C:${item.macros.carbs ?? '-'} F:${item.macros.fat ?? '-'}`}
-              </Text>
-            )}
+            {item.macros &&
+              (item.macros.protein !== undefined ||
+                item.macros.carbs !== undefined ||
+                item.macros.fat !== undefined) && (
+                <Text
+                  style={styles.macros}
+                  numberOfLines={1}
+                  ellipsizeMode="tail">
+                  {` • P:${item.macros.protein ?? '-'} C:${item.macros.carbs ?? '-'} F:${item.macros.fat ?? '-'}`}
+                </Text>
+              )}
           </View>
         </View>
         <Text style={styles.itemCalories}>{item.calories} cal</Text>
@@ -127,4 +145,4 @@ const styles = StyleSheet.create({
     marginLeft: 'auto', // Push calories to the right
     textAlign: 'right',
   },
-}); 
+});

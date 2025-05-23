@@ -1,7 +1,12 @@
-import React, { useState } from 'react';
-import { View, /* Text, */ StyleSheet, TouchableOpacity, Animated, /* Dimensions */ } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { ActionCardGrid } from '../items/ActionCardGrid'; // Import the new grid component
+import React, {useState} from 'react';
+import {
+  View,
+  /* Text, */ StyleSheet,
+  TouchableOpacity,
+  Animated /* Dimensions */,
+} from 'react-native';
+import {Ionicons} from '@expo/vector-icons';
+import {ActionCardGrid} from '../items/ActionCardGrid'; // Import the new grid component
 
 interface QuickAction {
   id: string;
@@ -14,7 +19,9 @@ interface FloatingActionButtonProps {
   actions: QuickAction[];
 }
 
-export const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({ actions }) => {
+export const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({
+  actions,
+}) => {
   const [isExpanded, setIsExpanded] = useState(false);
   // Keep animation state here as it controls both the grid and the FAB icon
   const [animation] = useState(new Animated.Value(0));
@@ -89,13 +96,13 @@ export const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({ acti
       {/* Use View for positioning container, not TouchableOpacity */}
       <View style={styles.container} pointerEvents="box-none">
         {/* Conditionally render grid or render with 0 opacity based on animation */}
-        {/* Passing animation value and actions down */} 
-        <View style={styles.gridPlacementContainer}> 
-          {/* This View helps position the grid relative to the FAB */} 
-          <ActionCardGrid 
-              actions={actions} 
-              animation={animation} 
-              onActionPress={handleActionPress} 
+        {/* Passing animation value and actions down */}
+        <View style={styles.gridPlacementContainer}>
+          {/* This View helps position the grid relative to the FAB */}
+          <ActionCardGrid
+            actions={actions}
+            animation={animation}
+            onActionPress={handleActionPress}
           />
         </View>
 
@@ -117,8 +124,7 @@ export const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({ acti
                   },
                 ],
               },
-            ]}
-          >
+            ]}>
             <Ionicons name="add" size={30} color="#fff" />
           </Animated.View>
         </TouchableOpacity>
@@ -145,8 +151,8 @@ const styles = StyleSheet.create({
     paddingRight: 30, // Keep FAB floating from right edge
     zIndex: 1000,
   },
-  gridPlacementContainer: { 
-    position: 'absolute', 
+  gridPlacementContainer: {
+    position: 'absolute',
     bottom: 90, // Position grid above the FAB (60 height + 30 bottom padding)
     left: 0,
     right: 0,
@@ -180,7 +186,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  // styles for cardsContainer, cardsGrid, card, cardIcon, cardLabel are moved 
+  // styles for cardsContainer, cardsGrid, card, cardIcon, cardLabel are moved
   // to ActionCardGrid.tsx and ActionCard.tsx
   /*
   cardsContainer: {
@@ -225,4 +231,4 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   */
-}); 
+});

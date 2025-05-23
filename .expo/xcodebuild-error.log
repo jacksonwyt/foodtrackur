@@ -1,9 +1,0 @@
---- xcodebuild: WARNING: Using the first of multiple matching destinations:
-{ platform:iOS Simulator, id:C72C889E-32C5-49E0-A21B-39FED824DC9C, OS:17.5, name:iPhone 15 Pro }
-{ platform:iOS Simulator, id:C72C889E-32C5-49E0-A21B-39FED824DC9C, OS:17.5, name:iPhone 15 Pro }
-** BUILD FAILED **
-
-
-The following build commands failed:
-	PhaseScriptExecution [CP]\ Check\ Pods\ Manifest.lock /Users/tywestbrook/Library/Developer/Xcode/DerivedData/foodtrack-boaylbfviwhtifflzcdlrmdukvui/Build/Intermediates.noindex/foodtrack.build/Debug-iphonesimulator/foodtrack.build/Script-08A4A3CD28434E44B6B9DE2E.sh (in target 'foodtrack' from project 'foodtrack')
-(1 failure)

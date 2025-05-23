@@ -1,18 +1,21 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import {View, Text, StyleSheet, TouchableOpacity} from 'react-native';
+import {Ionicons} from '@expo/vector-icons';
 
 interface CameraPermissionDeniedProps {
   onGoBack: () => void;
 }
 
-const CameraPermissionDenied: React.FC<CameraPermissionDeniedProps> = ({ onGoBack }) => {
+const CameraPermissionDenied: React.FC<CameraPermissionDeniedProps> = ({
+  onGoBack,
+}) => {
   return (
     <View style={styles.permissionDenied}>
       <Ionicons name="camera-reverse-outline" size={64} color="#FF3B30" />
       <Text style={styles.permissionTitle}>Camera Access Denied</Text>
       <Text style={styles.permissionText}>
-        We need camera access to scan your food. Please enable it in your device settings.
+        We need camera access to scan your food. Please enable it in your device
+        settings.
       </Text>
       <TouchableOpacity style={styles.button} onPress={onGoBack}>
         <Text style={styles.buttonText}>Go Back</Text>
@@ -55,4 +58,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default CameraPermissionDenied; 
+export default CameraPermissionDenied;

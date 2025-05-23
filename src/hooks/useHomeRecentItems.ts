@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import {useState, useEffect} from 'react';
 
 // Example data types (consider moving to src/types/ later)
 interface RecentItem {
@@ -62,7 +62,7 @@ const fetchRecentItems = async (date: Date): Promise<RecentItem[]> => {
   ];
   // Simulate slightly different data based on day
   if (date.getDate() % 2 === 0) {
-      return baseItems.slice(0, 2);
+    return baseItems.slice(0, 2);
   }
   return baseItems;
 };
@@ -83,8 +83,12 @@ export const useHomeRecentItems = (selectedDate: Date) => {
           setRecentItems(items);
         }
       } catch (err) {
-         if (isMounted) {
-          setError(err instanceof Error ? err : new Error('Failed to fetch recent items'));
+        if (isMounted) {
+          setError(
+            err instanceof Error
+              ? err
+              : new Error('Failed to fetch recent items'),
+          );
         }
       } finally {
         if (isMounted) {
@@ -93,12 +97,21 @@ export const useHomeRecentItems = (selectedDate: Date) => {
       }
     };
 
-    loadItems();
-    
+    loadItems().catch(err => {
+      // Errors are handled within loadItems, this catch is for the promise rejection itself
+      if (isMounted) {
+        console.error('Error invoking loadItems:', err);
+        setError(
+          new Error('An unexpected error occurred while loading recent items.'),
+        );
+        setIsLoading(false);
+      }
+    });
+
     return () => {
       isMounted = false; // Cleanup function to set isMounted to false
     };
   }, [selectedDate]); // Re-run effect when selectedDate changes
 
-  return { recentItems, isLoading, error };
-}; 
+  return {recentItems, isLoading, error};
+};

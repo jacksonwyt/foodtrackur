@@ -1,33 +1,23 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-} from 'react-native';
-
-interface WeightEntry {
-  id: string;
-  weight: number;
-  timestamp: Date;
-  note?: string;
-}
+import {View, Text, StyleSheet} from 'react-native';
+import type { WeightLogRow } from '../../types/weightLog';
 
 interface Props {
-  entry: WeightEntry;
+  entry: WeightLogRow;
 }
 
-export const WeightHistoryItem: React.FC<Props> = ({ entry }) => {
+export const WeightHistoryItem: React.FC<Props> = ({entry}) => {
+  const logDate = new Date(entry.log_date);
+
   return (
     <View style={styles.historyItem}>
       <View style={styles.infoContainer}>
-        <Text style={styles.weightValue}>{entry.weight.toFixed(1)} kg</Text>
+        <Text style={styles.weightValue}>{entry.weight.toFixed(1)} {entry.unit || 'kg'}</Text>
         <Text style={styles.weightDate}>
-          {entry.timestamp.toLocaleDateString()}
+          {logDate.toLocaleDateString()}
         </Text>
       </View>
-      {entry.note && (
-        <Text style={styles.weightNote}>{entry.note}</Text>
-      )}
+      {entry.notes && <Text style={styles.weightNote}>{entry.notes}</Text>}
     </View>
   );
 };
@@ -37,11 +27,13 @@ const styles = StyleSheet.create({
     padding: 16,
     backgroundColor: '#f5f5f5',
     borderRadius: 12,
-    gap: 8,
+    marginBottom: 10,
   },
   infoContainer: {
-      // If note is present, align date below weight
-      // If no note, keep them inline (or decide on a consistent layout)
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
   },
   weightValue: {
     fontSize: 18,
@@ -55,6 +47,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#666',
     fontStyle: 'italic',
-    marginTop: 4, // Add space if note is present
+    marginTop: 4,
   },
-}); 
+});

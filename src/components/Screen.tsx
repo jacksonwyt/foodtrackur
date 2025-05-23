@@ -1,17 +1,15 @@
 import React from 'react';
-import { View, StyleSheet, SafeAreaView, ViewStyle } from 'react-native';
+import {View, StyleSheet, SafeAreaView, ViewStyle} from 'react-native';
 
 interface ScreenProps {
   children: React.ReactNode;
   style?: ViewStyle;
 }
 
-export const Screen: React.FC<ScreenProps> = ({ children, style }) => {
+export const Screen: React.FC<ScreenProps> = ({children, style}) => {
   return (
     <SafeAreaView style={styles.safe}>
-      <View style={[styles.container, style]}>
-        {children}
-      </View>
+      <View style={[styles.container, style]}>{children}</View>
     </SafeAreaView>
   );
 };
@@ -24,4 +22,4 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-}); 
+});

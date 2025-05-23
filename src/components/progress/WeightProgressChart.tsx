@@ -1,6 +1,9 @@
 import React from 'react';
-import { View, Text, StyleSheet, Dimensions } from 'react-native';
-import { LineChart } from 'react-native-chart-kit';
+import {View, StyleSheet, Dimensions} from 'react-native';
+import {LineChart} from 'react-native-chart-kit';
+import {useTheme} from '../../hooks/useTheme';
+import {AppText} from '../../components/common/AppText';
+import type {Theme} from '../../constants/theme';
 
 interface ChartData {
   labels: string[];
@@ -13,35 +16,47 @@ interface WeightProgressChartProps {
   chartData: ChartData;
 }
 
-const chartConfig = {
-  backgroundColor: '#fff',
-  backgroundGradientFrom: '#fff',
-  backgroundGradientTo: '#fff',
+const getChartConfig = (theme: Theme) => ({
+  backgroundColor: theme.colors.surface,
+  backgroundGradientFrom: theme.colors.surface,
+  backgroundGradientTo: theme.colors.surface,
   decimalPlaces: 1,
-  color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
-  labelColor: (opacity = 1) => `rgba(100, 100, 100, ${opacity})`,
+  color: (opacity = 1) => `rgba(${theme.colors.primaryRGB}, ${opacity})`,
+  labelColor: (opacity = 1) => `rgba(${theme.colors.textSecondaryRGB}, ${opacity})`,
   style: {
-    borderRadius: 16,
+    borderRadius: theme.borderRadius.md,
   },
   propsForDots: {
     r: '5',
     strokeWidth: '2',
-    stroke: '#007AFF', // Example color
+    stroke: theme.colors.primary,
   },
   propsForBackgroundLines: {
-    strokeDasharray: '', // Solid lines
-    stroke: '#e0e0e0',
+    strokeDasharray: '',
+    stroke: theme.colors.border,
   },
-};
+});
 
-const WeightProgressChart: React.FC<WeightProgressChartProps> = ({ chartData }) => {
-  // Prevent rendering chart if data is empty to avoid errors
-  if (!chartData || !chartData.datasets || chartData.datasets.length === 0 || chartData.datasets[0].data.length === 0) {
+const WeightProgressChart: React.FC<WeightProgressChartProps> = ({
+  chartData,
+}) => {
+  const theme = useTheme();
+  const styles = makeStyles(theme);
+  const chartConfig = getChartConfig(theme);
+
+  if (
+    !chartData ||
+    !chartData.datasets ||
+    chartData.datasets.length === 0 ||
+    chartData.datasets[0].data.length === 0
+  ) {
     return (
       <View style={styles.chartCard}>
-        <Text style={styles.chartTitle}>Weight Progress</Text>
+        <AppText style={styles.chartTitle}>Weight Progress</AppText>
         <View style={styles.emptyChartContainer}>
-          <Text style={styles.emptyChartText}>Not enough data to display chart.</Text>
+          <AppText style={styles.emptyChartText}>
+            Not enough data to display chart.
+          </AppText>
         </View>
       </View>
     );
@@ -49,10 +64,10 @@ const WeightProgressChart: React.FC<WeightProgressChartProps> = ({ chartData }) 
 
   return (
     <View style={styles.chartCard}>
-      <Text style={styles.chartTitle}>Weight Progress</Text>
+      <AppText style={styles.chartTitle}>Weight Progress</AppText>
       <LineChart
         data={chartData}
-        width={Dimensions.get('window').width - 48} // Adjust based on padding
+        width={Dimensions.get('window').width - theme.spacing.lg * 2}
         height={220}
         chartConfig={chartConfig}
         bezier
@@ -61,42 +76,41 @@ const WeightProgressChart: React.FC<WeightProgressChartProps> = ({ chartData }) 
         yAxisLabel=""
         withInnerLines={true}
         withOuterLines={false}
-        fromZero={false} // Adjust based on your data range
+        fromZero={false}
       />
     </View>
   );
 };
 
-const styles = StyleSheet.create({
-  chartCard: {
-    marginBottom: 24,
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
-    // Add shadows or borders if desired
-    borderWidth: 1,
-    borderColor: '#eee',
-  },
-  chartTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    marginBottom: 16,
-    color: '#333',
-  },
-  chart: {
-    borderRadius: 16,
-  },
-  emptyChartContainer: {
-    height: 220,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#f9f9f9',
-    borderRadius: 16,
-  },
-  emptyChartText: {
-    color: '#666',
-    fontSize: 14,
-  },
-});
+const makeStyles = (theme: Theme) =>
+  StyleSheet.create({
+    chartCard: {
+      marginBottom: theme.spacing.lg,
+      backgroundColor: theme.colors.surface,
+      borderRadius: theme.borderRadius.lg,
+      padding: theme.spacing.md,
+      ...theme.shadows.sm,
+    },
+    chartTitle: {
+      fontSize: theme.typography.sizes.bodyLarge,
+      fontWeight: theme.typography.weights.bold as '700',
+      marginBottom: theme.spacing.md,
+      color: theme.colors.text,
+    },
+    chart: {
+      borderRadius: theme.borderRadius.md,
+    },
+    emptyChartContainer: {
+      height: 220,
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: theme.colors.background,
+      borderRadius: theme.borderRadius.md,
+    },
+    emptyChartText: {
+      color: theme.colors.textSecondary,
+      fontSize: theme.typography.sizes.body,
+    },
+  });
 
-export default WeightProgressChart; 
+export default WeightProgressChart;

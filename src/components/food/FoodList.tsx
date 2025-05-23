@@ -1,4 +1,4 @@
-import React, { ComponentType, ReactElement } from 'react';
+import React, {ComponentType, ReactElement} from 'react';
 import {
   FlatList,
   View,
@@ -8,7 +8,7 @@ import {
   ActivityIndicator,
   Button,
 } from 'react-native';
-import { FoodListItem } from './FoodListItem'; // Assuming same directory
+import {FoodListItem} from './FoodListItem'; // Assuming same directory
 
 // Re-define or import the item structure
 interface FoodListItemData {
@@ -18,14 +18,22 @@ interface FoodListItemData {
   // Add other fields passed to FoodListItem
 }
 
-interface FoodListProps extends Omit<FlatListProps<FoodListItemData>, 'renderItem' | 'data' | 'ListEmptyComponent'> {
+interface FoodListProps
+  extends Omit<
+    FlatListProps<FoodListItemData>,
+    'renderItem' | 'data' | 'ListEmptyComponent'
+  > {
   items: FoodListItemData[];
   onItemPress: (id: string) => void;
   isLoading: boolean;
   error: string | null;
   onRefresh?: () => void;
   refreshing?: boolean;
-  ListEmptyComponent?: ComponentType<any> | ReactElement | null | undefined;
+  ListEmptyComponent?:
+    | ComponentType<Record<string, never>>
+    | ReactElement
+    | null
+    | undefined;
 }
 
 export const FoodList: React.FC<FoodListProps> = ({
@@ -38,8 +46,7 @@ export const FoodList: React.FC<FoodListProps> = ({
   ListEmptyComponent,
   ...props
 }) => {
-
-  const renderItem = ({ item }: { item: FoodListItemData }) => (
+  const renderItem = ({item}: {item: FoodListItemData}) => (
     <FoodListItem
       name={item.name}
       calories={item.calories}
@@ -61,20 +68,27 @@ export const FoodList: React.FC<FoodListProps> = ({
     }
     // Allow custom empty component, or provide a default
     if (ListEmptyComponent) {
-        // Check if it's a component type (function or class) or a rendered element
-        if (typeof ListEmptyComponent === 'function' || (ListEmptyComponent && typeof ListEmptyComponent === 'object' && 'type' in ListEmptyComponent)) {
-             // If it's a component type, render it
-            const CustomEmptyComponent = ListEmptyComponent as ComponentType<any>; // Assert type
-            return <CustomEmptyComponent />;
-        } else {
-            // If it's already a ReactElement, return it directly
-            return ListEmptyComponent;
-        }
+      // Check if it's a component type (function or class) or a rendered element
+      if (
+        typeof ListEmptyComponent === 'function' ||
+        (ListEmptyComponent &&
+          typeof ListEmptyComponent === 'object' &&
+          'type' in ListEmptyComponent)
+      ) {
+        // If it's a component type, render it
+        const CustomEmptyComponent = ListEmptyComponent as ComponentType<
+          Record<string, never>
+        >; // Assert type
+        return <CustomEmptyComponent />;
+      } else {
+        // If it's already a ReactElement, return it directly
+        return ListEmptyComponent;
+      }
     }
     return (
-        <View style={styles.centeredMessage}>
-            <Text style={styles.emptyText}>No food items found.</Text>
-        </View>
+      <View style={styles.centeredMessage}>
+        <Text style={styles.emptyText}>No food items found.</Text>
+      </View>
     );
   };
 
@@ -82,7 +96,7 @@ export const FoodList: React.FC<FoodListProps> = ({
     <FlatList
       data={items}
       renderItem={renderItem}
-      keyExtractor={(item) => item.id}
+      keyExtractor={item => item.id}
       ListEmptyComponent={renderEmpty}
       contentContainerStyle={items.length === 0 && styles.emptyContainer} // Style when empty
       onRefresh={onRefresh}
@@ -115,4 +129,4 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 10,
   },
-}); 
+});

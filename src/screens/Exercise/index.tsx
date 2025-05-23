@@ -1,22 +1,32 @@
 import React from 'react';
 import {
   View,
-  Text,
   StyleSheet,
   TouchableOpacity,
   ScrollView,
-  TextInput,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { useExerciseFormData } from '../../hooks/useExerciseFormData';
-import { useExerciseData } from '../../hooks/useExerciseData';
-import { useExerciseCalculations } from '../../hooks/useExerciseCalculations';
-import { ExerciseSuggestionButton } from '../../components/exercise/ExerciseSuggestionButton';
-import { RecentExerciseItem } from '../../components/exercise/RecentExerciseItem';
+import {Ionicons} from '@expo/vector-icons';
+import type {NativeStackScreenProps} from '@react-navigation/native-stack';
+import type {ExerciseStackParamList} from '../../types/navigation';
+import {useExerciseFormData} from '../../hooks/useExerciseFormData';
+import {useExerciseData} from '../../hooks/useExerciseData';
+import {useExerciseCalculations} from '../../hooks/useExerciseCalculations';
+import {ExerciseSuggestionButton} from '../../components/exercise/ExerciseSuggestionButton';
+import {RecentExerciseItem} from '../../components/exercise/RecentExerciseItem';
+import {useTheme} from '../../hooks/useTheme';
+import {AppText} from '../../components/common/AppText';
+import {AppTextInput} from '../../components/common/AppTextInput';
+import {Theme} from '../../constants/theme';
 
-const ExerciseScreen: React.FC = () => {
+// Define prop types for the screen
+type ExerciseScreenProps = NativeStackScreenProps<
+  ExerciseStackParamList,
+  'Exercise'
+>;
+
+const ExerciseScreen: React.FC<ExerciseScreenProps> = ({navigation, route}) => {
   const {
     exerciseName,
     setExerciseName,
@@ -28,15 +38,16 @@ const ExerciseScreen: React.FC = () => {
     resetForm,
   } = useExerciseFormData();
 
-  const {
-    exerciseSuggestions,
-    recentExercises,
-    addExerciseEntry,
-  } = useExerciseData();
+  const {exerciseSuggestions, recentExercises, addExerciseEntry} =
+    useExerciseData();
 
-  const {
-    estimatedCalories,
-  } = useExerciseCalculations(selectedExercise, duration);
+  const {estimatedCalories} = useExerciseCalculations(
+    selectedExercise,
+    duration,
+  );
+
+  const theme = useTheme();
+  const styles = makeStyles(theme);
 
   const validForm = isFormValid();
 
@@ -53,26 +64,22 @@ const ExerciseScreen: React.FC = () => {
   return (
     <KeyboardAvoidingView
       style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-    >
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        <Text style={styles.title}>Log Exercise</Text>
+        <AppText style={styles.title}>Log Exercise</AppText>
 
         <View style={styles.form}>
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Exercise Type</Text>
-            <TextInput
-              style={styles.input}
-              value={exerciseName}
-              onChangeText={setExerciseName}
-              placeholder="Enter exercise name or quick select"
-              placeholderTextColor="#999"
-            />
-          </View>
+          <AppTextInput
+            label="Exercise Type"
+            containerStyle={styles.inputGroup}
+            value={exerciseName}
+            onChangeText={setExerciseName}
+            placeholder="Enter exercise name or quick select"
+          />
 
-          <Text style={styles.sectionTitle}>Quick Select</Text>
+          <AppText style={styles.sectionTitle}>Quick Select</AppText>
           <View style={styles.suggestions}>
-            {exerciseSuggestions.map((exercise) => (
+            {exerciseSuggestions.map(exercise => (
               <ExerciseSuggestionButton
                 key={exercise.name}
                 exercise={exercise}
@@ -82,31 +89,28 @@ const ExerciseScreen: React.FC = () => {
             ))}
           </View>
 
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Duration (minutes)</Text>
-            <TextInput
-              style={styles.input}
-              value={duration}
-              onChangeText={setDuration}
-              placeholder="Enter duration"
-              keyboardType="number-pad"
-              placeholderTextColor="#999"
-            />
-          </View>
+          <AppTextInput
+            label="Duration (minutes)"
+            containerStyle={styles.inputGroup}
+            value={duration}
+            onChangeText={setDuration}
+            placeholder="Enter duration"
+            keyboardType="number-pad"
+          />
 
           {estimatedCalories !== null && (
             <View style={styles.calorieEstimate}>
-              <Ionicons name="flame" size={24} color="#FF6B6B" />
-              <Text style={styles.calorieText}>
+              <Ionicons name="flame" size={24} color={theme.colors.warning} />
+              <AppText style={styles.calorieText}>
                 Estimated calories: {estimatedCalories}
-              </Text>
+              </AppText>
             </View>
           )}
         </View>
 
-        <Text style={styles.sectionTitle}>Recent Exercises</Text>
+        <AppText style={styles.sectionTitle}>Recent Exercises</AppText>
         <View style={styles.recentExercises}>
-          {recentExercises.map((exercise) => (
+          {recentExercises.map(exercise => (
             <RecentExerciseItem key={exercise.id} exercise={exercise} />
           ))}
         </View>
@@ -116,100 +120,97 @@ const ExerciseScreen: React.FC = () => {
         <TouchableOpacity
           style={[styles.button, !validForm && styles.buttonDisabled]}
           onPress={handleLogExercise}
-          disabled={!validForm}
-        >
-          <Text style={styles.buttonText}>Log Exercise</Text>
-          <Ionicons name="checkmark" size={20} color="#fff" />
+          disabled={!validForm}>
+          <AppText style={styles.buttonText}>Log Exercise</AppText>
+          <Ionicons name="checkmark" size={20} color={theme.colors.onPrimary} />
         </TouchableOpacity>
       </View>
     </KeyboardAvoidingView>
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-  },
-  content: {
-    flex: 1,
-    padding: 24,
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: '700',
-    marginBottom: 32,
-  },
-  form: {
-    gap: 24,
-    marginBottom: 32,
-  },
-  inputGroup: {
-    gap: 8,
-  },
-  label: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#000',
-  },
-  input: {
-    height: 48,
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    fontSize: 16,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    marginBottom: 16,
-  },
-  suggestions: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-  },
-  calorieEstimate: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    padding: 16,
-    backgroundColor: '#FFF5F5',
-    borderRadius: 12,
-  },
-  calorieText: {
-    fontSize: 16,
-    color: '#FF6B6B',
-    fontWeight: '600',
-  },
-  recentExercises: {
-    gap: 12,
-    marginBottom: 24,
-  },
-  footer: {
-    padding: 24,
-    borderTopWidth: 1,
-    borderTopColor: '#f0f0f0',
-    backgroundColor: '#fff',
-  },
-  button: {
-    backgroundColor: '#000',
-    borderRadius: 12,
-    paddingVertical: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-  },
-  buttonDisabled: {
-    backgroundColor: '#ccc',
-  },
-  buttonText: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: '600',
-  },
-});
+const makeStyles = (theme: Theme) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: theme.colors.background,
+    },
+    content: {
+      flex: 1,
+      padding: theme.spacing.lg,
+    },
+    title: {
+      fontSize: theme.typography.sizes.h1,
+      fontWeight: theme.typography.weights.bold,
+      color: theme.colors.onBackground,
+      marginBottom: theme.spacing.xl,
+    },
+    form: {
+      gap: theme.spacing.lg,
+      marginBottom: theme.spacing.xl,
+    },
+    inputGroup: {
+      // AppTextInput handles its own label and input styling, and marginBottom
+      // So, this might only be needed if there are multiple items in an inputGroup
+      // For now, AppTextInput will provide its own bottom margin.
+      // If specific grouping margin is needed, add it here.
+    },
+    sectionTitle: {
+      fontSize: theme.typography.sizes.h3,
+      fontWeight: theme.typography.weights.medium,
+      color: theme.colors.onBackground,
+      marginTop: theme.spacing.lg,
+      marginBottom: theme.spacing.md,
+    },
+    suggestions: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: theme.spacing.sm,
+    },
+    calorieEstimate: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: theme.spacing.sm,
+      padding: theme.spacing.md,
+      backgroundColor: theme.colors.surface,
+      borderRadius: theme.borderRadius.md,
+      marginTop: theme.spacing.sm,
+    },
+    calorieText: {
+      fontSize: theme.typography.sizes.body,
+      color: theme.colors.warning,
+      fontWeight: theme.typography.weights.medium,
+    },
+    recentExercises: {
+      gap: theme.spacing.md,
+      marginBottom: theme.spacing.lg,
+    },
+    footer: {
+      padding: theme.spacing.lg,
+      borderTopWidth: 1,
+      borderTopColor: theme.colors.border,
+      backgroundColor: theme.colors.surface,
+      ...theme.shadows.md,
+    },
+    button: {
+      backgroundColor: theme.colors.primary,
+      borderRadius: theme.borderRadius.lg,
+      paddingVertical: theme.spacing.md,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: theme.spacing.sm,
+      ...theme.shadows.sm,
+    },
+    buttonDisabled: {
+      backgroundColor: theme.colors.surfaceDisabled,
+      opacity: 0.7,
+    },
+    buttonText: {
+      color: theme.colors.onPrimary,
+      fontSize: theme.typography.button.fontSize,
+      fontWeight: theme.typography.button.fontWeight,
+    },
+  });
 
-export default ExerciseScreen; 
+export default ExerciseScreen;

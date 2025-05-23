@@ -1,6 +1,8 @@
-import React, { ComponentProps } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import React, {ComponentProps} from 'react';
+import {View, StyleSheet} from 'react-native';
+import {MaterialCommunityIcons} from '@expo/vector-icons';
+import {useTheme} from '../../hooks/useTheme';
+import {AppText as Text} from '../common/AppText';
 
 interface MacroTileProps {
   label: string;
@@ -18,8 +20,13 @@ export const MacroTile: React.FC<MacroTileProps> = ({
   consumed,
   goal,
   color,
-  iconBackgroundColor = '#f0f0f0', // Default background color
+  // iconBackgroundColor will be set using theme inside the component
 }) => {
+  const theme = useTheme(); // Initialize theme
+  // Default iconBackgroundColor using theme, can be overridden by prop if needed in future
+  const iconBgColor = theme.colors.background; // Or theme.colors.surface if tile is on background
+  const styles = makeStyles(theme); // Pass theme to styles
+
   // Ensure goal is not zero to avoid division by zero
   const safeGoal = Math.max(goal, 1);
   const cappedConsumed = Math.max(consumed, 0); // Ensure consumed is not negative
@@ -27,25 +34,26 @@ export const MacroTile: React.FC<MacroTileProps> = ({
 
   return (
     <View style={styles.tile}>
-      <View style={[styles.iconContainer, { backgroundColor: iconBackgroundColor }]}>
-        <MaterialCommunityIcons 
+      <View
+        style={[styles.iconContainer, {backgroundColor: iconBgColor}]}>
+        <MaterialCommunityIcons
           name={iconName} // Use iconName prop
           size={20} // Slightly smaller icon
-          color={color} 
+          color={color}
         />
       </View>
       <Text style={styles.macroLabel}>{label}</Text>
       <Text style={styles.valueText} numberOfLines={1} ellipsizeMode="tail">
         <Text style={styles.consumedText}>{cappedConsumed}</Text>
         {/* Handle goal being potentially 0 for display */}
-        <Text style={styles.goalText}> / {Math.max(goal, 0)}g</Text> 
+        <Text style={styles.goalText}> / {Math.max(goal, 0)}g</Text>
       </Text>
       <View style={styles.progressContainer}>
-        <View 
+        <View
           style={[
-            styles.progressBar, 
-            { backgroundColor: color, width: `${progress}%` }
-          ]} 
+            styles.progressBar,
+            {backgroundColor: color, width: `${progress}%`},
+          ]}
         />
       </View>
     </View>
@@ -53,49 +61,49 @@ export const MacroTile: React.FC<MacroTileProps> = ({
 };
 
 // Styles extracted from MacroTiles.tsx specific to a single tile
-const styles = StyleSheet.create({
+const makeStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
   tile: {
     flex: 1,
     alignItems: 'center',
-    paddingHorizontal: 5, // Adjust padding slightly
+    paddingHorizontal: theme.spacing.xs, // Use theme spacing
   },
   iconContainer: {
-    width: 36,
+    width: 36, // Keep specific size if design requires
     height: 36,
-    borderRadius: 18,
+    borderRadius: theme.borderRadius.round, // Make it fully round
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 6,
+    marginBottom: theme.spacing.xs, // Use theme spacing
   },
   macroLabel: {
-    fontSize: 12,
-    color: '#636366',
-    marginBottom: 4,
-    fontWeight: '500',
+    fontSize: theme.typography.sizes.overline, // Use theme typography
+    color: theme.colors.textSecondary, // Use theme color
+    marginBottom: theme.spacing.xxs, // Use theme spacing
+    fontWeight: theme.typography.weights.medium, // Use theme typography
   },
   valueText: {
-    marginBottom: 6,
-    height: 20, // Ensure consistent height
-    alignItems: 'flex-end', // Align baseline
+    marginBottom: theme.spacing.xs, // Use theme spacing
+    height: theme.typography.sizes.body * theme.typography.lineHeights.normal, // Ensure consistent height based on font
+    alignItems: 'flex-end',
   },
   consumedText: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#1C1C1E',
+    fontSize: theme.typography.sizes.body, // Use theme typography
+    fontWeight: theme.typography.weights.semibold, // Use theme typography
+    color: theme.colors.text, // Use theme color
   },
   goalText: {
-    fontSize: 13,
-    color: '#8E8E93',
+    fontSize: theme.typography.sizes.bodySmall, // Use theme typography
+    color: theme.colors.textSecondary, // Use theme color
   },
   progressContainer: {
     width: '100%',
-    height: 5,
-    backgroundColor: '#E5E5EA',
-    borderRadius: 2.5,
+    height: 5, // Keep specific size if design requires
+    backgroundColor: theme.colors.border, // Use theme color
+    borderRadius: theme.borderRadius.round, // Make it fully round
     overflow: 'hidden',
   },
   progressBar: {
     height: '100%',
-    borderRadius: 2.5,
+    borderRadius: theme.borderRadius.round, // Make it fully round
   },
-}); 
+});

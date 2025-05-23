@@ -1,5 +1,5 @@
-import { useState, useCallback } from 'react';
-import { Ionicons } from '@expo/vector-icons';
+import {useState, useCallback} from 'react';
+import {Ionicons} from '@expo/vector-icons';
 
 // Assuming this type is defined or imported (e.g., from useExerciseData or a types file)
 export interface ExerciseSuggestion {
@@ -11,7 +11,8 @@ export interface ExerciseSuggestion {
 export const useExerciseFormData = () => {
   const [exerciseName, setExerciseName] = useState('');
   const [duration, setDuration] = useState(''); // Keep as string for input field
-  const [selectedExercise, setSelectedExercise] = useState<ExerciseSuggestion | null>(null);
+  const [selectedExercise, setSelectedExercise] =
+    useState<ExerciseSuggestion | null>(null);
 
   // Handles updating form state when a suggestion is selected
   const handleExerciseSelect = useCallback((exercise: ExerciseSuggestion) => {
@@ -26,7 +27,13 @@ export const useExerciseFormData = () => {
     // and duration is a positive number. selectedExercise is needed for calculation,
     // but maybe allow logging without it if name is custom?
     // For now, require selectedExercise for simplicity as calculation depends on it.
-    return exerciseName.trim() !== '' && duration !== '' && !isNaN(minutes) && minutes > 0 && selectedExercise !== null;
+    return (
+      exerciseName.trim() !== '' &&
+      duration !== '' &&
+      !isNaN(minutes) &&
+      minutes > 0 &&
+      selectedExercise !== null
+    );
   }, [exerciseName, duration, selectedExercise]);
 
   const resetForm = useCallback(() => {
@@ -46,4 +53,4 @@ export const useExerciseFormData = () => {
     isFormValid,
     resetForm,
   };
-}; 
+};

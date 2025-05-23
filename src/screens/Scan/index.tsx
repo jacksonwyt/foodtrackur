@@ -1,30 +1,52 @@
-import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ActivityIndicator,
-  TouchableOpacity,
-  ScrollView
-} from 'react-native';
-import { CameraView as ExpoCameraView } from 'expo-camera';
-import { useCameraPermission } from '../../hooks/useCameraPermission';
-import { useScanScreenActions } from '../../hooks/useScanScreenActions';
+import React, {useState} from 'react';
+import {View, ActivityIndicator} from 'react-native';
+import {CameraView as ExpoCameraView} from 'expo-camera';
+import {useRoute, RouteProp} from '@react-navigation/native';
+import {ScanStackParamList} from '../../types/navigation';
+import {useCameraPermission} from '../../hooks/useCameraPermission';
+import {useScanScreenActions} from '../../hooks/useScanScreenActions';
 import CameraPermissionDenied from '../../components/scan/CameraPermissionDenied';
 import CameraView from '../../components/scan/CameraView';
+import {useTheme} from '../../hooks/useTheme';
+import {AppText} from '../../components/common/AppText';
+import {Theme} from '../../constants/theme';
+
+type ScanScreenRouteProp = RouteProp<ScanStackParamList, 'ScanMain'>;
+
+const makeStyles = (theme: Theme) => ({
+  container: {
+    flex: 1,
+    backgroundColor: theme.colors.background,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: theme.colors.background,
+  },
+  loadingText: {
+    color: theme.colors.text,
+    fontSize: theme.typography.body1.fontSize,
+  },
+});
 
 const ScanScreen: React.FC = () => {
+  const route = useRoute<ScanScreenRouteProp>();
+  const {dateToLog} = route.params;
+  const theme = useTheme();
+  const styles = makeStyles(theme);
+
   const permissionStatus = useCameraPermission();
   const [cameraRef, setCameraRef] = useState<ExpoCameraView | null>(null);
-  const {
-    handleCapture,
-    handleClose,
-  } = useScanScreenActions(cameraRef);
+  const {handleCapture, handleClose} = useScanScreenActions(
+    cameraRef,
+    dateToLog,
+  );
 
   if (permissionStatus === 'checking') {
     return (
       <View style={styles.loadingContainer}>
-        <Text style={styles.loadingText}>Requesting camera permission...</Text>
+        <AppText style={styles.loadingText}>Requesting camera permission...</AppText>
       </View>
     );
   }
@@ -42,51 +64,12 @@ const ScanScreen: React.FC = () => {
       <CameraView
         setCameraRef={setCameraRef}
         onClose={handleClose}
-        onCapture={handleCapture}
+        onCapture={() => {
+          void handleCapture();
+        }}
       />
     </View>
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#000',
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#000',
-  },
-  loadingText: {
-    color: '#fff',
-    fontSize: 16,
-  },
-  overlayContainer: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 30,
-  },
-  analysisBox: {
-    backgroundColor: 'rgba(50, 50, 50, 0.9)',
-    borderRadius: 15,
-    padding: 25,
-    alignItems: 'center',
-    width: '80%',
-  },
-  overlayText: {
-    color: '#fff',
-    fontSize: 16,
-    textAlign: 'center',
-    marginTop: 15,
-  },
-});
-
-export default ScanScreen; 
+export default ScanScreen;

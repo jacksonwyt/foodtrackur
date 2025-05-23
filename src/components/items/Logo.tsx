@@ -1,7 +1,12 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import {View, StyleSheet} from 'react-native';
+import {useTheme} from '../../hooks/useTheme';
+import {AppText as Text} from '../common/AppText';
 
 export const Logo: React.FC = () => {
+  const theme = useTheme();
+  const styles = makeStyles(theme);
+
   return (
     <View style={styles.container}>
       <Text style={styles.text}>FoodTrack</Text>
@@ -9,13 +14,16 @@ export const Logo: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
+const makeStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
   container: {
-    paddingHorizontal: 16,
+    // Padding is handled by the parent header in HomeScreen, so this might be optional
+    // If specific alignment needed, it can be adjusted here.
+    // For now, removing it to rely on parent padding.
+    // paddingHorizontal: theme.spacing.md,
   },
   text: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#000',
+    fontSize: theme.typography.sizes.h2,
+    fontWeight: theme.typography.weights.bold,
+    color: theme.colors.primary,
   },
-}); 
+});

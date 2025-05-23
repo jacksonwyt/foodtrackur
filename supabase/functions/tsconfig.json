@@ -1,0 +1,18 @@
+{
+    "compilerOptions": {
+      "target": "esnext",
+      "module": "esnext",
+      "lib": ["esnext", "dom"], // Explicitly include Deno types
+      "strict": true,
+      "esModuleInterop": true,
+      "skipLibCheck": true,
+      "forceConsistentCasingInFileNames": true,
+      "resolveJsonModule": true,
+      "moduleResolution": "bundler",
+      
+      "isolatedModules": true // Deno files are typically treated as isolated modules
+    },
+    "include": [
+      "./**/*.ts" // Include all .ts files within this functions directory
+    ]
+  }

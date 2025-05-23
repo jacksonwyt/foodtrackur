@@ -1,13 +1,16 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import {View, Text, StyleSheet, TouchableOpacity, Platform} from 'react-native';
+import {Ionicons} from '@expo/vector-icons';
 
 interface SubscriptionHeaderProps {
   title: string;
   onClose: () => void;
 }
 
-const SubscriptionHeader: React.FC<SubscriptionHeaderProps> = ({ title, onClose }) => {
+const SubscriptionHeader: React.FC<SubscriptionHeaderProps> = ({
+  title,
+  onClose,
+}) => {
   return (
     <View style={styles.header}>
       <TouchableOpacity style={styles.closeButton} onPress={onClose}>
@@ -40,4 +43,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default SubscriptionHeader; 
+export default SubscriptionHeader;

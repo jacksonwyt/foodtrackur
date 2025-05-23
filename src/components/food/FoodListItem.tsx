@@ -6,7 +6,7 @@ import {
   TouchableOpacity,
   TouchableOpacityProps,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import {Ionicons} from '@expo/vector-icons';
 
 interface FoodListItemProps extends TouchableOpacityProps {
   name: string;
@@ -56,4 +56,4 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#666',
   },
-}); 
+});

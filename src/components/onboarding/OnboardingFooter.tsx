@@ -5,31 +5,64 @@ import {
   Text,
   StyleSheet,
   SafeAreaView,
+  Platform,
+  ViewStyle,
+  TextStyle,
+  ActivityIndicator,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import {Ionicons} from '@expo/vector-icons';
+import theme from '../../constants/theme'; // Import the centralized theme
 
 interface OnboardingFooterProps {
   buttonText?: string;
   onPress: () => void;
   disabled?: boolean;
+  showIcon?: boolean; // Added prop to control icon visibility
+  isLoading?: boolean; // Added isLoading prop
 }
+
+const ICON_SIZE = 20;
+const ACTIVE_OPACITY = 0.7;
+const DISABLED_OPACITY = 1; // Typically, disabled buttons don't change opacity on press
 
 export const OnboardingFooter: React.FC<OnboardingFooterProps> = ({
   buttonText = 'Continue',
   onPress,
   disabled = false,
+  showIcon = true, // Default to showing the icon
+  isLoading = false, // Default isLoading to false
 }) => {
+  const buttonDynamicStyle: ViewStyle =
+    disabled || isLoading ? styles.buttonDisabled : styles.buttonEnabled;
+  const textColor =
+    disabled || isLoading ? theme.colors.textSecondary : theme.colors.onPrimary;
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.footerContainer}>
         <TouchableOpacity
-          style={[styles.button, disabled && styles.buttonDisabled]}
+          style={[styles.buttonBase, buttonDynamicStyle]}
           onPress={onPress}
-          disabled={disabled}
-          activeOpacity={disabled ? 1 : 0.8}
-        >
-          <Text style={styles.buttonText}>{buttonText}</Text>
-          <Ionicons name="arrow-forward" size={20} color="#fff" />
+          disabled={disabled || isLoading}
+          activeOpacity={
+            disabled || isLoading ? DISABLED_OPACITY : ACTIVE_OPACITY
+          }
+          accessible={true}
+          accessibilityRole="button"
+          accessibilityState={{disabled, busy: isLoading}}
+          accessibilityLabel={buttonText}>
+          {isLoading ? (
+            <ActivityIndicator size="small" color={textColor} />
+          ) : (
+            <>
+              <Text style={[styles.buttonText, {color: textColor}]}>
+                {buttonText}
+              </Text>
+              {showIcon && (
+                <Ionicons name="arrow-forward" size={ICON_SIZE} color={textColor} />
+              )}
+            </>
+          )}
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -38,39 +71,38 @@ export const OnboardingFooter: React.FC<OnboardingFooterProps> = ({
 
 const styles = StyleSheet.create({
   safeArea: {
-    backgroundColor: '#fff', // Match background
+    backgroundColor: theme.colors.background, // Use theme background
     borderTopWidth: 1,
-    borderTopColor: '#e0e0e5', // Slightly darker border
-  },
+    borderTopColor: theme.colors.border, // Use theme border color
+  } as ViewStyle,
   footerContainer: {
-    padding: 20,
-    paddingBottom: 30, // Extra padding for safe area
-  },
-  button: {
-    backgroundColor: '#007AFF', // Use theme blue
-    borderRadius: 30, // More rounded corners
-    paddingVertical: 16,
+    paddingHorizontal: theme.spacing.lg,
+    paddingVertical: theme.spacing.md,
+    // Adjust bottom padding for safe area, especially on iOS
+    paddingBottom: Platform.OS === 'ios' ? theme.spacing.xl : theme.spacing.lg,
+  } as ViewStyle,
+  buttonBase: {
+    // Base styles for the button
+    borderRadius: theme.borderRadius.round, // Fully rounded
+    paddingVertical: theme.spacing.md,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 10,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.23,
-    shadowRadius: 2.62,
-    elevation: 4,
-  },
+    gap: theme.spacing.sm,
+  } as ViewStyle,
+  buttonEnabled: {
+    backgroundColor: theme.colors.primary, // Use theme primary color
+    ...theme.shadows.md, // Apply medium shadow from theme
+  } as ViewStyle,
   buttonDisabled: {
-    backgroundColor: '#AEAEB2', // Standard iOS disabled color
+    backgroundColor: theme.colors.inactive, // Use a theme color for disabled state (e.g., light gray or specific inactive color)
+    // No shadow for disabled state typically
     shadowOpacity: 0,
     elevation: 0,
-  },
+  } as ViewStyle,
   buttonText: {
-    color: '#fff',
-    fontSize: 17,
-    fontWeight: '600',
-  },
-}); 
+    fontSize: theme.typography.sizes.bodyLarge, // Corrected to use bodyLarge or similar from new theme scale
+    fontWeight: theme.typography.weights.semibold, // Cast to TextStyle['fontWeight']
+    fontFamily: theme.typography.fontFamily,
+  } as TextStyle,
+});

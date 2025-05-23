@@ -1,6 +1,7 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import {View, Text, StyleSheet, Platform} from 'react-native';
+import {Ionicons} from '@expo/vector-icons';
+import theme from '../../constants/theme'; // Import the centralized theme
 
 interface FeatureItemProps {
   icon: keyof typeof Ionicons.glyphMap;
@@ -8,10 +9,21 @@ interface FeatureItemProps {
   description: string;
 }
 
-export const FeatureItem: React.FC<FeatureItemProps> = ({ icon, title, description }) => (
+const ICON_CONTAINER_SIZE = 48; // Defined for clarity, could be in theme.touchTarget or similar
+const ICON_SIZE = 24; // Defined for clarity, could be in theme.iconSizes
+
+export const FeatureItem: React.FC<FeatureItemProps> = ({
+  icon,
+  title,
+  description,
+}) => (
   <View style={styles.feature}>
-    <View style={styles.featureIcon}>
-      <Ionicons name={icon} size={24} color="#333" /> {/* Slightly darker icon */}
+    <View style={styles.featureIconContainer}>
+      <Ionicons
+        name={icon}
+        size={ICON_SIZE}
+        color={theme.colors.primary}
+      />
     </View>
     <View style={styles.featureContent}>
       <Text style={styles.featureTitle}>{title}</Text>
@@ -24,13 +36,13 @@ const styles = StyleSheet.create({
   feature: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 16,
+    gap: theme.spacing.md, // Use theme spacing
   },
-  featureIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: '#f0f0f5', // Slightly different background
+  featureIconContainer: {
+    width: ICON_CONTAINER_SIZE,
+    height: ICON_CONTAINER_SIZE,
+    borderRadius: theme.borderRadius.round, // Make it a circle
+    backgroundColor: theme.colors.card, // Use card color for background from theme
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -38,14 +50,17 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   featureTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#111', // Darker title
-    marginBottom: 4,
+    fontSize: theme.typography.sizes.body,
+    fontWeight: theme.typography.weights.semibold,
+    color: theme.colors.text,
+    // fontFamily: theme.typography.fontFamily, // Assuming default system font or handled globally
+    marginBottom: theme.spacing.xs, // Use theme spacing
   },
   featureDescription: {
-    fontSize: 14,
-    color: '#555', // Slightly darker description
-    lineHeight: 20,
+    fontSize: theme.typography.sizes.caption,
+    fontWeight: theme.typography.weights.regular,
+    color: theme.colors.textSecondary,
+    // fontFamily: theme.typography.fontFamily, // Assuming default system font or handled globally
+    lineHeight: theme.typography.sizes.caption * 1.4, // 140% line height
   },
-}); 
+});

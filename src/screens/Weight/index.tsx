@@ -5,56 +5,45 @@ import {
   StyleSheet,
   TouchableOpacity,
   ScrollView,
-  TextInput,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { useWeightFormData } from '../../hooks/useWeightFormData';
-import { useWeightHistoryData } from '../../hooks/useWeightHistoryData';
-import { useWeightDerivedData } from '../../hooks/useWeightDerivedData';
-import { WeightChartCard } from '../../components/weight/WeightChartCard';
-import { WeightHistoryItem } from '../../components/weight/WeightHistoryItem';
+import {Ionicons} from '@expo/vector-icons';
+import {useNavigation} from '@react-navigation/native';
+import {
+  NativeStackNavigationProp,
+  NativeStackScreenProps,
+} from '@react-navigation/native-stack';
+import {WeightStackParamList} from '../../types/navigation';
+import {useWeightHistoryData} from '../../hooks/useWeightHistoryData';
+import {useWeightDerivedData} from '../../hooks/useWeightDerivedData';
+import {WeightChartCard} from '../../components/weight/WeightChartCard';
+import {WeightHistoryItem} from '../../components/weight/WeightHistoryItem';
 
-const WeightScreen: React.FC = () => {
-  const {
-    weight,
-    setWeight,
-    note,
-    setNote,
-    isFormValid,
-    resetForm,
-  } = useWeightFormData();
+// Added prop type
+type WeightScreenProps = NativeStackScreenProps<
+  WeightStackParamList,
+  'WeightMain'
+>;
 
-  const {
-    weightHistory,
-    addWeightEntry,
-  } = useWeightHistoryData();
+const WeightScreen: React.FC<WeightScreenProps> = ({navigation, route}) => {
+  // const navigation = useNavigation<NativeStackNavigationProp<WeightStackParamList>>(); // No longer needed, use prop
 
-  const {
-    chartData,
-    weightTrend,
-    currentWeight,
-    history,
-  } = useWeightDerivedData(weightHistory);
+  const {weightHistory} = useWeightHistoryData();
 
-  const validForm = isFormValid();
+  const {chartData, weightTrend, currentWeight, history} =
+    useWeightDerivedData(weightHistory);
 
-  const handleLogWeight = () => {
-    const numericWeight = parseFloat(weight);
-    if (validForm && !isNaN(numericWeight)) {
-      addWeightEntry(numericWeight, note);
-      resetForm();
-    }
+  const navigateToLogWeight = () => {
+    navigation.navigate('LogWeight');
   };
 
   return (
     <KeyboardAvoidingView
       style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-    >
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        <Text style={styles.title}>Weight Tracking</Text>
+        <Text style={styles.title}>Weight Progress</Text>
 
         <WeightChartCard
           chartData={chartData}
@@ -62,48 +51,24 @@ const WeightScreen: React.FC = () => {
           currentWeight={currentWeight}
         />
 
-        <View style={styles.form}>
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Log Today's Weight (kg)</Text>
-            <TextInput
-              style={styles.input}
-              value={weight}
-              onChangeText={setWeight}
-              placeholder="Enter weight"
-              keyboardType="decimal-pad"
-              placeholderTextColor="#999"
-            />
-          </View>
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Note (optional)</Text>
-            <TextInput
-              style={[styles.input, styles.noteInput]}
-              value={note}
-              onChangeText={setNote}
-              placeholder="Add a note about your weigh-in"
-              placeholderTextColor="#999"
-              multiline
-            />
-          </View>
-        </View>
-
         <Text style={styles.sectionTitle}>History</Text>
-        <View style={styles.history}>
-          {history.map((entry) => (
-            <WeightHistoryItem key={entry.id} entry={entry} />
-          ))}
+        <View style={styles.historyListContainer}>
+          {history.length > 0 ? (
+            history.map(entry => (
+              <WeightHistoryItem key={entry.id.toString()} entry={entry} />
+            ))
+          ) : (
+            <Text style={styles.emptyHistoryText}>
+              No weight entries yet. Log your first weight!
+            </Text>
+          )}
         </View>
       </ScrollView>
 
       <View style={styles.footer}>
-        <TouchableOpacity
-          style={[styles.button, !validForm && styles.buttonDisabled]}
-          onPress={handleLogWeight}
-          disabled={!validForm}
-        >
-          <Text style={styles.buttonText}>Log Weight</Text>
-          <Ionicons name="checkmark" size={20} color="#fff" />
+        <TouchableOpacity style={styles.button} onPress={navigateToLogWeight}>
+          <Text style={styles.buttonText}>Log New Weight</Text>
+          <Ionicons name="add-circle-outline" size={24} color="#fff" />
         </TouchableOpacity>
       </View>
     </KeyboardAvoidingView>
@@ -113,75 +78,68 @@ const WeightScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#f8f9fa',
   },
   content: {
     flex: 1,
-    padding: 24,
+    padding: 20,
   },
   title: {
-    fontSize: 32,
-    fontWeight: '700',
-    marginBottom: 24,
-  },
-  form: {
-    gap: 24,
-    marginBottom: 32,
-  },
-  inputGroup: {
-    gap: 8,
-  },
-  label: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#000',
-  },
-  input: {
-    height: 48,
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    fontSize: 16,
-  },
-  noteInput: {
-    height: 80,
-    paddingTop: 12,
-    paddingBottom: 12,
-    textAlignVertical: 'top',
+    fontSize: 28,
+    fontWeight: 'bold',
+    marginBottom: 20,
+    color: '#212529',
+    textAlign: 'center',
   },
   sectionTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: '600',
-    marginBottom: 16,
+    marginTop: 24,
+    marginBottom: 12,
+    color: '#343a40',
+  },
+  historyListContainer: {
+    marginBottom: 20,
+  },
+  emptyHistoryText: {
+    textAlign: 'center',
+    fontSize: 16,
+    color: '#6c757d',
+    marginTop: 20,
+    marginBottom: 20,
   },
   history: {
     gap: 12,
     marginBottom: 24,
   },
   footer: {
-    padding: 24,
+    padding: 16,
     borderTopWidth: 1,
-    borderTopColor: '#f0f0f0',
+    borderTopColor: '#e9ecef',
     backgroundColor: '#fff',
   },
   button: {
-    backgroundColor: '#000',
-    borderRadius: 12,
-    paddingVertical: 16,
+    backgroundColor: '#007bff',
+    borderRadius: 8,
+    paddingVertical: 14,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
-  },
-  buttonDisabled: {
-    backgroundColor: '#ccc',
+    gap: 10,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 3.84,
+    elevation: 3,
   },
   buttonText: {
     color: '#fff',
-    fontSize: 18,
-    fontWeight: '600',
+    fontSize: 17,
+    fontWeight: '500',
   },
 });
 
-export default WeightScreen; 
+export default WeightScreen;

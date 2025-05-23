@@ -1,14 +1,23 @@
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
-import { useGoalsScreenLogic } from '../../hooks/useGoalsScreenLogic';
-import { useGoalsScreenNavigation } from '../../hooks/useGoalsScreenNavigation';
-import { OnboardingHeader } from '../../components/onboarding/OnboardingHeader';
-import { GoalsList } from '../../components/onboarding/GoalsList';
-import { OnboardingFooter } from '../../components/onboarding/OnboardingFooter';
+import {View, StyleSheet} from 'react-native';
+import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
+import type {OnboardingStackParamList, GoalType} from '../../types/navigation';
+import {useGoalsScreenLogic} from '../../hooks/useGoalsScreenLogic';
+import {useGoalsScreenNavigation} from '../../hooks/useGoalsScreenNavigation';
+import {OnboardingHeader} from '../../components/onboarding/OnboardingHeader';
+import {GoalsList} from '../../components/onboarding/GoalsList';
+import {OnboardingFooter} from '../../components/onboarding/OnboardingFooter';
+import theme from '../../constants/theme';
 
-export const GoalsScreen: React.FC = () => {
-  const { goals, selectedGoalId, selectGoal } = useGoalsScreenLogic();
-  const { goToDetails } = useGoalsScreenNavigation();
+interface GoalsScreenProps {
+  // Even if navigation is handled by a hook, it's good practice to type it
+  // if the screen is part of a navigator stack.
+  navigation: NativeStackNavigationProp<OnboardingStackParamList, 'Goals'>;
+}
+
+export const GoalsScreen: React.FC<GoalsScreenProps> = () => {
+  const {goals, selectedGoalId, selectGoal} = useGoalsScreenLogic();
+  const {goToDetails} = useGoalsScreenNavigation();
 
   const handlePressContinue = () => {
     if (selectedGoalId) {
@@ -44,13 +53,13 @@ export const GoalsScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: theme.colors.background,
   },
   listContentContainer: {
-    paddingHorizontal: 24,
-    paddingTop: 24,
-    paddingBottom: 40,
+    paddingHorizontal: theme.spacing.lg,
+    paddingTop: theme.spacing.lg,
+    paddingBottom: theme.spacing.xxxl,
   },
 });
 
-export default GoalsScreen; 
+export default GoalsScreen;

@@ -1,19 +1,29 @@
-import { useState, useEffect, useCallback } from 'react';
+import {useState, useEffect, useCallback} from 'react';
 import {
   addWeightLog,
   getWeightLogs,
-  deleteWeightLog,
-  WeightLog,
-  AddWeightLogData,
-  WeightUnits,
+  // deleteWeightLog, // Not used, can be removed if not planned soon
+  // WeightLog, // Will be defined locally
+  // AddWeightLogParams, // Use AddWeightLogParams
+  WeightUnit, // Import WeightUnit type
 } from '../services/weightLogService';
-import { Alert } from 'react-native'; // For showing errors
+import {Alert} from 'react-native'; // For showing errors
+// import type { Database } from '../types/database.types'; // Import Database type
+import type { WeightLogRow, AddWeightLogParams } from '../types/weightLog'; // Import from centralized location
 
-// Type alias for clarity, matches service definition
-export type { WeightLog };
+// Type alias for clarity, should be the Row type from Supabase
+// export type WeightLog = Database['public']['Tables']['weight_logs']['Row']; // Removed
+
+// This type is for the data the CALLER of addWeightEntry provides.
+// It aligns with AddWeightLogParams from the service.
+// export type AddWeightLogDataForHook = { // Removed
+//   weight: number;
+//   unit: WeightUnit; // Use WeightUnit type
+//   log_date: string;
+// };
 
 export const useWeightHistoryData = () => {
-  const [weightHistory, setWeightHistory] = useState<WeightLog[]>([]);
+  const [weightHistory, setWeightHistory] = useState<WeightLogRow[]>([]); // Use WeightLogRow
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -26,7 +36,8 @@ export const useWeightHistoryData = () => {
       if (logs) {
         // Sort logs by date ascending for easier chart processing later
         const sortedLogs = logs.sort(
-          (a, b) => new Date(a.log_date).getTime() - new Date(b.log_date).getTime()
+          (a, b) =>
+            new Date(a.log_date).getTime() - new Date(b.log_date).getTime(),
         );
         setWeightHistory(sortedLogs);
       } else {
@@ -35,8 +46,12 @@ export const useWeightHistoryData = () => {
         setWeightHistory([]); // Ensure state is empty on error
       }
     } catch (err) {
-      console.error("Error fetching weight history:", err);
-      setError(err instanceof Error ? err.message : 'An unknown error occurred while fetching weight history.');
+      console.error('Error fetching weight history:', err);
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'An unknown error occurred while fetching weight history.',
+      );
       setWeightHistory([]);
     } finally {
       setIsLoading(false);
@@ -44,24 +59,33 @@ export const useWeightHistoryData = () => {
   }, []);
 
   useEffect(() => {
-    fetchHistory();
+    fetchHistory().catch(err => {
+      // Errors are handled in fetchHistory, this is for the promise rejection itself
+      console.error('Error invoking fetchHistory from useEffect:', err);
+      // Optionally set a generic error state if not already handled by fetchHistory
+      // setError("Failed to initialize weight history loading.");
+      setIsLoading(false); // Ensure loading is stopped
+    });
   }, [fetchHistory]);
 
   // Add a new entry
-  const addWeightEntry = useCallback(async (weight: number, unit: WeightLog['unit'] = WeightUnits.KG, note?: string) => {
-    // Assume default unit KG for now if not provided by form
-    const newLogData: AddWeightLogData = {
-      weight: weight,
-      unit: unit,
-      log_date: new Date().toISOString(), // Use current timestamp
-      // Note field is not in WeightLog table in service, needs adjustment if required
-    };
-
+  const addWeightEntry = useCallback(async (logData: AddWeightLogParams) => { // Use AddWeightLogParams
+    // The logData object should already contain weight, unit, and log_date correctly formatted.
     try {
-      const addedLog = await addWeightLog(newLogData);
-      if (addedLog) {
-        setWeightHistory(prev => 
-          [...prev, addedLog].sort((a, b) => new Date(a.log_date).getTime() - new Date(b.log_date).getTime())
+      // Ensure logData passed to addWeightLog matches AddWeightLogParams
+      // const serviceLogData: AddWeightLogParams = { // No longer needed, logData is already correct type
+      //   weight: logData.weight,
+      //   unit: logData.unit,
+      //   log_date: logData.log_date,
+      // };
+      const addedLog = await addWeightLog(logData); // Pass logData directly
+      if (addedLog) { // addedLog is WeightLogRow | null
+        setWeightHistory(prev =>
+          // Ensure prev is WeightLog[] and addedLog is WeightLog (not null)
+          [...prev, addedLog].sort(
+            (a, b) => // a and b should be WeightLog
+              new Date(a.log_date).getTime() - new Date(b.log_date).getTime(),
+          ),
         );
         return true; // Indicate success
       } else {
@@ -69,8 +93,13 @@ export const useWeightHistoryData = () => {
         return false; // Indicate failure
       }
     } catch (err) {
-      console.error("Error adding weight entry:", err);
-      Alert.alert('Error', err instanceof Error ? err.message : 'An unknown error occurred while saving.');
+      console.error('Error adding weight entry:', err);
+      Alert.alert(
+        'Error',
+        err instanceof Error
+          ? err.message
+          : 'An unknown error occurred while saving.',
+      );
       return false;
     }
   }, []);
@@ -85,4 +114,4 @@ export const useWeightHistoryData = () => {
     addWeightEntry,
     refetchHistory: fetchHistory, // Expose refetch function
   };
-}; 
+};

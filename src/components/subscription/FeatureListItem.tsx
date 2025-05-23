@@ -1,6 +1,6 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import {View, Text, StyleSheet} from 'react-native';
+import {Ionicons} from '@expo/vector-icons';
 
 interface FeatureListItemProps {
   icon: React.ComponentProps<typeof Ionicons>['name'];
@@ -8,7 +8,11 @@ interface FeatureListItemProps {
   description: string;
 }
 
-const FeatureListItem: React.FC<FeatureListItemProps> = ({ icon, title, description }) => {
+const FeatureListItem: React.FC<FeatureListItemProps> = ({
+  icon,
+  title,
+  description,
+}) => {
   return (
     <View style={styles.featureItem}>
       <View style={styles.featureIcon}>
@@ -51,4 +55,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default FeatureListItem; 
+export default FeatureListItem;

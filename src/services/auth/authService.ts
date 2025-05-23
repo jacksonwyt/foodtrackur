@@ -1,4 +1,4 @@
-import { supabase } from '../supabaseClient';
+import {supabase} from '../supabaseClient';
 import {
   AuthError,
   AuthResponse,
@@ -13,29 +13,29 @@ import {
  * Signs up a new user with email and password.
  */
 export async function signUpWithEmail(
-  credentials: SignUpWithPasswordCredentials
-): Promise<{ user: User | null; error: AuthError | null }> {
-  const { data, error }: AuthResponse = await supabase.auth.signUp(credentials);
-  return { user: data.user, error };
+  credentials: SignUpWithPasswordCredentials,
+): Promise<{user: User | null; error: AuthError | null}> {
+  const {data, error}: AuthResponse = await supabase.auth.signUp(credentials);
+  return {user: data.user, error};
 }
 
 /**
  * Signs in an existing user with email and password.
  */
 export async function signInWithEmail(
-  credentials: SignInWithPasswordCredentials
-): Promise<{ session: Session | null; error: AuthError | null }> {
-  const { data, error }: AuthTokenResponsePassword =
+  credentials: SignInWithPasswordCredentials,
+): Promise<{session: Session | null; error: AuthError | null}> {
+  const {data, error}: AuthTokenResponsePassword =
     await supabase.auth.signInWithPassword(credentials);
-  return { session: data.session, error };
+  return {session: data.session, error};
 }
 
 /**
  * Signs out the current user.
  */
-export async function signOut(): Promise<{ error: AuthError | null }> {
-  const { error } = await supabase.auth.signOut();
-  return { error };
+export async function signOut(): Promise<{error: AuthError | null}> {
+  const {error} = await supabase.auth.signOut();
+  return {error};
 }
 
 /**
@@ -46,8 +46,8 @@ export async function getCurrentSession(): Promise<{
   session: Session | null;
   error: AuthError | null;
 }> {
-  const { data, error } = await supabase.auth.getSession();
-  return { session: data.session, error };
+  const {data, error} = await supabase.auth.getSession();
+  return {session: data.session, error};
 }
 
 /**
@@ -61,10 +61,10 @@ export async function getCurrentUser(): Promise<{
   // Often, getSession is preferred as it also returns the session object
   // But if you only need user details, this can be slightly more direct
   const {
-    data: { user },
+    data: {user},
     error,
   } = await supabase.auth.getUser();
-  return { user, error };
+  return {user, error};
 }
 
 /**
@@ -73,10 +73,10 @@ export async function getCurrentUser(): Promise<{
  * Returns a subscription object which should be unsubscribed when no longer needed.
  */
 export function onAuthStateChange(
-  callback: (event: string, session: Session | null) => void
+  callback: (event: string, session: Session | null) => void,
 ) {
   const {
-    data: { subscription },
+    data: {subscription},
   } = supabase.auth.onAuthStateChange(callback);
   return subscription;
-} 
+}

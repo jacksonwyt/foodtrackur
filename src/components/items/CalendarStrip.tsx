@@ -1,14 +1,15 @@
-import React, { useRef } from 'react';
+import React, {useRef} from 'react';
 import {
   View,
   ScrollView,
-  Text,
   TouchableOpacity,
   StyleSheet,
 } from 'react-native';
-import { format, isSameDay } from 'date-fns';
-import { useCalendarStripData } from '../../hooks/useCalendarStripData';
-import { useCalendarStripScroll } from '../../hooks/useCalendarStripScroll';
+import {format, isSameDay} from 'date-fns';
+import {useCalendarStripData} from '../../hooks/useCalendarStripData';
+import {useCalendarStripScroll} from '../../hooks/useCalendarStripScroll';
+import {useTheme} from '../../hooks/useTheme';
+import {AppText as Text} from '../common/AppText';
 
 interface CalendarStripProps {
   selectedDate: Date;
@@ -24,15 +25,17 @@ export const CalendarStrip: React.FC<CalendarStripProps> = ({
   onDateSelect,
   numberOfDays = 14,
 }) => {
+  const theme = useTheme();
+  const styles = makeStyles(theme);
   const scrollViewRef = useRef<ScrollView>(null);
 
-  const { today, dates, selectedIndex } = useCalendarStripData({
+  const {today, dates, selectedIndex} = useCalendarStripData({
     selectedDate,
     numberOfDays,
   });
 
   useCalendarStripScroll({
-    scrollViewRef,
+    scrollViewRef: scrollViewRef as React.RefObject<ScrollView>,
     selectedIndex,
     itemWidth: ITEM_WIDTH,
     itemMargin: ITEM_MARGIN,
@@ -50,20 +53,21 @@ export const CalendarStrip: React.FC<CalendarStripProps> = ({
           styles.dateBubble,
           isSelected && styles.selectedBubble,
           isToday && styles.todayBubble,
-        ]}
-      >
-        <Text style={[
-          styles.dayText,
-          isSelected && styles.selectedText,
-          isToday && styles.todayText,
         ]}>
+        <Text
+          style={[
+            styles.dayText,
+            isSelected && styles.selectedText,
+            isToday && styles.todayText,
+          ]}>
           {format(date, 'EEE')}
         </Text>
-        <Text style={[
-          styles.dateText,
-          isSelected && styles.selectedText,
-          isToday && styles.todayText,
-        ]}>
+        <Text
+          style={[
+            styles.dateText,
+            isSelected && styles.selectedText,
+            isToday && styles.todayText,
+          ]}>
           {format(date, 'd')}
         </Text>
         {isToday && <View style={styles.todayDot} />}
@@ -79,60 +83,61 @@ export const CalendarStrip: React.FC<CalendarStripProps> = ({
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
         decelerationRate="fast"
-        snapToInterval={ITEM_WIDTH + ITEM_MARGIN * 2}
-      >
+        snapToInterval={ITEM_WIDTH + ITEM_MARGIN * 2}>
         {dates.map(renderDateBubble)}
       </ScrollView>
     </View>
   );
 };
 
-const styles = StyleSheet.create({
+const makeStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
   container: {
     height: 75,
-    backgroundColor: '#fff',
+    backgroundColor: theme.colors.surface,
   },
   scrollContent: {
     paddingHorizontal: ITEM_MARGIN,
+    alignItems: 'center',
   },
   dateBubble: {
     width: ITEM_WIDTH,
-    height: ITEM_WIDTH,
+    paddingVertical: theme.spacing.sm,
     marginHorizontal: ITEM_MARGIN,
-    borderRadius: ITEM_WIDTH / 2,
-    backgroundColor: '#f5f5f5',
+    borderRadius: theme.borderRadius.md,
+    backgroundColor: theme.colors.background,
     justifyContent: 'center',
     alignItems: 'center',
   },
   selectedBubble: {
-    backgroundColor: '#111',
+    backgroundColor: theme.colors.primary,
   },
   todayBubble: {
     borderWidth: 1.5,
-    borderColor: '#000',
+    borderColor: theme.colors.primary,
+    backgroundColor: theme.colors.background,
   },
   dayText: {
-    fontSize: 11,
-    color: '#666',
-    marginBottom: 2,
+    fontSize: theme.typography.sizes.overline,
+    color: theme.colors.textSecondary,
+    marginBottom: theme.spacing.xxs,
   },
   dateText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#000',
+    fontSize: theme.typography.sizes.body,
+    fontWeight: theme.typography.weights.semibold,
+    color: theme.colors.text,
   },
   selectedText: {
-    color: '#fff',
+    color: theme.colors.onPrimary,
   },
   todayText: {
-    color: '#000',
+    color: theme.colors.primary,
   },
   todayDot: {
     position: 'absolute',
-    bottom: 4,
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: '#FF6B6B',
+    bottom: theme.spacing.xs,
+    width: 5,
+    height: 5,
+    borderRadius: theme.borderRadius.round,
+    backgroundColor: theme.colors.primary,
   },
-}); 
+});

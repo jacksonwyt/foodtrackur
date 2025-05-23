@@ -1,11 +1,12 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import { FeatureItem } from './FeatureItem'; // Corrected import path
+import {View, Text, StyleSheet, Platform} from 'react-native';
+import {FeatureItem} from './FeatureItem';
+import theme from '../../constants/theme'; // Import the centralized theme
 
 export const WelcomeContent: React.FC = () => {
   return (
     <View style={styles.content}>
-      <Text style={styles.title}>Welcome to CalAI</Text>
+      <Text style={styles.title}>Welcome to FoodTrack</Text>
       <Text style={styles.subtitle}>
         Your personal AI-powered nutrition assistant
       </Text>
@@ -34,27 +35,29 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     alignItems: 'center',
-    paddingHorizontal: 24,
-    paddingTop: 60, // Adjust as needed, or make dynamic
-    paddingBottom: 40, // Add bottom padding
+    paddingHorizontal: theme.spacing.lg,
+    paddingTop: theme.spacing.xxl,
+    paddingBottom: theme.spacing.xl,
   },
   title: {
-    fontSize: 30, // Slightly adjusted size
-    fontWeight: 'bold',
-    color: '#111', // Darker color
-    marginBottom: 12,
+    fontSize: theme.typography.sizes.h1, // Use h1 for largest titles
+    fontWeight: theme.typography.weights.bold as 'bold', // Explicitly cast fontWeight
+    color: theme.colors.text,
+    // fontFamily: theme.typography.fontFamily, // Assuming default system font or handled globally
+    marginBottom: theme.spacing.md, // Use theme spacing
     textAlign: 'center',
   },
   subtitle: {
-    fontSize: 18,
-    color: '#555', // Slightly darker grey
+    fontSize: theme.typography.sizes.bodyLarge, // Use bodyLarge or similar appropriate size
+    fontWeight: theme.typography.weights.regular as 'normal', // Explicitly cast fontWeight
+    color: theme.colors.textSecondary,
     textAlign: 'center',
-    marginBottom: 48,
-    lineHeight: 24,
+    marginBottom: theme.spacing.xxl,
+    lineHeight:
+      theme.typography.sizes.bodyLarge * theme.typography.lineHeights.normal, // Use theme lineHeights
   },
   features: {
     width: '100%',
-    gap: 24,
+    gap: theme.spacing.lg,
   },
-  // Feature styles are now in FeatureItem.tsx
-}); 
+});
