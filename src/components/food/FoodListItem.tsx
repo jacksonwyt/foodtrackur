@@ -7,6 +7,8 @@ import {
   TouchableOpacityProps,
 } from 'react-native';
 import {Ionicons} from '@expo/vector-icons';
+import { useTheme } from '@/hooks/useTheme';
+import { Theme } from '@/constants/theme';
 
 interface FoodListItemProps extends TouchableOpacityProps {
   name: string;
@@ -20,40 +22,42 @@ export const FoodListItem: React.FC<FoodListItemProps> = ({
   style,
   ...props
 }) => {
+  const theme = useTheme();
+  const styles = makeStyles(theme);
   return (
     <TouchableOpacity style={[styles.container, style]} {...props}>
       <View style={styles.infoContainer}>
         <Text style={styles.name}>{name}</Text>
         <Text style={styles.calories}>{calories} kcal</Text>
       </View>
-      <Ionicons name="chevron-forward" size={20} color="#ccc" />
+      <Ionicons name="chevron-forward" size={20} color={theme.colors.border} />
     </TouchableOpacity>
   );
 };
 
-const styles = StyleSheet.create({
+const makeStyles = (theme: Theme) => StyleSheet.create({
   container: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    backgroundColor: '#fff',
+    paddingVertical: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.md,
+    backgroundColor: theme.colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    borderBottomColor: theme.colors.border,
   },
   infoContainer: {
-    flex: 1, // Allow text to take available space
-    marginRight: 10,
+    flex: 1,
+    marginRight: theme.spacing.sm,
   },
   name: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#333',
-    marginBottom: 2,
+    fontSize: theme.typography.sizes.body,
+    fontWeight: theme.typography.weights.medium,
+    color: theme.colors.text,
+    marginBottom: theme.spacing.xxs,
   },
   calories: {
-    fontSize: 14,
-    color: '#666',
+    fontSize: theme.typography.sizes.bodySmall,
+    color: theme.colors.textSecondary,
   },
 });

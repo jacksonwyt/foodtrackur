@@ -9,6 +9,8 @@ import {
   Button,
 } from 'react-native';
 import {FoodListItem} from './FoodListItem'; // Assuming same directory
+import { useTheme } from '@/hooks/useTheme'; // Added import
+import { Theme } from '@/constants/theme'; // Added import
 
 // Re-define or import the item structure
 interface FoodListItemData {
@@ -46,6 +48,9 @@ export const FoodList: React.FC<FoodListProps> = ({
   ListEmptyComponent,
   ...props
 }) => {
+  const theme = useTheme(); // Added useTheme hook
+  const styles = makeStyles(theme); // Added makeStyles call
+
   const renderItem = ({item}: {item: FoodListItemData}) => (
     <FoodListItem
       name={item.name}
@@ -56,13 +61,13 @@ export const FoodList: React.FC<FoodListProps> = ({
 
   const renderEmpty = () => {
     if (isLoading) {
-      return <ActivityIndicator style={styles.centeredMessage} size="large" />;
+      return <ActivityIndicator style={styles.centeredMessage} size="large" color={theme.colors.primary} />;
     }
     if (error) {
       return (
         <View style={styles.centeredMessage}>
           <Text style={styles.errorText}>{error}</Text>
-          {onRefresh && <Button title="Retry" onPress={onRefresh} />}
+          {onRefresh && <Button title="Retry" onPress={onRefresh} color={theme.colors.primary} />}
         </View>
       );
     }
@@ -106,7 +111,7 @@ export const FoodList: React.FC<FoodListProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
+const makeStyles = (theme: Theme) => StyleSheet.create({
   emptyContainer: {
     flexGrow: 1, // Ensure empty component can center if needed
     justifyContent: 'center',
@@ -116,17 +121,17 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
+    padding: theme.spacing.md, // Changed to theme variable
   },
   emptyText: {
-    fontSize: 16,
-    color: '#666',
+    fontSize: theme.typography.sizes.body, // Changed to theme variable
+    color: theme.colors.textSecondary, // Changed to theme variable
     textAlign: 'center',
   },
   errorText: {
-    fontSize: 16,
-    color: 'red',
+    fontSize: theme.typography.sizes.body, // Changed to theme variable
+    color: theme.colors.error, // Changed to theme variable
     textAlign: 'center',
-    marginBottom: 10,
+    marginBottom: theme.spacing.sm, // Changed to theme variable
   },
 });

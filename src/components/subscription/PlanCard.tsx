@@ -1,5 +1,7 @@
 import React from 'react';
 import {View, Text, StyleSheet, TouchableOpacity} from 'react-native';
+import {useTheme} from '@/hooks/useTheme';
+import type {Theme} from '@/constants/theme';
 
 interface PlanCardProps {
   id: string;
@@ -20,9 +22,11 @@ const PlanCard: React.FC<PlanCardProps> = ({
   isSelected,
   onSelect,
 }) => {
+  const theme = useTheme();
+  const styles = makeStyles(theme, isSelected);
   return (
     <TouchableOpacity
-      style={[styles.planCard, isSelected && styles.selectedPlan]}
+      style={styles.planCard}
       onPress={() => onSelect(id)}>
       <View style={styles.planHeader}>
         <Text style={styles.planTitle}>{title}</Text>
@@ -41,50 +45,50 @@ const PlanCard: React.FC<PlanCardProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
+const makeStyles = (theme: Theme, isSelected: boolean) => StyleSheet.create({
   planCard: {
-    padding: 20,
-    borderRadius: 16,
+    padding: theme.spacing.md,
+    borderRadius: theme.borderRadius.lg,
     borderWidth: 2,
-    borderColor: '#f0f0f0',
-  },
-  selectedPlan: {
-    borderColor: '#000',
+    borderColor: isSelected ? theme.colors.primary : theme.colors.border,
+    backgroundColor: theme.colors.surface,
   },
   planHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 8,
+    marginBottom: theme.spacing.sm,
   },
   planTitle: {
-    fontSize: 18,
-    fontWeight: '600',
+    fontSize: theme.typography.sizes.bodyLarge,
+    fontWeight: theme.typography.weights.semibold,
+    color: theme.colors.text,
   },
   popularBadge: {
-    backgroundColor: '#000',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
+    backgroundColor: theme.colors.primary,
+    paddingHorizontal: theme.spacing.sm,
+    paddingVertical: theme.spacing.xs,
+    borderRadius: theme.borderRadius.xl,
   },
   popularText: {
-    color: '#fff',
-    fontSize: 12,
-    fontWeight: '600',
+    color: theme.colors.onPrimary,
+    fontSize: theme.typography.sizes.overline,
+    fontWeight: theme.typography.weights.semibold,
   },
   planPrice: {
-    fontSize: 32,
-    fontWeight: '700',
-    marginBottom: 8,
+    fontSize: theme.typography.sizes.h1,
+    fontWeight: theme.typography.weights.bold,
+    marginBottom: theme.spacing.sm,
+    color: theme.colors.text,
   },
   planPeriod: {
-    fontSize: 16,
-    fontWeight: '400',
-    color: '#666',
+    fontSize: theme.typography.sizes.body,
+    fontWeight: theme.typography.weights.regular,
+    color: theme.colors.textSecondary,
   },
   planDescription: {
-    fontSize: 14,
-    color: '#666',
+    fontSize: theme.typography.sizes.bodySmall,
+    color: theme.colors.textSecondary,
   },
 });
 

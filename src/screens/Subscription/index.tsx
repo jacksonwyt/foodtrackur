@@ -7,6 +7,8 @@ import SubscriptionHeader from '../../components/subscription/SubscriptionHeader
 import SubscriptionFooter from '../../components/subscription/SubscriptionFooter';
 import type {NativeStackScreenProps} from '@react-navigation/native-stack';
 import type {SubscriptionStackParamList} from '../../types/navigation';
+import {useTheme} from '../../hooks/useTheme';
+import type {Theme} from '../../constants/theme';
 
 type SubscriptionScreenProps = NativeStackScreenProps<
   SubscriptionStackParamList,
@@ -17,6 +19,8 @@ const SubscriptionScreen: React.FC<SubscriptionScreenProps> = ({
   navigation,
   route,
 }) => {
+  const theme = useTheme();
+  const styles = makeStyles(theme);
   const {
     features,
     plans,
@@ -72,28 +76,29 @@ const SubscriptionScreen: React.FC<SubscriptionScreenProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-  },
-  content: {
-    flex: 1,
-    padding: 20,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#666',
-    textAlign: 'center',
-    marginBottom: 32,
-  },
-  features: {
-    marginBottom: 32,
-  },
-  plans: {
-    gap: 16,
-    marginBottom: 24,
-  },
-});
+const makeStyles = (theme: Theme) => 
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: theme.colors.background,
+    },
+    content: {
+      flex: 1,
+      padding: theme.spacing.lg,
+    },
+    subtitle: {
+      fontSize: theme.typography.sizes.body,
+      color: theme.colors.textSecondary,
+      textAlign: 'center',
+      marginBottom: theme.spacing.xl,
+    },
+    features: {
+      marginBottom: theme.spacing.xl,
+    },
+    plans: {
+      gap: theme.spacing.md,
+      marginBottom: theme.spacing.lg,
+    },
+  });
 
 export default SubscriptionScreen;

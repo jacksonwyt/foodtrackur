@@ -1,4 +1,4 @@
-import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
+import '@supabase/functions-js/edge-runtime.d.ts';
 
 // Relying on 'jsr:@supabase/functions-js/edge-runtime.d.ts' and the
 // supabase/functions/tsconfig.json (with "deno.ns", "deno.window" libs)
@@ -6,7 +6,7 @@ import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
 
 import {
   serve,
-  ServerRequest, // This should now be correctly typed from deno.land/std
+  // This should now be correctly typed from deno.land/std
 } from 'https://deno.land/std@0.177.0/http/server.ts';
 
 // The 'declare global { namespace Deno ... }' block should no longer be needed.
@@ -146,7 +146,7 @@ interface RequestPayload {
 console.log('Analyze Food Image Edge Function started.');
 
 // 'serve' and 'req: ServerRequest' should now be correctly typed
-serve(async (req: ServerRequest): Promise<Response> => {
+serve(async (req: Request): Promise<Response> => {
   const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers':

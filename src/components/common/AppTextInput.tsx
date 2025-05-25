@@ -7,9 +7,9 @@ import {
   ViewStyle,
   TextStyle,
 } from 'react-native';
-import {useTheme} from '../../hooks/useTheme';
+import {useTheme} from '@/hooks/useTheme';
 import {AppText} from './AppText'; // For error messages or labels
-import {Theme} from '../../constants/theme';
+import {Theme} from '@/constants/theme';
 
 interface AppTextInputProps extends TextInputProps {
   error?: string;

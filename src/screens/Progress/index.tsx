@@ -1,13 +1,17 @@
 import React from 'react';
 import { StyleSheet, ScrollView, View, ActivityIndicator } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import type { ProgressStackParamList } from '../../types/navigation';
-import { Screen } from '../../components/Screen';
-import { useProgressChartData } from '../../hooks/useProgressChartData';
-import WeightProgressChart from '../../components/progress/WeightProgressChart';
-import { useTheme } from '../../hooks/useTheme';
-import { AppText } from '../../components/common/AppText';
-import type { Theme } from '../../constants/theme';
+import type { ProgressStackParamList } from '@/types/navigation';
+import { Screen } from '@/components/Screen';
+import { useProgressChartData } from '@/hooks/useProgressChartData';
+import ProgressChart from '@/components/charts/ProgressChart';
+import { useTheme } from '@/hooks/useTheme';
+import { AppText } from '@/components/common/AppText';
+import type { Theme } from '@/constants/theme';
+import { getProfile, type Profile } from '@/services/profileService';
+import { useFocusEffect } from '@react-navigation/native';
+import GoalProgressBar from '@/components/progress/GoalProgressBar';
+import KeyStatistics from '@/components/progress/KeyStatistics';
 
 // Define prop types for the screen
 type ProgressScreenProps = NativeStackScreenProps<
@@ -15,18 +19,62 @@ type ProgressScreenProps = NativeStackScreenProps<
   'Progress'
 >;
 
+interface DataPoint {
+  value: number;
+  date: string;
+}
+
 const ProgressScreen: React.FC<ProgressScreenProps> = ({ navigation, route }) => {
   const theme = useTheme();
   const styles = makeStyles(theme);
+  const [userProfile, setUserProfile] = React.useState<Profile | null>(null);
+  const [isLoadingProfile, setIsLoadingProfile] = React.useState(true);
+  const [errorProfile, setErrorProfile] = React.useState<string | null>(null);
+
   const {
-    chartData,
+    chartData: rawChartData,
     isLoading: isLoadingChart,
     error: errorChart,
   } = useProgressChartData();
 
-  let content;
+  useFocusEffect(
+    React.useCallback(() => {
+      const fetchUserProfile = async () => {
+        setIsLoadingProfile(true);
+        setErrorProfile(null);
+        try {
+          const profile = await getProfile();
+          setUserProfile(profile);
+        } catch (e) {
+          if (e instanceof Error) {
+            setErrorProfile(e.message);
+          } else {
+            setErrorProfile('Failed to fetch user profile.');
+          }
+        } finally {
+          setIsLoadingProfile(false);
+        }
+      };
 
-  if (isLoadingChart) {
+      void fetchUserProfile();
+    }, [])
+  );
+
+  const formattedChartData: DataPoint[] = React.useMemo(() => {
+    if (!rawChartData || !rawChartData.labels || !rawChartData.datasets?.[0]?.data) {
+      return [];
+    }
+    return rawChartData.labels.map((label, index) => ({
+      date: label,
+      value: rawChartData.datasets[0].data[index],
+    }));
+  }, [rawChartData]);
+
+  let content;
+  let goalOverviewContent = null;
+  let keyStatisticsContent = null;
+
+  if (isLoadingChart || isLoadingProfile) {
     content = (
       <View style={styles.centeredContent}>
         <ActivityIndicator size="large" color={theme.colors.primary} />
@@ -36,20 +84,56 @@ const ProgressScreen: React.FC<ProgressScreenProps> = ({ navigation, route }) =>
     content = (
       <View style={styles.centeredContent}>
         <AppText style={styles.errorText}>
-          Error loading chart data: {errorChart.message}
+          Error loading chart data: {errorChart?.message || 'Unknown error'}
         </AppText>
-        {/* TODO: Add a retry button here? */}
+      </View>
+    );
+  } else if (errorProfile) {
+    content = (
+      <View style={styles.centeredContent}>
+        <AppText style={styles.errorText}>
+          Error loading profile data: {errorProfile || 'Unknown error'}
+        </AppText>
       </View>
     );
   } else {
-    content = <WeightProgressChart chartData={chartData} />;
+    content = <ProgressChart data={formattedChartData} unit=" kg" lineColor={theme.colors.primary} />;
+
+    if (rawChartData?.datasets?.[0]?.data?.length > 0 && userProfile?.goal_weight) {
+      const weights = rawChartData.datasets[0].data;
+      const startingWeight = weights[0];
+      const currentWeight = weights[weights.length - 1];
+      const goalWeight = userProfile.goal_weight;
+
+      goalOverviewContent = (
+        <View style={styles.goalOverviewContainer}>
+          <GoalProgressBar 
+            startingWeight={startingWeight}
+            currentWeight={currentWeight}
+            goalWeight={goalWeight}
+          />
+        </View>
+      );
+    } else if (userProfile && !userProfile.goal_weight) {
+      goalOverviewContent = (
+        <View style={styles.goalOverviewContainer}>
+          <AppText style={styles.goalText}>No goal weight set. You can set one in Settings.</AppText>
+        </View>
+      );
+    }
+
+    if (rawChartData?.datasets?.[0]?.data?.length > 0) {
+      keyStatisticsContent = <KeyStatistics chartData={rawChartData} />;
+    }
   }
 
   return (
     <Screen>
       <ScrollView style={styles.container} contentContainerStyle={styles.scrollContentContainer} showsVerticalScrollIndicator={false}>
         <AppText style={styles.title}>Progress</AppText>
-        {content}
+        {content} 
+        {goalOverviewContent}
+        {keyStatisticsContent}
       </ScrollView>
     </Screen>
   );
@@ -68,10 +152,21 @@ const makeStyles = (theme: Theme) =>
       padding: theme.spacing.lg,
     },
     title: {
-      fontSize: theme.typography.sizes.headingLarge,
+      fontSize: theme.typography.sizes.h1,
       fontWeight: theme.typography.weights.bold as '700',
       color: theme.colors.text,
       marginBottom: theme.spacing.lg,
+    },
+    goalOverviewContainer: {
+      marginBottom: theme.spacing.lg,
+      padding: theme.spacing.md,
+      backgroundColor: theme.colors.card,
+      borderRadius: theme.borderRadius.md,
+    },
+    goalText: {
+      fontSize: theme.typography.sizes.body,
+      color: theme.colors.text,
+      marginBottom: theme.spacing.sm,
     },
     centeredContent: {
       flex: 1,

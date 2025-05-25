@@ -1,9 +1,10 @@
-import React, {useRef} from 'react';
+import React, {useRef, useState} from 'react';
 import {
   View,
   ScrollView,
   TouchableOpacity,
   StyleSheet,
+  Dimensions,
 } from 'react-native';
 import {format, isSameDay} from 'date-fns';
 import {useCalendarStripData} from '../../hooks/useCalendarStripData';
@@ -28,6 +29,7 @@ export const CalendarStrip: React.FC<CalendarStripProps> = ({
   const theme = useTheme();
   const styles = makeStyles(theme);
   const scrollViewRef = useRef<ScrollView>(null);
+  const [stripWidth, setStripWidth] = useState(Dimensions.get('window').width);
 
   const {today, dates, selectedIndex} = useCalendarStripData({
     selectedDate,
@@ -39,6 +41,7 @@ export const CalendarStrip: React.FC<CalendarStripProps> = ({
     selectedIndex,
     itemWidth: ITEM_WIDTH,
     itemMargin: ITEM_MARGIN,
+    stripWidth: stripWidth,
   });
 
   const renderDateBubble = (date: Date) => {
@@ -76,7 +79,14 @@ export const CalendarStrip: React.FC<CalendarStripProps> = ({
   };
 
   return (
-    <View style={styles.container}>
+    <View
+      style={styles.container}
+      onLayout={(event) => {
+        const {width} = event.nativeEvent.layout;
+        if (width > 0 && width !== stripWidth) {
+          setStripWidth(width);
+        }
+      }}>
       <ScrollView
         ref={scrollViewRef}
         horizontal
@@ -93,7 +103,7 @@ export const CalendarStrip: React.FC<CalendarStripProps> = ({
 const makeStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
   container: {
     height: 75,
-    backgroundColor: theme.colors.surface,
+    backgroundColor: theme.colors.background,
   },
   scrollContent: {
     paddingHorizontal: ITEM_MARGIN,

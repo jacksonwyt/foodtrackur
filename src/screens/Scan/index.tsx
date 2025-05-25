@@ -26,7 +26,7 @@ const makeStyles = (theme: Theme) => ({
   },
   loadingText: {
     color: theme.colors.text,
-    fontSize: theme.typography.body1.fontSize,
+    fontSize: theme.typography.sizes.body,
   },
 });
 

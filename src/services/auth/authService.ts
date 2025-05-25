@@ -8,15 +8,26 @@ import {
   SignUpWithPasswordCredentials,
   User,
 } from '@supabase/supabase-js';
+// import * as Linking from 'expo-linking'; // No longer needed if not using emailRedirectTo
+
+// Helper to create the redirect URL - No longer needed if not using emailRedirectTo
+// const createRedirectUrl = (path: string = '') => {
+//   return Linking.createURL(path);
+// };
 
 /**
  * Signs up a new user with email and password.
  */
 export async function signUpWithEmail(
   credentials: SignUpWithPasswordCredentials,
-): Promise<{user: User | null; error: AuthError | null}> {
-  const {data, error}: AuthResponse = await supabase.auth.signUp(credentials);
-  return {user: data.user, error};
+): Promise<{user: User | null; session: Session | null; error: AuthError | null}> {
+  // emailRedirectTo option is removed as email verification is off
+  const {data, error}: AuthResponse = await supabase.auth.signUp({
+    email: credentials.email,
+    password: credentials.password,
+    // No options needed here if email verification is globally off
+  });
+  return {user: data?.user ?? null, session: data?.session ?? null, error};
 }
 
 /**

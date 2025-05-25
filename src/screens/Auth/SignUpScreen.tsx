@@ -18,6 +18,7 @@ import {
   setAuthState,
   clearAuthError,
 } from '../../store/slices/authSlice';
+import {createUserProfile} from '../../store/slices/profileSlice';
 import {signUpWithEmail} from '../../services/auth/authService';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import type {AuthStackParamList} from '../../types/navigation';
@@ -68,7 +69,7 @@ export function SignUpScreen({
     dispatch(clearAuthError());
     dispatch(setAuthState({status: 'loading', user: null, session: null, error: null}));
     try {
-      const {user, error} = await signUpWithEmail({email, password});
+      const {user, session, error} = await signUpWithEmail({email, password});
 
       if (error) {
         console.error('Sign Up Error:', error.message);
@@ -80,12 +81,23 @@ export function SignUpScreen({
             error: error.message,
           }),
         );
-      } else if (user) {
-        console.log('Sign up successful, user created. Email confirmation likely required.');
+      } else if (user && session) {
+        console.log('Sign up successful, user created and session initiated.');
+        dispatch(
+          setAuthState({
+            status: 'authenticated',
+            user: user,
+            session: session,
+            error: null,
+          }),
+        );
+        console.log('[SignUpScreen] User authenticated. Trigger will handle initial profile creation.');
+      } else if (user && !session) {
+        console.warn('Sign up successful, user created but no session returned (email verification likely pending).');
         dispatch(
           setAuthState({
             status: 'unauthenticated',
-            user: null,
+            user: user,
             session: null,
             error: 'Sign up successful! Please check your email to confirm your account and then login.',
           }),
@@ -134,18 +146,18 @@ export function SignUpScreen({
         <Text style={styles.title}>Create Account</Text>
         <Text style={styles.subtitle}>Join us and start tracking your nutrition!</Text>
 
-        {authStatus === 'failed' && authError && (
+        {/* {authStatus === 'failed' && authError && (
           <View style={styles.errorContainer}>
             <Ionicons name="alert-circle-outline" size={20} color={theme.colors.error} />
             <Text style={styles.errorText}>{authError}</Text>
           </View>
         )}
         {authStatus === 'unauthenticated' && authError && authError.includes('confirm your account') && (
-           <View style={[styles.errorContainer, styles.successContainer]}> {/* Using error styles for now, can be specific success style */}
+           <View style={[styles.errorContainer, styles.successContainer]}> /!* Using error styles for now, can be specific success style *!/
             <Ionicons name="checkmark-circle-outline" size={20} color={theme.colors.success} />
             <Text style={[styles.errorText, styles.successText]}>{authError}</Text>
           </View>
-        )}
+        )} */}
 
         <View style={styles.inputContainer}>
           <Text style={styles.label}>Email Address</Text>
@@ -286,7 +298,7 @@ const styles = StyleSheet.create({
   errorContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFEEEE',
+    backgroundColor: theme.colors.errorBackground,
     paddingHorizontal: theme.spacing.md,
     paddingVertical: theme.spacing.sm,
     borderRadius: theme.borderRadius.md,
@@ -300,7 +312,7 @@ const styles = StyleSheet.create({
     fontFamily: theme.typography.fontFamily,
   },
   successContainer: {
-    backgroundColor: '#E6FFFA',
+    backgroundColor: theme.colors.successBackground,
   },
   successText: {
     color: theme.colors.success,

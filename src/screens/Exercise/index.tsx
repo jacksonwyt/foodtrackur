@@ -4,8 +4,6 @@ import {
   StyleSheet,
   TouchableOpacity,
   ScrollView,
-  KeyboardAvoidingView,
-  Platform,
 } from 'react-native';
 import {Ionicons} from '@expo/vector-icons';
 import type {NativeStackScreenProps} from '@react-navigation/native-stack';
@@ -19,6 +17,7 @@ import {useTheme} from '../../hooks/useTheme';
 import {AppText} from '../../components/common/AppText';
 import {AppTextInput} from '../../components/common/AppTextInput';
 import {Theme} from '../../constants/theme';
+import {Screen} from '../../components/Screen';
 
 // Define prop types for the screen
 type ExerciseScreenProps = NativeStackScreenProps<
@@ -62,10 +61,11 @@ const ExerciseScreen: React.FC<ExerciseScreenProps> = ({navigation, route}) => {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+    <Screen>
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}>
         <AppText style={styles.title}>Log Exercise</AppText>
 
         <View style={styles.form}>
@@ -108,6 +108,16 @@ const ExerciseScreen: React.FC<ExerciseScreenProps> = ({navigation, route}) => {
           )}
         </View>
 
+        <View style={styles.logExerciseButtonContainer}>
+          <TouchableOpacity
+            style={[styles.button, !validForm && styles.buttonDisabled]}
+            onPress={handleLogExercise}
+            disabled={!validForm}>
+            <AppText style={styles.buttonText}>Log Exercise</AppText>
+            <Ionicons name="checkmark" size={20} color={theme.colors.onPrimary} />
+          </TouchableOpacity>
+        </View>
+
         <AppText style={styles.sectionTitle}>Recent Exercises</AppText>
         <View style={styles.recentExercises}>
           {recentExercises.map(exercise => (
@@ -115,17 +125,7 @@ const ExerciseScreen: React.FC<ExerciseScreenProps> = ({navigation, route}) => {
           ))}
         </View>
       </ScrollView>
-
-      <View style={styles.footer}>
-        <TouchableOpacity
-          style={[styles.button, !validForm && styles.buttonDisabled]}
-          onPress={handleLogExercise}
-          disabled={!validForm}>
-          <AppText style={styles.buttonText}>Log Exercise</AppText>
-          <Ionicons name="checkmark" size={20} color={theme.colors.onPrimary} />
-        </TouchableOpacity>
-      </View>
-    </KeyboardAvoidingView>
+    </Screen>
   );
 };
 
@@ -136,14 +136,14 @@ const makeStyles = (theme: Theme) =>
       backgroundColor: theme.colors.background,
     },
     content: {
-      flex: 1,
       padding: theme.spacing.lg,
+      flexGrow: 1,
     },
     title: {
       fontSize: theme.typography.sizes.h1,
       fontWeight: theme.typography.weights.bold,
-      color: theme.colors.onBackground,
-      marginBottom: theme.spacing.xl,
+      color: theme.colors.text,
+      marginBottom: theme.spacing.lg,
     },
     form: {
       gap: theme.spacing.lg,
@@ -158,7 +158,7 @@ const makeStyles = (theme: Theme) =>
     sectionTitle: {
       fontSize: theme.typography.sizes.h3,
       fontWeight: theme.typography.weights.medium,
-      color: theme.colors.onBackground,
+      color: theme.colors.text,
       marginTop: theme.spacing.lg,
       marginBottom: theme.spacing.md,
     },
@@ -185,12 +185,9 @@ const makeStyles = (theme: Theme) =>
       gap: theme.spacing.md,
       marginBottom: theme.spacing.lg,
     },
-    footer: {
-      padding: theme.spacing.lg,
-      borderTopWidth: 1,
-      borderTopColor: theme.colors.border,
-      backgroundColor: theme.colors.surface,
-      ...theme.shadows.md,
+    logExerciseButtonContainer: {
+      marginTop: theme.spacing.xl,
+      marginBottom: theme.spacing.lg,
     },
     button: {
       backgroundColor: theme.colors.primary,

@@ -7,6 +7,8 @@ import {
 } from 'react-native';
 import {Ionicons} from '@expo/vector-icons';
 import {ActionCardGrid} from '../items/ActionCardGrid'; // Import the new grid component
+import {useTheme} from '@/hooks/useTheme'; // Added
+import type {Theme} from '@/constants/theme'; // Added
 
 interface QuickAction {
   id: string;
@@ -22,6 +24,8 @@ interface FloatingActionButtonProps {
 export const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({
   actions,
 }) => {
+  const theme = useTheme(); // Added
+  const styles = makeStyles(theme); // Added
   const [isExpanded, setIsExpanded] = useState(false);
   // Keep animation state here as it controls both the grid and the FAB icon
   const [animation] = useState(new Animated.Value(0));
@@ -125,7 +129,7 @@ export const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({
                 ],
               },
             ]}>
-            <Ionicons name="add" size={30} color="#fff" />
+            <Ionicons name="add" size={30} color={theme.colors.onPrimary} />
           </Animated.View>
         </TouchableOpacity>
       </View>
@@ -133,52 +137,48 @@ export const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
+// Added makeStyles
+const makeStyles = (theme: Theme) => StyleSheet.create({
   overlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    zIndex: 999,
+    backgroundColor: `rgba(${theme.colors.textRGB}, 0.4)`,
+    zIndex: 999, // Ensure overlay is above other content but below FAB menu
   },
   container: {
     position: 'absolute',
-    bottom: 0, // Adjust container position if needed
+    bottom: 0,
     right: 0,
-    left: 0, // Make container full width for easier grid centering
-    top: 0, // Make container full height for overlay and positioning
-    alignItems: 'center', // Center children horizontally
-    justifyContent: 'flex-end', // Align children to bottom
-    paddingBottom: 30, // Keep FAB floating above bottom edge
-    paddingRight: 30, // Keep FAB floating from right edge
-    zIndex: 1000,
+    left: 0,
+    top: 0,
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    paddingBottom: theme.spacing.xl, // Use theme spacing
+    paddingRight: theme.spacing.xl, // Use theme spacing
+    zIndex: 1000, // Ensure FAB and menu are above overlay
   },
   gridPlacementContainer: {
     position: 'absolute',
-    bottom: 90, // Position grid above the FAB (60 height + 30 bottom padding)
+    // Adjust bottom based on FAB height (60) + container paddingBottom (theme.spacing.xl)
+    // and desired spacing between FAB and grid (e.g., theme.spacing.md)
+    bottom: 60 + theme.spacing.xl + theme.spacing.md,
     left: 0,
     right: 0,
-    alignItems: 'center', // Center the ActionCardGrid component itself
+    alignItems: 'center',
   },
   fab: {
-    position: 'absolute', // Position FAB absolutely within the container
-    bottom: 30, // Position relative to container bottom padding
-    right: 30, // Position relative to container right padding
-    backgroundColor: '#007AFF',
+    position: 'absolute',
+    bottom: theme.spacing.xl,
+    right: theme.spacing.xl,
+    backgroundColor: theme.colors.primary,
     width: 60,
     height: 60,
-    borderRadius: 30,
+    borderRadius: 30, // Half of width/height for a perfect circle
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
+    ...theme.shadows.lg, // Use a more prominent shadow for FAB
   },
   fabActive: {
-    backgroundColor: '#FF3B30',
+    backgroundColor: theme.colors.error, // Or a different theme color for active/close state
   },
   fabIcon: {
     width: 30,

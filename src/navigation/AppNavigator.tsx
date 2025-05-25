@@ -4,10 +4,20 @@ import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import {Ionicons} from '@expo/vector-icons';
 import {useSelector} from 'react-redux';
-import {selectIsAuthenticated} from '@/store/slices/authSlice';
-import {Platform, StyleSheet} from 'react-native';
+import {
+  selectIsAuthenticated,
+  selectAuthStatus,
+} from '@/store/slices/authSlice';
+import {
+  selectOnboardingComplete,
+  selectProfileStatus,
+} from '@/store/slices/profileSlice';
+import {ActivityIndicator, View, StyleSheet} from 'react-native';
 import {CustomTabBarButton} from '@/components/navigation/CustomTabBarButton';
 import {useTheme} from '@/hooks/useTheme';
+import {formatISODate} from '@/utils/dateUtils';
+import OnboardingNavigator from './OnboardingNavigator';
+import {Platform} from 'react-native';
 
 // Import your screen components here
 // Auth Screens
@@ -39,10 +49,12 @@ import {
   FoodDBStackParamList,
   SubscriptionStackParamList,
   WeightStackParamList,
+  OnboardingStackParamList,
 } from '@/types/navigation';
 
 const Stack = createNativeStackNavigator<AppStackParamList>();
-const AuthStack = createNativeStackNavigator<AuthStackParamList>();
+const AuthStackNav = createNativeStackNavigator<AuthStackParamList>();
+const OnboardingStack = createNativeStackNavigator<OnboardingStackParamList>();
 const Tab = createBottomTabNavigator<MainTabParamList>();
 const HomeStackNavigator = createNativeStackNavigator<HomeStackParamList>();
 const ProgressStackNavigator =
@@ -87,10 +99,10 @@ function ExerciseStack() {
 // Auth Stack
 function AuthNavigator() {
   return (
-    <AuthStack.Navigator screenOptions={{headerShown: false}}>
-      <AuthStack.Screen name="Login" component={LoginScreen} />
-      <AuthStack.Screen name="SignUp" component={SignUpScreen} />
-    </AuthStack.Navigator>
+    <AuthStackNav.Navigator screenOptions={{headerShown: false}}>
+      <AuthStackNav.Screen name="Login" component={LoginScreen} />
+      <AuthStackNav.Screen name="SignUp" component={SignUpScreen} />
+    </AuthStackNav.Navigator>
   );
 }
 
@@ -108,12 +120,43 @@ function MainTabs() {
       screenOptions={{
         headerShown: false,
         tabBarShowLabel: false, // Consistent with previous setup
-        tabBarActiveTintColor: '#007AFF', // From previous setup
-        tabBarInactiveTintColor: 'gray', // From previous setup
+        tabBarActiveTintColor: theme.colors.primary,
+        tabBarInactiveTintColor: theme.colors.textSecondary,
         tabBarStyle: {
           backgroundColor: theme.colors.surface,
         },
       }}>
+      <Tab.Screen
+        name="FoodDBTab"
+        component={FoodDBNavigator}
+        options={{
+          tabBarLabel: 'Food DB',
+          tabBarIcon: ({
+            focused,
+            color,
+            size,
+          }: {
+            focused: boolean;
+            color: string;
+            size: number;
+          }) => (
+            <Ionicons
+              name={focused ? 'search-circle' : 'search-circle-outline'}
+              size={size * 0.9}
+              color={color}
+            />
+          ),
+        }}
+        listeners={({navigation}) => ({
+          tabPress: e => {
+            e.preventDefault();
+            navigation.navigate('FoodDBTab', { 
+              screen: 'FoodSearch', 
+              params: { dateToLog: formatISODate(new Date()) } 
+            });
+          },
+        })}
+      />
       <Tab.Screen
         name="HomeTab"
         component={HomeStack}
@@ -193,12 +236,36 @@ function MainTabs() {
 
 // Root App Navigator
 export default function AppNavigator() {
+  const authStatus = useSelector(selectAuthStatus);
   const isAuthenticated = useSelector(selectIsAuthenticated);
+  const onboardingComplete = useSelector(selectOnboardingComplete);
+  const profileStatus = useSelector(selectProfileStatus);
+  const theme = useTheme();
+
+  if (authStatus === 'idle' || authStatus === 'loading') {
+    return (
+      <View style={[styles.centered, {backgroundColor: theme.colors.background}]}>
+        <ActivityIndicator size="large" color={theme.colors.primary} />
+      </View>
+    );
+  }
+
+  if (isAuthenticated && (profileStatus === 'idle' || profileStatus === 'loading')) {
+    return (
+      <View style={[styles.centered, {backgroundColor: theme.colors.background}]}>
+        <ActivityIndicator size="large" color={theme.colors.primary} />
+      </View>
+    );
+  }
 
   return (
     <NavigationContainer>
       <Stack.Navigator screenOptions={{headerShown: false}}>
-        {isAuthenticated ? (
+        {!isAuthenticated ? (
+          <Stack.Screen name="Auth" component={AuthNavigator} />
+        ) : !onboardingComplete ? (
+          <Stack.Screen name="Onboarding" component={OnboardingNavigator} />
+        ) : (
           <>
             <Stack.Screen name="Main" component={MainTabs} />
             <Stack.Screen name="SettingsNav" component={SettingsNavigator} />
@@ -215,32 +282,17 @@ export default function AppNavigator() {
               {/* <Stack.Screen name="FoodDetailsModal" component={FoodDetailsScreen} /> */}
             </Stack.Group>
           </>
-        ) : (
-          <Stack.Screen name="Auth" component={AuthNavigator} />
         )}
       </Stack.Navigator>
     </NavigationContainer>
   );
 }
 
-// Styles for the Tab Bar (copied from app/(app)/_layout.tsx)
 const styles = StyleSheet.create({
-  tabBarStyle: {
-    position: 'absolute',
-    bottom: Platform.OS === 'ios' ? 25 : 20,
-    left: 20,
-    right: 20,
-    elevation: 0, // Note: elevation for shadow on Android is often applied to the container, not the bar style directly for complex layouts.
-    backgroundColor: '#ffffff',
-    borderRadius: 15,
-    height: 70,
-    borderTopWidth: 0, // Explicitly set to remove default top border if any
-    // For shadow on iOS, it's often applied via shadowProps on the View, but react-navigation might handle this differently or require it on a wrapper.
-    // The custom button has its own shadow. For the bar itself, these are typical for iOS if needed directly on style:
-    // shadowColor: '#000',
-    // shadowOffset: { width: 0, height: -3 }, // Shadow pointing upwards
-    // shadowOpacity: 0.1,
-    // shadowRadius: 3,
+  centered: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
 

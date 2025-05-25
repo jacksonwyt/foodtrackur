@@ -1,7 +1,7 @@
 import React from 'react';
 import {Text as RNText, TextProps, StyleSheet} from 'react-native';
-import {useTheme} from '../../hooks/useTheme';
-import {Theme} from '../../constants/theme'; // Assuming Theme interface is here
+import {useTheme} from '@/hooks/useTheme';
+import {Theme} from '@/constants/theme'; // Corrected import path
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 interface AppTextProps extends TextProps {

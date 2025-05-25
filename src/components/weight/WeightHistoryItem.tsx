@@ -1,12 +1,16 @@
 import React from 'react';
 import {View, Text, StyleSheet} from 'react-native';
 import type { WeightLogRow } from '../../types/weightLog';
+import {useTheme} from '../../hooks/useTheme';
+import type {Theme} from '../../constants/theme';
 
 interface Props {
   entry: WeightLogRow;
 }
 
 export const WeightHistoryItem: React.FC<Props> = ({entry}) => {
+  const theme = useTheme();
+  const styles = makeStyles(theme);
   const logDate = new Date(entry.log_date);
 
   return (
@@ -22,31 +26,32 @@ export const WeightHistoryItem: React.FC<Props> = ({entry}) => {
   );
 };
 
-const styles = StyleSheet.create({
+const makeStyles = (theme: Theme) => StyleSheet.create({
   historyItem: {
-    padding: 16,
-    backgroundColor: '#f5f5f5',
-    borderRadius: 12,
-    marginBottom: 10,
+    padding: theme.spacing.md,
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.borderRadius.lg,
+    marginBottom: theme.spacing.sm,
   },
   infoContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: theme.spacing.sm,
   },
   weightValue: {
-    fontSize: 18,
-    fontWeight: '600',
+    fontSize: theme.typography.sizes.bodyLarge,
+    fontWeight: theme.typography.weights.semibold,
+    color: theme.colors.text,
   },
   weightDate: {
-    fontSize: 14,
-    color: '#666',
+    fontSize: theme.typography.sizes.body,
+    color: theme.colors.textSecondary,
   },
   weightNote: {
-    fontSize: 14,
-    color: '#666',
+    fontSize: theme.typography.sizes.body,
+    color: theme.colors.textSecondary,
     fontStyle: 'italic',
-    marginTop: 4,
+    marginTop: theme.spacing.xs,
   },
 });

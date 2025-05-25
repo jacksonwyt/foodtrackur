@@ -39,6 +39,7 @@ export const colors = {
 
   // Text Colors
   text: '#000000', // Primary text color (high contrast)
+  textRGB: hexToRgbString('#000000'), // Added for rgba usage
   textSecondary: '#3C3C43', // Medium Gray - for subheadings, less important text (iOS Label)
   textSecondaryRGB: hexToRgbString('#3C3C43'), // Added
   textPlaceholder: '#3C3C43', // Placeholder text (iOS Placeholder Text, opacity 0.3)
@@ -66,6 +67,12 @@ export const colors = {
   // Status colors (keeping existing, consider if they map to semantic colors)
   active: '#34C759', // Could map to success
   inactive: '#8E8E93', // A darker medium gray for inactive states
+
+  // Meal Category Colors
+  mealBreakfast: '#FFCC00', // Yellow for breakfast
+  mealLunch: '#34C759', // Green for lunch
+  mealDinner: '#B22222', // Deep Red for dinner
+  mealSnack: '#FF9500', // Bright Orange for snacks
 
   // Disabled Colors
   surfaceDisabled: '#E5E5EA', // A light gray for disabled surfaces (iOS-like)

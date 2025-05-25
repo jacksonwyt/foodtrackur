@@ -1,6 +1,8 @@
 import React from 'react';
 import {View, Text, StyleSheet, TouchableOpacity} from 'react-native';
 import {Ionicons} from '@expo/vector-icons';
+import {useTheme} from '../../hooks/useTheme';
+import type {Theme} from '../../constants/theme';
 
 // Consider moving this to a shared types file (e.g., src/types/food.ts) later
 export interface FoodLogItem {
@@ -37,18 +39,19 @@ const getCategoryIcon = (category: FoodLogItem['category']) => {
   }
 };
 
-const getCategoryColor = (category: FoodLogItem['category']) => {
+// Modified to use theme colors or placeholders
+const getCategoryColor = (category: FoodLogItem['category'], theme: Theme) => {
   switch (category) {
     case 'breakfast':
-      return '#FF9500'; // Orange
+      return theme.colors.mealBreakfast;
     case 'lunch':
-      return '#34C759'; // Green
+      return theme.colors.mealLunch;
     case 'dinner':
-      return '#5856D6'; // Indigo
+      return theme.colors.mealDinner;
     case 'snack':
-      return '#FF3B30'; // Red
+      return theme.colors.mealSnack;
     default:
-      return '#007AFF'; // Blue
+      return theme.colors.primary;
   }
 };
 
@@ -56,6 +59,10 @@ export const FoodLogListItem: React.FC<FoodLogListItemProps> = ({
   item,
   onPress,
 }) => {
+  const theme = useTheme();
+  const styles = makeStyles(theme);
+  const categoryColor = getCategoryColor(item.category, theme);
+
   return (
     <TouchableOpacity
       style={styles.itemContainer}
@@ -64,12 +71,12 @@ export const FoodLogListItem: React.FC<FoodLogListItemProps> = ({
         <View
           style={[
             styles.categoryIcon,
-            {backgroundColor: getCategoryColor(item.category)},
+            {backgroundColor: categoryColor},
           ]}>
           <Ionicons
             name={getCategoryIcon(item.category)}
             size={16}
-            color="#fff"
+            color={theme.colors.onPrimary}
           />
         </View>
         <View style={styles.itemLeft}>
@@ -97,10 +104,10 @@ export const FoodLogListItem: React.FC<FoodLogListItemProps> = ({
   );
 };
 
-// Styles extracted from RecentlyLogged.tsx specific to the list item
-const styles = StyleSheet.create({
+// Added makeStyles
+const makeStyles = (theme: Theme) => StyleSheet.create({
   itemContainer: {
-    paddingVertical: 12,
+    paddingVertical: theme.spacing.sm,
   },
   itemContent: {
     flexDirection: 'row',
@@ -109,40 +116,40 @@ const styles = StyleSheet.create({
   categoryIcon: {
     width: 32,
     height: 32,
-    borderRadius: 16,
+    borderRadius: theme.borderRadius.round,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 12,
+    marginRight: theme.spacing.sm,
   },
   itemLeft: {
     flex: 1,
-    marginRight: 8, // Add margin to prevent text overlap
+    marginRight: theme.spacing.xs,
   },
   itemName: {
-    fontSize: 16,
-    color: '#333',
-    marginBottom: 4,
-    fontWeight: '500',
+    fontSize: theme.typography.sizes.body,
+    color: theme.colors.text,
+    marginBottom: theme.spacing.xxs,
+    fontWeight: theme.typography.weights.medium,
   },
   itemDetails: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   itemTime: {
-    fontSize: 13,
-    color: '#666',
+    fontSize: theme.typography.sizes.caption,
+    color: theme.colors.textSecondary,
   },
   macros: {
-    fontSize: 13,
-    color: '#666',
-    marginLeft: 4,
-    flexShrink: 1, // Allow macro text to shrink
+    fontSize: theme.typography.sizes.caption,
+    color: theme.colors.textSecondary,
+    marginLeft: theme.spacing.xxs,
+    flexShrink: 1,
   },
   itemCalories: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#333',
-    marginLeft: 'auto', // Push calories to the right
+    fontSize: theme.typography.sizes.bodySmall,
+    fontWeight: theme.typography.weights.semibold,
+    color: theme.colors.text,
+    marginLeft: 'auto',
     textAlign: 'right',
   },
 });

@@ -1,6 +1,8 @@
 import React from 'react';
 import {View, Text, StyleSheet, TouchableOpacity} from 'react-native';
 import {Ionicons} from '@expo/vector-icons';
+import {useTheme} from '../../hooks/useTheme';
+import type {Theme} from '../../constants/theme';
 
 interface RecentlyLoggedEmptyStateProps {
   onAddPress: () => void;
@@ -9,71 +11,69 @@ interface RecentlyLoggedEmptyStateProps {
 export const RecentlyLoggedEmptyState: React.FC<
   RecentlyLoggedEmptyStateProps
 > = ({onAddPress}) => {
+  const theme = useTheme();
+  const styles = makeStyles(theme);
+
   return (
     <View style={styles.emptyContainer}>
       <View style={styles.emptyIconContainer}>
-        <Ionicons name="restaurant-outline" size={40} color="#8E8E93" />
+        <Ionicons name="restaurant-outline" size={40} color={theme.colors.textSecondary} />
       </View>
       <Text style={styles.emptyTitle}>No meals logged yet</Text>
       <Text style={styles.emptySubtitle}>
         Log your meals using the + button or quick actions below.
       </Text>
       <TouchableOpacity style={styles.addButton} onPress={onAddPress}>
-        <Ionicons name="add" size={20} color="#fff" style={styles.addIcon} />
+        <Ionicons name="add" size={20} color={theme.colors.onPrimary} style={styles.addIcon} />
         <Text style={styles.addButtonText}>Add Your First Meal</Text>
       </TouchableOpacity>
     </View>
   );
 };
 
-// Styles extracted from RecentlyLogged.tsx specific to the empty state
-const styles = StyleSheet.create({
+const makeStyles = (theme: Theme) => StyleSheet.create({
   emptyContainer: {
     alignItems: 'center',
-    paddingVertical: 30, // Increased padding
-    paddingHorizontal: 20,
+    paddingVertical: theme.spacing.xl,
+    paddingHorizontal: theme.spacing.lg,
   },
   emptyIconContainer: {
     width: 80,
     height: 80,
-    borderRadius: 40,
-    backgroundColor: '#F2F2F7', // Lighter background
+    borderRadius: theme.borderRadius.full,
+    backgroundColor: theme.colors.backgroundSecondary,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 20,
+    marginBottom: theme.spacing.lg,
   },
   emptyTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#1C1C1E', // Darker text
-    marginBottom: 8,
+    fontSize: theme.typography.sizes.h3,
+    fontWeight: theme.typography.weights.semibold,
+    color: theme.colors.text,
+    marginBottom: theme.spacing.sm,
   },
   emptySubtitle: {
-    fontSize: 14,
-    color: '#636366', // Slightly darker subtitle
+    fontSize: theme.typography.sizes.body,
+    color: theme.colors.textSecondary,
     textAlign: 'center',
-    marginBottom: 24,
-    lineHeight: 20,
+    marginBottom: theme.spacing.lg,
+    lineHeight: theme.typography.sizes.body * theme.typography.lineHeights.normal,
   },
   addButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#007AFF',
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 25, // More rounded
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 1},
-    shadowOpacity: 0.2,
-    shadowRadius: 2,
+    backgroundColor: theme.colors.primary,
+    paddingHorizontal: theme.spacing.xl,
+    paddingVertical: theme.spacing.md,
+    borderRadius: theme.borderRadius.round,
+    ...theme.shadows.sm,
   },
   addIcon: {
-    marginRight: 8,
+    marginRight: theme.spacing.sm,
   },
   addButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
+    color: theme.colors.onPrimary,
+    fontSize: theme.typography.sizes.bodyLarge,
+    fontWeight: theme.typography.weights.semibold,
   },
 });

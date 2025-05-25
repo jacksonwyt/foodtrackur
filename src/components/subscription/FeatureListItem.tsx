@@ -1,6 +1,8 @@
 import React from 'react';
 import {View, Text, StyleSheet} from 'react-native';
 import {Ionicons} from '@expo/vector-icons';
+import {useTheme} from '@/hooks/useTheme';
+import type {Theme} from '@/constants/theme';
 
 interface FeatureListItemProps {
   icon: React.ComponentProps<typeof Ionicons>['name'];
@@ -13,10 +15,12 @@ const FeatureListItem: React.FC<FeatureListItemProps> = ({
   title,
   description,
 }) => {
+  const theme = useTheme();
+  const styles = makeStyles(theme);
   return (
     <View style={styles.featureItem}>
       <View style={styles.featureIcon}>
-        <Ionicons name={icon} size={24} color="#000" />
+        <Ionicons name={icon} size={24} color={theme.colors.primary} />
       </View>
       <View style={styles.featureText}>
         <Text style={styles.featureTitle}>{title}</Text>
@@ -26,32 +30,33 @@ const FeatureListItem: React.FC<FeatureListItemProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
+const makeStyles = (theme: Theme) => StyleSheet.create({
   featureItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: theme.spacing.md,
   },
   featureIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: '#f0f0f0',
+    width: theme.spacing.xxxl,
+    height: theme.spacing.xxxl,
+    borderRadius: theme.borderRadius.round,
+    backgroundColor: theme.colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 16,
+    marginRight: theme.spacing.md,
   },
   featureText: {
     flex: 1,
   },
   featureTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 4,
+    fontSize: theme.typography.sizes.body,
+    fontWeight: theme.typography.weights.semibold,
+    marginBottom: theme.spacing.xs,
+    color: theme.colors.text,
   },
   featureDescription: {
-    fontSize: 14,
-    color: '#666',
+    fontSize: theme.typography.sizes.bodySmall,
+    color: theme.colors.textSecondary,
   },
 });
 

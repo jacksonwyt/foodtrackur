@@ -1,6 +1,8 @@
 import React from 'react';
 import {View, Text, StyleSheet, TouchableOpacity, Platform} from 'react-native';
 import {Ionicons} from '@expo/vector-icons';
+import {useTheme} from '@/hooks/useTheme';
+import type {Theme} from '@/constants/theme';
 
 interface SubscriptionHeaderProps {
   title: string;
@@ -11,35 +13,36 @@ const SubscriptionHeader: React.FC<SubscriptionHeaderProps> = ({
   title,
   onClose,
 }) => {
+  const theme = useTheme();
+  const styles = makeStyles(theme);
   return (
     <View style={styles.header}>
       <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-        <Ionicons name="close" size={24} color="#000" />
+        <Ionicons name="close" size={24} color={theme.colors.text} />
       </TouchableOpacity>
       <Text style={styles.title}>{title}</Text>
     </View>
   );
 };
 
-const styles = StyleSheet.create({
+const makeStyles = (theme: Theme) => StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 20,
-    paddingTop: Platform.OS === 'ios' ? 60 : 20, // Adjust top padding for iOS status bar
+    padding: theme.spacing.md,
+    paddingTop: Platform.OS === 'ios' ? theme.spacing.xxxl + theme.spacing.sm : theme.spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
-    backgroundColor: '#fff', // Ensure header has a background
+    borderBottomColor: theme.colors.border,
+    backgroundColor: theme.colors.background,
   },
   closeButton: {
-    // Make the touchable area larger if needed
-    padding: 8, // Add padding to increase touch area
-    marginRight: 8, // Adjust spacing
+    padding: theme.spacing.sm,
+    marginRight: theme.spacing.sm,
   },
   title: {
-    fontSize: 20,
-    fontWeight: '600',
-    // Removed marginLeft to let flexbox handle spacing if needed, or adjust as required
+    fontSize: theme.typography.sizes.h3,
+    fontWeight: theme.typography.weights.semibold,
+    color: theme.colors.text,
   },
 });
 

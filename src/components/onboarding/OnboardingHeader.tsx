@@ -14,7 +14,7 @@ export const OnboardingHeader: React.FC<OnboardingHeaderProps> = ({
   return (
     <View style={styles.headerContainer}>
       <Text style={styles.title}>{title}</Text>
-      {subtitle && <Text style={styles.subtitle}>{subtitle}</Text>}{' '}
+      {subtitle && <Text style={styles.subtitle}>{subtitle}</Text>}
       {/* Conditionally render subtitle */}
     </View>
   );

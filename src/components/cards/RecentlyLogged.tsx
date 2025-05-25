@@ -3,6 +3,8 @@ import {View, Text, StyleSheet, FlatList, TouchableOpacity} from 'react-native';
 import {Ionicons} from '@expo/vector-icons';
 import {FoodLogListItem, FoodLogItem} from '../items/FoodLogListItem';
 import {RecentlyLoggedEmptyState} from '../items/RecentlyLoggedEmptyState';
+import {useTheme} from '@/hooks/useTheme';
+import type {Theme} from '@/constants/theme';
 
 interface RecentlyLoggedProps {
   items: FoodLogItem[];
@@ -17,6 +19,9 @@ export const RecentlyLogged: React.FC<RecentlyLoggedProps> = ({
   onViewAllPress,
   onAddPress,
 }) => {
+  const theme = useTheme();
+  const styles = makeStyles(theme);
+
   const renderItem = ({item}: {item: FoodLogItem}) => (
     <FoodLogListItem item={item} onPress={onItemPress} />
   );
@@ -30,7 +35,7 @@ export const RecentlyLogged: React.FC<RecentlyLoggedProps> = ({
             onPress={onViewAllPress}
             style={styles.viewAllButton}>
             <Text style={styles.viewAll}>View All</Text>
-            <Ionicons name="chevron-forward" size={16} color="#007AFF" />
+            <Ionicons name="chevron-forward" size={16} color={theme.colors.primary} />
           </TouchableOpacity>
         )}
       </View>
@@ -50,49 +55,42 @@ export const RecentlyLogged: React.FC<RecentlyLoggedProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
+const makeStyles = (theme: Theme) => StyleSheet.create({
   container: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    marginHorizontal: 20,
-    marginVertical: 10,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 3,
-    overflow: 'hidden',
+    // backgroundColor: theme.colors.surface,
+    // borderRadius: theme.borderRadius.lg,
+    // marginHorizontal: theme.spacing.lg,
+    // marginVertical: theme.spacing.sm,
+    // ...theme.shadows.sm,
+    // overflow: 'hidden',
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingTop: 16,
-    paddingHorizontal: 16,
-    paddingBottom: 12,
+    paddingTop: theme.spacing.md,
+    paddingHorizontal: theme.spacing.md,
+    paddingBottom: theme.spacing.sm,
   },
   title: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#1C1C1E',
+    fontSize: theme.typography.sizes.h3,
+    fontWeight: theme.typography.weights.semibold,
+    color: theme.colors.text,
   },
   viewAllButton: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   viewAll: {
-    fontSize: 14,
-    color: '#007AFF',
-    fontWeight: '500',
-    marginRight: 2,
+    fontSize: theme.typography.sizes.body,
+    color: theme.colors.primary,
+    fontWeight: theme.typography.weights.medium,
+    marginRight: theme.spacing.xxs,
   },
   separator: {
     height: 1,
-    backgroundColor: '#E5E5EA',
-    marginLeft: 16 + 32 + 12,
-    marginRight: 16,
+    backgroundColor: theme.colors.border,
+    marginLeft: theme.spacing.md + 32 + theme.spacing.sm,
+    marginRight: theme.spacing.md,
   },
 });

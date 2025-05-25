@@ -1,7 +1,7 @@
 import {useMemo} from 'react';
 import {Dimensions} from 'react-native';
-import {ChartConfig} from 'react-native-chart-kit/dist/HelperTypes'; // Approximate type
-import theme from '../constants/theme'; // Assuming theme path
+import {ChartConfig} from 'react-native-chart-kit/dist/HelperTypes';
+import theme from '../constants/theme';
 
 interface DataPoint {
   value: number;
@@ -11,7 +11,6 @@ interface DataPoint {
 interface UseProgressChartLogicProps {
   data: DataPoint[];
   color?: string;
-  // theme could be passed here if needed, or accessed via context
 }
 
 interface UseProgressChartLogicReturn {
@@ -32,8 +31,8 @@ export const useProgressChartLogic = ({
   color = theme.colors.primary,
 }: UseProgressChartLogicProps): UseProgressChartLogicReturn => {
   const chartWidth = useMemo(() => {
-    return Dimensions.get('window').width - theme.spacing.md * 2;
-  }, []); // Recalculates only if Dimensions change (though unlikely without listener)
+    return Dimensions.get('window').width - theme.spacing.lg * 2;
+  }, []);
 
   const chartData = useMemo(() => {
     return {
@@ -41,7 +40,7 @@ export const useProgressChartLogic = ({
       datasets: [
         {
           data: data.map(point => point.value),
-          color: () => color, // Use the provided color
+          color: () => color,
           strokeWidth: 2,
         },
       ],
@@ -49,23 +48,29 @@ export const useProgressChartLogic = ({
   }, [data, color]);
 
   const chartConfig: ChartConfig = useMemo(() => {
+    const defaultPrimaryRGB = '100,100,100'; // A neutral grey
+    const defaultTextSecondaryRGB = '150,150,150'; // A slightly lighter grey
+
+    const primaryRgbToUse = theme.colors.primaryRGB || defaultPrimaryRGB;
+    const textSecondaryRgbToUse = theme.colors.textSecondaryRGB || defaultTextSecondaryRGB;
+
     return {
       backgroundColor: theme.colors.background,
       backgroundGradientFrom: theme.colors.background,
       backgroundGradientTo: theme.colors.background,
       decimalPlaces: 0,
-      color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`, // Base color, actual line color is from dataset
-      labelColor: () => theme.colors.textSecondary,
+      color: (opacity = 1) => `rgba(${primaryRgbToUse}, ${opacity})`,
+      labelColor: (opacity = 1) => `rgba(${textSecondaryRgbToUse}, ${opacity})`,
       style: {
         borderRadius: theme.borderRadius.md,
       },
       propsForDots: {
         r: '4',
         strokeWidth: '2',
-        stroke: color, // Use the provided color for dots
+        stroke: color,
       },
     };
-  }, [color]); // Regenerate config if color changes
+  }, [color]);
 
   return {
     chartData,

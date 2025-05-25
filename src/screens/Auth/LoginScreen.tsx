@@ -97,7 +97,7 @@ export function LoginScreen({
     if (authError) {
       dispatch(clearAuthError());
     }
-  }, [email, password, dispatch]);
+  }, [email, password, dispatch, authError]);
 
   const navigateToSignUp = () => {
     navigation.navigate('SignUp');
@@ -176,7 +176,7 @@ export function LoginScreen({
           onPress={navigateToSignUp}
           disabled={authStatus === 'loading'}>
           <Text style={styles.secondaryButtonText}>
-            Don't have an account? <Text style={styles.signUpLink}>Sign Up</Text>
+            Don&apos;t have an account? <Text style={styles.signUpLink}>Sign Up</Text>
           </Text>
         </TouchableOpacity>
       </View>
@@ -248,7 +248,7 @@ const styles = StyleSheet.create({
   errorContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFEEEE', // Placeholder for theme.colors.errorBackground
+    backgroundColor: theme.colors.errorBackground, // Placeholder for theme.colors.errorBackground
     paddingHorizontal: theme.spacing.md,
     paddingVertical: theme.spacing.sm,
     borderRadius: theme.borderRadius.md,

@@ -1,7 +1,7 @@
 import React from 'react';
 import {View, StyleSheet, Dimensions} from 'react-native';
 import Svg, {Circle, G} from 'react-native-svg';
-import {useTheme} from '../../hooks/useTheme';
+import {useTheme} from '@/hooks/useTheme';
 import {AppText as Text} from '../common/AppText';
 
 interface CalorieSummaryProps {

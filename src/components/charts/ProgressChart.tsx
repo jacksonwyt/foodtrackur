@@ -1,8 +1,8 @@
 import React from 'react';
 import {View, StyleSheet, Text} from 'react-native';
 import {LineChart} from 'react-native-chart-kit';
-import {useProgressChartLogic} from '../../hooks/useProgressChartLogic';
-import {useTheme} from '../../hooks/useTheme';
+import {useProgressChartLogic} from '@/hooks/useProgressChartLogic';
+import {useTheme} from '@/hooks/useTheme';
 
 interface DataPoint {
   value: number;
@@ -11,78 +11,75 @@ interface DataPoint {
 
 interface ProgressChartProps {
   data: DataPoint[];
-  title: string;
   unit: string;
-  color?: string;
+  lineColor?: string;
 }
 
 const ProgressChart: React.FC<ProgressChartProps> = ({
   data,
-  title,
   unit,
-  color,
+  lineColor,
 }) => {
   const theme = useTheme();
   const styles = makeStyles(theme);
 
   const {chartData, chartConfig, chartWidth} = useProgressChartLogic({
     data,
-    color,
+    color: lineColor || theme.colors.primary,
   });
 
   if (
     !chartData ||
+    !chartData.labels ||
     chartData.labels.length === 0 ||
+    !chartData.datasets ||
+    chartData.datasets.length === 0 ||
+    !chartData.datasets[0] ||
     chartData.datasets[0].data.length === 0
   ) {
     return (
-      <View style={styles.container}>
-        <Text style={styles.title}>{title}</Text>
+      <View style={styles.noDataContainer}>
         <Text style={styles.noDataText}>No data available for chart.</Text>
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>{title}</Text>
-      <LineChart
-        data={chartData}
-        width={chartWidth}
-        height={220}
-        chartConfig={chartConfig}
-        bezier
-        style={styles.chart}
-        yAxisSuffix={unit}
-        yAxisInterval={1}
-      />
-    </View>
+    <LineChart
+      data={chartData}
+      width={chartWidth}
+      height={220}
+      chartConfig={chartConfig}
+      bezier
+      style={styles.chart}
+      yAxisSuffix={unit}
+      yAxisLabel=""
+      yAxisInterval={1}
+      withInnerLines={true}
+      withOuterLines={false}
+      fromZero={false}
+    />
   );
 };
 
 const makeStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
-  container: {
-    marginVertical: theme.spacing.md,
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.borderRadius.md,
-    padding: theme.spacing.md,
-    ...theme.shadows.sm,
-  },
-  title: {
-    marginBottom: theme.spacing.md,
-    fontSize: theme.typography.sizes.h6,
-    fontWeight: theme.typography.weights.bold,
-    color: theme.colors.text,
-  },
   chart: {
-    marginVertical: theme.spacing.sm,
+    alignSelf: 'center',
+    backgroundColor: theme.colors.background,
+    borderRadius: theme.borderRadius.md,
+  },
+  noDataContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: theme.spacing.md,
+    height: 220,
     borderRadius: theme.borderRadius.md,
   },
   noDataText: {
     color: theme.colors.textSecondary,
     fontStyle: 'italic',
     textAlign: 'center',
-    paddingVertical: theme.spacing.lg,
   },
 });
 

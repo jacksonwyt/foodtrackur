@@ -1,5 +1,6 @@
 import React from 'react';
 import {View, StyleSheet} from 'react-native';
+import {SafeAreaView} from 'react-native-safe-area-context';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import type {OnboardingStackParamList, GoalType} from '../../types/navigation';
 import {useGoalsScreenLogic} from '../../hooks/useGoalsScreenLogic';
@@ -33,7 +34,7 @@ export const GoalsScreen: React.FC<GoalsScreenProps> = () => {
   );
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <GoalsList
         goals={goals}
         selectedGoalId={selectedGoalId}
@@ -46,7 +47,7 @@ export const GoalsScreen: React.FC<GoalsScreenProps> = () => {
         onPress={handlePressContinue}
         disabled={!selectedGoalId}
       />
-    </View>
+    </SafeAreaView>
   );
 };
 

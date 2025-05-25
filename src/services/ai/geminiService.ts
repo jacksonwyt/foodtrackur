@@ -17,10 +17,10 @@ export interface FoodLogItemData {
 interface GeminiFoodItem {
   food_name: string;
   serving_description: string; // e.g., "1 medium (approx 182g)", "100g", "1 cup"
-  calories: number;
-  protein: number;
-  carbs: number;
-  fat: number;
+  calories: number | string; // Can be string from API
+  protein: number | string;  // Can be string from API
+  carbs: number | string;    // Can be string from API
+  fat: number | string;      // Can be string from API
 }
 
 // Expected root structure of Gemini's JSON response
@@ -220,21 +220,27 @@ Do not include any introductory text or explanations outside of the JSON structu
             // TODO: Future enhancement - allow user to select if multiple items are returned.
             const firstFoodItem = parsedResponse.food_items[0];
 
+            // Convert string nutritional values to numbers
+            const calories = parseFloat(firstFoodItem.calories as string);
+            const protein = parseFloat(firstFoodItem.protein as string);
+            const carbs = parseFloat(firstFoodItem.carbs as string);
+            const fat = parseFloat(firstFoodItem.fat as string);
+
             // Validate the structure of the first food item
             if (
               typeof firstFoodItem.food_name === 'string' &&
               typeof firstFoodItem.serving_description === 'string' &&
-              typeof firstFoodItem.calories === 'number' &&
-              typeof firstFoodItem.protein === 'number' &&
-              typeof firstFoodItem.carbs === 'number' &&
-              typeof firstFoodItem.fat === 'number'
+              !isNaN(calories) && // Check if parsing was successful
+              !isNaN(protein) &&
+              !isNaN(carbs) &&
+              !isNaN(fat)
             ) {
               const foodLogData: FoodLogItemData = {
                 food_name: firstFoodItem.food_name,
-                calories: firstFoodItem.calories,
-                protein: firstFoodItem.protein,
-                carbs: firstFoodItem.carbs,
-                fat: firstFoodItem.fat,
+                calories: calories,
+                protein: protein,
+                carbs: carbs,
+                fat: fat,
                 serving_unit: firstFoodItem.serving_description,
               };
               console.log(
@@ -244,8 +250,8 @@ Do not include any introductory text or explanations outside of the JSON structu
               return foodLogData;
             } else {
               console.error(
-                'Gemini response food_item has missing or invalid fields:',
-                firstFoodItem,
+                'Gemini response food_item has missing or invalid fields (after parsing attempt):',
+                {...firstFoodItem, calories, protein, carbs, fat}, // Log parsed values
               );
               return null;
             }

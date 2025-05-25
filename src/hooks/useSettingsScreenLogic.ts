@@ -114,9 +114,6 @@ export const useSettingsScreenLogic = (): {
       // This is a common pattern, but consider if a global auth listener makes more sense
       // for your app's architecture, especially for handling session restoration and
       // reacting to auth state changes.
-      if (!session) {
-        console.log('No session, navigating to Auth');
-      }
     }
   };
 

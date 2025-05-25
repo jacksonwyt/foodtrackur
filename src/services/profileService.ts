@@ -1,55 +1,9 @@
 import {supabase} from './supabaseClient';
 import {getCurrentUser} from './auth/authService';
 import {type PostgrestError} from '@supabase/supabase-js';
+import {type GenderType, type ActivityLevelType, type GoalType} from '../types/navigation';
 // import {User} from '@supabase/supabase-js'; // Not strictly needed if only authUser.id is used
 import {type Profile, type UpdateProfileData} from '../types/profile';
-
-// --- Profile Interface ---
-// Define based on expected columns in your Supabase 'profiles' table.
-// Ensure this matches the table structure you create in the Supabase dashboard.
-export interface Profile {
-  id: string; // Should match auth.users.id (UUID)
-  updated_at?: string; // Supabase automatically handles this
-  created_at?: string; // Supabase automatically handles this
-  username?: string;
-  email?: string; // Added email as it's commonly part of a profile
-  full_name?: string;
-  avatar_url?: string;
-  // Add other profile fields based on MVP.md requirements
-  // Add new fields based on onboarding data
-  height_cm?: number;
-  weight?: number; // e.g., in kg. Consider a separate weight_log table for history.
-  dob?: string; // ISO date string (YYYY-MM-DD)
-  gender?: GenderType;
-  activity_level?: ActivityLevelType;
-  // Removed goal_calories, goal_protein, goal_carbs, goal_fat as these seem like calculated TDEE, not stored profile prefs
-  // target goals are better for user-defined targets
-  target_calories?: number;
-  target_protein_g?: number;
-  target_carbs_g?: number;
-  target_fat_g?: number;
-  goal?: GoalType; // Use imported GoalType
-  goal_weight?: number | null; // Added: Desired target weight
-  goal_pace?: number | null; // Added: Desired pace (e.g., kg/week or lbs/week, can be negative for loss)
-}
-
-export interface UpdateProfileData {
-  username?: string;
-  dob?: string;
-  gender?: GenderType;
-  height_cm?: number;
-  activity_level?: ActivityLevelType;
-  target_calories?: number;
-  target_protein_g?: number;
-  target_carbs_g?: number;
-  target_fat_g?: number;
-  goal?: GoalType;
-  goal_weight?: number | null;
-  goal_pace?: number | null;
-  // full_name and avatar_url could also be updatable here
-  full_name?: string;
-  avatar_url?: string;
-}
 
 // --- Service Functions ---
 
@@ -134,15 +88,24 @@ export async function createProfile(
  * Updates the profile for the currently authenticated user.
  */
 export async function updateProfile(
-  userId: string, // userId is preferred over implicit getCurrentUser for direct operations
+  userId: string,
   updates: UpdateProfileData,
 ): Promise<Profile> {
-  // Return type is Profile, not Profile | null, implies success or throw
   if (!userId) throw new Error('User ID is required to update profile.');
 
-  // Construct the update object, ensuring `updated_at` is set.
-  // Supabase client handles this if the column is set to default now() or on update now()
-  // but explicit is also fine.
+  // --- BEGIN TEMPORARY LOG ---
+  try {
+    const sessionData = await supabase.auth.getSession();
+    if (sessionData.data.session) {
+      console.log('[updateProfile] Current Access Token:', sessionData.data.session.access_token);
+      console.log('[updateProfile] Current User from session in updateProfile:', sessionData.data.session.user.id);
+    } else {
+      console.log('[updateProfile] No active session found when trying to update profile.');
+    }
+  } catch (e) {
+    console.error('[updateProfile] Error getting session for logging:', e);
+  }
+  // --- END TEMPORARY LOG ---
   const updateWithTimestamp = {
     ...updates,
     updated_at: new Date().toISOString(),

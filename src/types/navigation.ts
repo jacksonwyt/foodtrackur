@@ -58,6 +58,7 @@ export type SettingsStackParamList = {
 
 // Define ParamList for the Main Tab Navigator
 export type MainTabParamList = {
+  FoodDBTab: NavigatorScreenParams<FoodDBStackParamList>; // ADDED FoodDBTab
   HomeTab: NavigatorScreenParams<HomeStackParamList>; // HomeTab now contains a stack
   AddModal: undefined; // Placeholder for the central button action
   ProgressTab: NavigatorScreenParams<ProgressStackParamList>; // ProgressTab contains a stack
@@ -68,6 +69,7 @@ export type MainTabParamList = {
 // This matches the structure in AppNavigator.tsx
 export type AppStackParamList = {
   Auth: NavigatorScreenParams<AuthStackParamList>;
+  Onboarding: NavigatorScreenParams<OnboardingStackParamList>; // Added Onboarding route
   Main: NavigatorScreenParams<MainTabParamList>;
   AddFood: {initialDate: string};
   SettingsNav: NavigatorScreenParams<SettingsStackParamList>; // MODIFIED to use SettingsStackParamList

@@ -1,6 +1,8 @@
 import React from 'react';
 import {View, Text, TouchableOpacity, StyleSheet} from 'react-native';
 import {Ionicons} from '@expo/vector-icons';
+import {useTheme} from '../../hooks/useTheme';
+import type {Theme} from '../../constants/theme';
 
 interface ActionCardProps {
   id: string;
@@ -15,42 +17,37 @@ export const ActionCard: React.FC<ActionCardProps> = ({
   icon,
   onPress,
 }) => {
+  const theme = useTheme();
+  const styles = makeStyles(theme);
+
   return (
     <TouchableOpacity key={id} style={styles.card} onPress={onPress}>
       <View style={styles.cardIcon}>
-        <Ionicons name={icon} size={40} color="#007AFF" />
+        <Ionicons name={icon} size={40} color={theme.colors.primary} />
       </View>
       <Text style={styles.cardLabel}>{label}</Text>
     </TouchableOpacity>
   );
 };
 
-const styles = StyleSheet.create({
+const makeStyles = (theme: Theme) => StyleSheet.create({
   card: {
-    backgroundColor: '#fff',
+    backgroundColor: theme.colors.surface,
     width: 150,
     height: 130,
-    borderRadius: 16,
-    padding: 16,
+    borderRadius: theme.borderRadius.xl,
+    padding: theme.spacing.md,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 5,
-    elevation: 5,
-    marginBottom: 12, // This might be better handled by the grid layout (gap)
+    ...theme.shadows.md,
   },
   cardIcon: {
-    marginBottom: 16,
+    marginBottom: theme.spacing.md,
   },
   cardLabel: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#333',
+    fontSize: theme.typography.sizes.bodyLarge,
+    fontWeight: theme.typography.weights.semibold,
+    color: theme.colors.text,
     textAlign: 'center',
   },
 });

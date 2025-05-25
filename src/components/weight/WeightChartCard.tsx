@@ -2,6 +2,8 @@ import React from 'react';
 import {View, Text, StyleSheet, Platform, Dimensions} from 'react-native';
 import {Ionicons} from '@expo/vector-icons';
 import {LineChart} from 'react-native-chart-kit';
+import {useTheme} from '../../hooks/useTheme';
+import type {Theme} from '../../constants/theme';
 
 // Define the expected structure for the chart data
 interface LineChartDataset {
@@ -22,15 +24,40 @@ interface Props {
   currentWeight: number | null;
 }
 
-const chartWidth = Dimensions.get('window').width - 48; // padding * 2
+const getChartConfig = (theme: Theme) => ({
+  backgroundColor: theme.colors.surface,
+  backgroundGradientFrom: theme.colors.surface,
+  backgroundGradientTo: theme.colors.surface,
+  decimalPlaces: 1,
+  color: (opacity = 1) => `rgba(${theme.colors.primaryRGB}, ${opacity})`,
+  labelColor: (opacity = 1) => `rgba(${theme.colors.textSecondaryRGB}, ${opacity})`,
+  style: {
+    borderRadius: theme.borderRadius.md,
+  },
+  propsForDots: {
+    r: '4',
+    strokeWidth: '2',
+    stroke: theme.colors.primary,
+  },
+  propsForBackgroundLines: {
+    strokeDasharray: '',
+    stroke: theme.colors.border,
+  },
+});
 
 export const WeightChartCard: React.FC<Props> = ({
   chartData,
   weightTrend,
   currentWeight,
 }) => {
-  const trendColor = weightTrend <= 0 ? '#4CAF50' : '#FF6B6B';
+  const theme = useTheme();
+  const styles = makeStyles(theme);
+  const chartConfig = getChartConfig(theme);
+
+  const trendColor = weightTrend <= 0 ? theme.colors.success : theme.colors.error;
   const trendIcon = weightTrend <= 0 ? 'trending-down' : 'trending-up';
+
+  const chartWidth = Dimensions.get('window').width - (theme.spacing.md * 2 + theme.spacing.sm * 2);
 
   const renderChart = () => {
     if (!chartData || !chartData.labels || chartData.labels.length === 0) {
@@ -46,24 +73,12 @@ export const WeightChartCard: React.FC<Props> = ({
         data={chartData}
         width={chartWidth}
         height={180}
-        chartConfig={{
-          backgroundColor: '#fff',
-          backgroundGradientFrom: '#fff',
-          backgroundGradientTo: '#fff',
-          decimalPlaces: 1,
-          color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
-          labelColor: (opacity = 1) => `rgba(100, 100, 100, ${opacity})`,
-          style: {
-            borderRadius: 16,
-          },
-          propsForDots: {
-            r: '4',
-            strokeWidth: '2',
-            stroke: '#000',
-          },
-        }}
+        chartConfig={chartConfig}
         bezier
         style={styles.chart}
+        withInnerLines={true}
+        withOuterLines={false}
+        fromZero={false}
       />
     );
   };
@@ -91,54 +106,46 @@ export const WeightChartCard: React.FC<Props> = ({
   );
 };
 
-const styles = StyleSheet.create({
+const makeStyles = (theme: Theme) => StyleSheet.create({
   chartCard: {
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 24,
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: {width: 0, height: 2},
-        shadowOpacity: 0.1,
-        shadowRadius: 8,
-      },
-      android: {
-        elevation: 4,
-      },
-    }),
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.borderRadius.lg,
+    padding: theme.spacing.md,
+    marginBottom: theme.spacing.lg,
+    ...theme.shadows.sm,
   },
   chartHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: 16,
+    marginBottom: theme.spacing.md,
   },
   chartTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    marginBottom: 4,
+    fontSize: theme.typography.sizes.h3,
+    fontWeight: theme.typography.weights.semibold,
+    color: theme.colors.text,
+    marginBottom: theme.spacing.xs,
   },
   trendText: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: theme.typography.sizes.bodyLarge,
+    fontWeight: theme.typography.weights.semibold,
     flexDirection: 'row',
     alignItems: 'center',
   },
   currentWeight: {
-    fontSize: 24,
-    fontWeight: '700',
+    fontSize: theme.typography.sizes.h2,
+    fontWeight: theme.typography.weights.bold,
+    color: theme.colors.text,
   },
   chart: {
-    marginVertical: 8,
-    borderRadius: 16,
+    marginVertical: theme.spacing.sm,
+    borderRadius: theme.borderRadius.md,
     alignSelf: 'center',
   },
   noDataText: {
     textAlign: 'center',
-    paddingVertical: 40,
-    fontSize: 16,
-    color: '#666',
+    paddingVertical: theme.spacing.xl,
+    fontSize: theme.typography.sizes.body,
+    color: theme.colors.textSecondary,
   },
 });

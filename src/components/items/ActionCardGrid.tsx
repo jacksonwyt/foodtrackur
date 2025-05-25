@@ -1,6 +1,8 @@
 import React from 'react';
 import {View, StyleSheet, Animated} from 'react-native';
 import {ActionCard} from './ActionCard'; // Import the new ActionCard component
+import {useTheme} from '../../hooks/useTheme'; // Added
+import type {Theme} from '../../constants/theme'; // Added
 
 interface QuickAction {
   id: string;
@@ -20,6 +22,9 @@ export const ActionCardGrid: React.FC<ActionCardGridProps> = ({
   animation,
   onActionPress,
 }) => {
+  const theme = useTheme(); // Added
+  const styles = makeStyles(theme); // Added
+
   return (
     <Animated.View
       style={[
@@ -56,15 +61,16 @@ export const ActionCardGrid: React.FC<ActionCardGridProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
+// Added makeStyles
+const makeStyles = (theme: Theme) => StyleSheet.create({
   cardsContainer: {
     // Position is handled by the parent FAB component
     // position: 'absolute',
     // bottom: 80,
     // left: -100,
     // right: -100,
-    paddingHorizontal: 16,
-    paddingBottom: 16,
+    paddingHorizontal: theme.spacing.md,
+    paddingBottom: theme.spacing.md,
     alignItems: 'center', // Center the grid horizontally if needed
   },
   cardsGrid: {
@@ -72,7 +78,7 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     justifyContent: 'space-around',
     alignItems: 'center',
-    gap: 20, // Use gap for spacing between cards
+    gap: theme.spacing.lg, // Use gap for spacing between cards
     width: '100%', // Adjust width as needed, maybe max-width?
     maxWidth: 340, // Example max width to contain 2 cards per row
   },

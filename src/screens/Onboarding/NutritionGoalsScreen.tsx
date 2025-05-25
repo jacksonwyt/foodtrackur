@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React from 'react';
 import {
   View,
   Text,
@@ -9,18 +9,23 @@ import {
 import {useNavigation} from '@react-navigation/native';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import type {
-  OnboardingStackParamList,
   AppStackParamList,
 } from '../../types/navigation';
-import {SafeAreaView, useSafeAreaInsets} from 'react-native-safe-area-context';
-import {getProfile, Profile} from '../../services/profileService';
+import {SafeAreaView} from 'react-native-safe-area-context';
+// Removed getProfile as profile data should now come from Redux store via fetchUserProfile
+// import {getProfile, Profile} from '../../services/profileService'; 
 import {useTheme} from '../../hooks/useTheme';
 import type {Theme} from '../../constants/theme';
-import OnboardingHeader from '../../components/onboarding/OnboardingHeader';
-
-// interface NutritionGoalsScreenProps {
-//   navigation: NativeStackNavigationProp<OnboardingStackParamList, 'NutritionGoals'>;
-// }
+import {OnboardingHeader} from '../../components/onboarding/OnboardingHeader';
+import {useSelector} from 'react-redux'; // Removed useDispatch
+import {
+  selectUserProfile, // Corrected: use selectUserProfile
+  selectProfileStatus,
+  selectProfileError, // Added to use for error display
+} from '../../store/slices/profileSlice'; 
+// import {selectCurrentUser} from '../../store/slices/authSlice'; // No longer needed for dispatching
+import type {RootState} from '../../store/store'; // Removed AppDispatch
+// import type {Profile} from '../../services/profileService'; // Removed Profile type import
 
 // Define makeStyles outside the component
 const makeStyles = (theme: Theme) =>
@@ -120,42 +125,38 @@ export default function NutritionGoalsScreen() {
   const styles = makeStyles(theme); // Call makeStyles here
   const navigation =
     useNavigation<NativeStackNavigationProp<AppStackParamList>>();
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  // const [profile, setProfile] = useState<Profile | null>(null); // Replaced by Redux state
+  // const [isLoading, setIsLoading] = useState(true); // Replaced by Redux state
+  // const [error, setError] = useState<string | null>(null); // Replaced by Redux state
+  // const dispatch = useDispatch<AppDispatch>(); // No longer dispatching from here
 
-  useEffect(() => {
-    async function fetchProfileData() {
-      try {
-        setIsLoading(true);
-        const userProfile = await getProfile();
-        if (userProfile) {
-          setProfile(userProfile);
-        } else {
-          setError('Could not load profile. Please try again.');
-        }
-      } catch (e) {
-        if (e instanceof Error) {
-          setError(e.message);
-        } else {
-          setError('An unexpected error occurred while fetching profile.');
-        }
-        console.error('Failed to fetch profile:', e);
-      } finally {
-        setIsLoading(false);
-      }
-    }
-    void fetchProfileData();
-  }, []);
+  // Get profile data from Redux store
+  const reduxProfile = useSelector(selectUserProfile); // Use the correct selector
+  const profileStatus = useSelector(selectProfileStatus);
+  const profileErrorFromSlice = useSelector(selectProfileError); // Get error from slice
+
+  // Local state for this screen if needed, or rely on Redux for profile data
+  // const [currentProfile, setCurrentProfile] = useState<Profile | null>(reduxProfile);
+  // No longer need local currentProfile state if directly using reduxProfile for display
+  // useEffect(() => {
+  //   if (reduxProfile) {
+  //     setCurrentProfile(reduxProfile);
+  //   }
+  // }, [reduxProfile]);
 
   const handleContinue = () => {
-    navigation.reset({
-      index: 0,
-      routes: [{name: 'Main', params: {screen: 'HomeTab'}}],
-    });
+    // This button might not even be strictly necessary if AppNavigator handles redirection.
+    // If it is kept, it could be a fallback or a way to explicitly acknowledge.
+    // For now, let AppNavigator handle the primary redirection.
+    console.log("Let's Get Started! pressed. AppNavigator should handle redirection.");
+    // Optionally, navigate to a specific tab if AppNavigator doesn't default as desired:
+    // navigation.reset({
+    //   index: 0,
+    //   routes: [{name: 'Main', params: {screen: 'HomeTab'}}],
+    // });
   };
 
-  if (isLoading) {
+  if (profileStatus === 'loading' || profileStatus === 'idle') {
     return (
       <SafeAreaView style={styles.container}>
         <ActivityIndicator size="large" color={theme.colors.primary} />
@@ -163,21 +164,24 @@ export default function NutritionGoalsScreen() {
     );
   }
 
-  if (error || !profile) {
+  // Use profileErrorFromSlice for error display
+  if (profileErrorFromSlice || !reduxProfile) { 
     return (
       <SafeAreaView style={styles.safeArea}>
         <OnboardingHeader title="Your Daily Goals" />
         <View style={styles.container}>
           <View style={styles.errorContainer}>
             <Text style={styles.errorText}>
-              {error || 'Profile data is unavailable.'}
+              {profileErrorFromSlice || 'Profile data is unavailable.'}
             </Text>
           </View>
-          {/* Optionally, add a retry button here */}
         </View>
       </SafeAreaView>
     );
   }
+
+  // Use reduxProfile directly for rendering data
+  const displayProfile = reduxProfile; 
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -194,25 +198,25 @@ export default function NutritionGoalsScreen() {
         <View style={styles.goalsContainer}>
           <View style={styles.goalItem}>
             <Text style={styles.goalValue}>
-              {Math.round(profile.target_calories || 0)}
+              {Math.round(displayProfile.target_calories || 0)}
             </Text>
             <Text style={styles.goalLabel}>Calories</Text>
           </View>
           <View style={styles.goalItem}>
             <Text style={styles.goalValue}>
-              {Math.round(profile.target_protein_g || 0)}g
+              {Math.round(displayProfile.target_protein_g || 0)}g
             </Text>
             <Text style={styles.goalLabel}>Protein</Text>
           </View>
           <View style={styles.goalItem}>
             <Text style={styles.goalValue}>
-              {Math.round(profile.target_carbs_g || 0)}g
+              {Math.round(displayProfile.target_carbs_g || 0)}g
             </Text>
             <Text style={styles.goalLabel}>Carbs</Text>
           </View>
           <View style={styles.goalItem}>
             <Text style={styles.goalValue}>
-              {Math.round(profile.target_fat_g || 0)}g
+              {Math.round(displayProfile.target_fat_g || 0)}g
             </Text>
             <Text style={styles.goalLabel}>Fat</Text>
           </View>

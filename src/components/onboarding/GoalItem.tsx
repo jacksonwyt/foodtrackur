@@ -77,7 +77,7 @@ const makeStyles = (theme: Theme) =>
     },
     selectedIconContainer: {
       ...getIconContainerBaseStyle(theme),
-      backgroundColor: 'rgba(255, 255, 255, 0.2)',
+      backgroundColor: `rgba(${theme.colors.onPrimaryRGB}, 0.2)`,
       borderColor: 'transparent',
     },
     goalContent: {

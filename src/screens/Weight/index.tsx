@@ -9,9 +9,7 @@ import {
   Platform,
 } from 'react-native';
 import {Ionicons} from '@expo/vector-icons';
-import {useNavigation} from '@react-navigation/native';
 import {
-  NativeStackNavigationProp,
   NativeStackScreenProps,
 } from '@react-navigation/native-stack';
 import {WeightStackParamList} from '../../types/navigation';
@@ -19,6 +17,8 @@ import {useWeightHistoryData} from '../../hooks/useWeightHistoryData';
 import {useWeightDerivedData} from '../../hooks/useWeightDerivedData';
 import {WeightChartCard} from '../../components/weight/WeightChartCard';
 import {WeightHistoryItem} from '../../components/weight/WeightHistoryItem';
+import {useTheme} from '../../hooks/useTheme';
+import type {Theme} from '../../constants/theme';
 
 // Added prop type
 type WeightScreenProps = NativeStackScreenProps<
@@ -27,7 +27,8 @@ type WeightScreenProps = NativeStackScreenProps<
 >;
 
 const WeightScreen: React.FC<WeightScreenProps> = ({navigation, route}) => {
-  // const navigation = useNavigation<NativeStackNavigationProp<WeightStackParamList>>(); // No longer needed, use prop
+  const theme = useTheme();
+  const styles = makeStyles(theme);
 
   const {weightHistory} = useWeightHistoryData();
 
@@ -68,78 +69,72 @@ const WeightScreen: React.FC<WeightScreenProps> = ({navigation, route}) => {
       <View style={styles.footer}>
         <TouchableOpacity style={styles.button} onPress={navigateToLogWeight}>
           <Text style={styles.buttonText}>Log New Weight</Text>
-          <Ionicons name="add-circle-outline" size={24} color="#fff" />
+          <Ionicons name="add-circle-outline" size={24} color={theme.colors.onPrimary} />
         </TouchableOpacity>
       </View>
     </KeyboardAvoidingView>
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f8f9fa',
-  },
-  content: {
-    flex: 1,
-    padding: 20,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    marginBottom: 20,
-    color: '#212529',
-    textAlign: 'center',
-  },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    marginTop: 24,
-    marginBottom: 12,
-    color: '#343a40',
-  },
-  historyListContainer: {
-    marginBottom: 20,
-  },
-  emptyHistoryText: {
-    textAlign: 'center',
-    fontSize: 16,
-    color: '#6c757d',
-    marginTop: 20,
-    marginBottom: 20,
-  },
-  history: {
-    gap: 12,
-    marginBottom: 24,
-  },
-  footer: {
-    padding: 16,
-    borderTopWidth: 1,
-    borderTopColor: '#e9ecef',
-    backgroundColor: '#fff',
-  },
-  button: {
-    backgroundColor: '#007bff',
-    borderRadius: 8,
-    paddingVertical: 14,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 10,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
+const makeStyles = (theme: Theme) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: theme.colors.background,
     },
-    shadowOpacity: 0.1,
-    shadowRadius: 3.84,
-    elevation: 3,
-  },
-  buttonText: {
-    color: '#fff',
-    fontSize: 17,
-    fontWeight: '500',
-  },
-});
+    content: {
+      flex: 1,
+      padding: theme.spacing.lg,
+    },
+    title: {
+      fontSize: theme.typography.sizes.h1,
+      fontWeight: theme.typography.weights.bold,
+      marginBottom: theme.spacing.lg,
+      color: theme.colors.text,
+      textAlign: 'center',
+    },
+    sectionTitle: {
+      fontSize: theme.typography.sizes.h3,
+      fontWeight: theme.typography.weights.semibold,
+      marginTop: theme.spacing.lg,
+      marginBottom: theme.spacing.md,
+      color: theme.colors.textSecondary,
+    },
+    historyListContainer: {
+      marginBottom: theme.spacing.lg,
+    },
+    emptyHistoryText: {
+      textAlign: 'center',
+      fontSize: theme.typography.sizes.body,
+      color: theme.colors.textPlaceholder,
+      marginTop: theme.spacing.lg,
+      marginBottom: theme.spacing.lg,
+    },
+    history: {
+      gap: theme.spacing.md,
+      marginBottom: theme.spacing.xl,
+    },
+    footer: {
+      padding: theme.spacing.md,
+      borderTopWidth: 1,
+      borderTopColor: theme.colors.border,
+      backgroundColor: theme.colors.surface,
+    },
+    button: {
+      backgroundColor: theme.colors.primary,
+      borderRadius: theme.borderRadius.md,
+      paddingVertical: theme.spacing.md,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: theme.spacing.sm,
+      ...theme.shadows.sm,
+    },
+    buttonText: {
+      color: theme.colors.onPrimary,
+      fontSize: theme.typography.button.fontSize,
+      fontWeight: theme.typography.button.fontWeight,
+    },
+  });
 
 export default WeightScreen;

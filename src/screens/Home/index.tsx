@@ -14,6 +14,8 @@ import {CalorieSummary} from '../../components/cards/CalorieSummary';
 import {MacroTiles} from '../../components/cards/MacroTiles';
 import {Logo} from '../../components/items/Logo';
 import {Streaks} from '../../components/items/Streaks';
+import {RecentlyLogged} from '../../components/cards/RecentlyLogged';
+import {FoodLogItem} from '../../components/items/FoodLogListItem';
 import {useHomeSummaryData} from '../../hooks/useHomeSummaryData';
 import {useHomeNavigation} from '../../hooks/useHomeNavigation';
 import {Ionicons} from '@expo/vector-icons';
@@ -102,6 +104,28 @@ const HomeScreen: React.FC = () => {
   const isLoading = isLoadingSummary;
   const error = errorSummary;
 
+  // Dummy data and functions for RecentlyLogged
+  const recentlyLoggedItems: FoodLogItem[] = [
+    // Add some sample FoodLogItem objects here if needed for testing
+    // Example:
+    // { id: '1', name: 'Apple', calories: 95, timestamp: new Date().toISOString(), mealType: 'Snack' },
+    // { id: '2', name: 'Chicken Salad', calories: 350, timestamp: new Date().toISOString(), mealType: 'Lunch' },
+  ];
+  const handleItemPress = (item: FoodLogItem) => {
+    console.log('Pressed item:', item);
+    // navigation.navigate('FoodDetailScreen', { foodId: item.id }); // Example navigation
+  };
+  const handleViewAllPress = () => {
+    console.log('View All pressed');
+    // navigation.navigate('AllLoggedFoodScreen'); // Example navigation
+  };
+  const handleAddPress = () => {
+    console.log('Add new meal pressed, navigating to FoodDB');
+    // Navigate to FoodDBMain, ensuring to pass initialDate if required by FoodDBMain
+    // The currentSelectedISO seems appropriate for the initialDate
+    navigation.navigate('FoodDBNav', { screen: 'FoodDBMain', params: { initialDate: currentSelectedISO } });
+  };
+
   const styles = makeStyles(theme);
 
   if (isLoading) {
@@ -174,6 +198,15 @@ const HomeScreen: React.FC = () => {
             fat={dailyData.macros.fat}
           />
         </View>
+
+        <View style={styles.recentlyLoggedContainer}>
+          <RecentlyLogged
+            items={recentlyLoggedItems}
+            onItemPress={handleItemPress}
+            onViewAllPress={handleViewAllPress}
+            onAddPress={handleAddPress}
+          />
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -193,6 +226,7 @@ interface HomeStyles {
   errorText: TextStyle;
   noDataText: TextStyle;
   noDataSubText: TextStyle;
+  recentlyLoggedContainer: ViewStyle;
 }
 
 const makeStyles = (theme: ReturnType<typeof useTheme>): HomeStyles => {
@@ -213,27 +247,14 @@ const makeStyles = (theme: ReturnType<typeof useTheme>): HomeStyles => {
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
-      paddingVertical: theme.spacing.md,
+      paddingTop: theme.spacing.md,
+      paddingBottom: theme.spacing.md,
       paddingHorizontal: theme.spacing.lg,
-      backgroundColor: theme.colors.surface,
-      shadowColor: theme.shadows.sm.shadowColor,
-      shadowOffset: theme.shadows.sm.shadowOffset,
-      shadowOpacity: theme.shadows.sm.shadowOpacity,
-      shadowRadius: theme.shadows.sm.shadowRadius,
-      elevation: theme.shadows.sm.elevation,
     },
     headerRight: {
       flexDirection: 'row',
       alignItems: 'center',
       gap: theme.spacing.md,
-      backgroundColor: theme.colors.surface,
-      borderRadius: theme.borderRadius.md,
-      padding: theme.spacing.md,
-      shadowColor: theme.shadows.sm.shadowColor,
-      shadowOffset: theme.shadows.sm.shadowOffset,
-      shadowOpacity: theme.shadows.sm.shadowOpacity,
-      shadowRadius: theme.shadows.sm.shadowRadius,
-      elevation: theme.shadows.sm.elevation,
     },
     settingsButton: {
       padding: theme.spacing.xs,
@@ -245,14 +266,6 @@ const makeStyles = (theme: ReturnType<typeof useTheme>): HomeStyles => {
     },
     summaryContainer: {
       marginBottom: theme.spacing.lg,
-      backgroundColor: theme.colors.surface,
-      borderRadius: theme.borderRadius.md,
-      padding: theme.spacing.md,
-      shadowColor: theme.shadows.sm.shadowColor,
-      shadowOffset: theme.shadows.sm.shadowOffset,
-      shadowOpacity: theme.shadows.sm.shadowOpacity,
-      shadowRadius: theme.shadows.sm.shadowRadius,
-      elevation: theme.shadows.sm.elevation,
     },
     macrosContainer: {
       marginBottom: theme.spacing.lg,
@@ -264,6 +277,11 @@ const makeStyles = (theme: ReturnType<typeof useTheme>): HomeStyles => {
       shadowOpacity: theme.shadows.sm.shadowOpacity,
       shadowRadius: theme.shadows.sm.shadowRadius,
       elevation: theme.shadows.sm.elevation,
+    },
+    recentlyLoggedContainer: {
+      // Remove outer container styling for RecentlyLogged to allow its own styling to take full effect.
+      // The RecentlyLogged component itself has marginHorizontal and marginVertical, so this container
+      // might not need much styling, or specific overrides if necessary.
     },
     centeredContainer: {
       flex: 1,

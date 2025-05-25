@@ -1,12 +1,14 @@
 import {configureStore} from '@reduxjs/toolkit';
 import authReducer from './slices/authSlice';
 import dateReducer from './slices/dateSlice'; // Import the new date reducer
+import profileReducer from './slices/profileSlice'; // Import the profile reducer
 // Import other reducers here if they exist
 
 export const store = configureStore({
   reducer: {
     auth: authReducer,
     date: dateReducer, // Add the date reducer
+    profile: profileReducer, // Add the profile reducer
     // Add other reducers here
   },
   // Middleware can be added here (e.g., for logging, thunks)

@@ -14,12 +14,15 @@ import {
 } from 'react-native';
 import {Ionicons} from '@expo/vector-icons';
 import {useRoute, RouteProp, useNavigation} from '@react-navigation/native';
-import {useSelector} from 'react-redux';
-import {selectCurrentUser} from '../../store/slices/authSlice';
-import {useOnboardingDetailsForm} from '../../hooks/useOnboardingDetailsForm';
-import {OnboardingHeader} from '../../components/onboarding/OnboardingHeader';
-import {OnboardingFooter} from '../../components/onboarding/OnboardingFooter';
-import {ActivityLevelItem} from '../../components/onboarding/ActivityLevelItem';
+import {useDispatch, useSelector} from 'react-redux';
+import {selectCurrentUser} from '@/store/slices/authSlice';
+import {
+  updateUserProfileAndCompleteOnboarding,
+} from '@/store/slices/profileSlice';
+import {useOnboardingDetailsForm} from '@/hooks/useOnboardingDetailsForm';
+import {OnboardingHeader} from '@/components/onboarding/OnboardingHeader';
+import {OnboardingFooter} from '@/components/onboarding/OnboardingFooter';
+import {ActivityLevelItem} from '@/components/onboarding/ActivityLevelItem';
 import {
   OnboardingStackParamList,
   OnboardingData,
@@ -30,7 +33,7 @@ import {
   calculateNutritionalGoals,
   CalculatedGoals,
 } from '../../utils/calculations';
-import {updateProfile, UpdateProfileData} from '../../services/profileService';
+import type {UpdateProfileData} from '../../types/profile';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import theme from '../../constants/theme';
@@ -39,6 +42,7 @@ import {
   convertHeightToCm,
   convertWeightToKg,
 } from '../../utils/unitConversions';
+import {AppDispatch} from '@/store/store';
 
 // Define unit types
 type HeightUnit = 'cm' | 'ft_in';
@@ -55,7 +59,6 @@ type DetailsScreenNavigationProp = NativeStackNavigationProp<
 interface DetailsScreenProps {
   route: DetailsScreenRouteProp;
   navigation: DetailsScreenNavigationProp;
-  onComplete: () => void;
 }
 
 const ACTIVITY_LEVELS_FORM = [
@@ -141,13 +144,13 @@ function prepareProfileUpdateData(
 export const DetailsScreen: React.FC<DetailsScreenProps> = ({
   route,
   navigation,
-  onComplete,
 }) => {
   const {goal} = route.params;
   const [isLoading, setIsLoading] = useState(false);
   const [focusedInput, setFocusedInput] = useState<string | null>(null);
   const insets = useSafeAreaInsets();
   const currentUser = useSelector(selectCurrentUser);
+  const dispatch = useDispatch<AppDispatch>();
 
   const [heightUnit, setHeightUnit] = useState<HeightUnit>('cm');
   const [weightUnit, setWeightUnit] = useState<WeightUnit>('kg');
@@ -285,13 +288,20 @@ export const DetailsScreen: React.FC<DetailsScreenProps> = ({
         calculatedGoals,
       );
 
-      await updateProfile(userId, profileUpdates);
-      console.log('Profile updated successfully for user:', userId);
+      await dispatch(
+        updateUserProfileAndCompleteOnboarding({
+          userId,
+          profileData: profileUpdates,
+        }),
+      ).unwrap();
+      
+      console.log(
+        'Profile update and onboarding completion dispatched for user:', 
+        userId
+      );
 
-      await AsyncStorage.setItem('onboardingComplete', 'true');
-      console.log('Onboarding status saved to AsyncStorage');
+      navigation.navigate('NutritionGoals');
 
-      onComplete();
     } catch (err) {
       console.error('Error submitting onboarding data:', err);
       let alertMessage = 'Could not save your profile. Please try again.';

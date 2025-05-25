@@ -1,5 +1,7 @@
 import React from 'react';
 import {View, Text, StyleSheet, TouchableOpacity} from 'react-native';
+import {useTheme} from '@/hooks/useTheme';
+import type {Theme} from '@/constants/theme';
 
 interface SubscriptionFooterProps {
   subscribeButtonText: string;
@@ -14,6 +16,8 @@ const SubscriptionFooter: React.FC<SubscriptionFooterProps> = ({
   guaranteeText,
   onSubscribe,
 }) => {
+  const theme = useTheme();
+  const styles = makeStyles(theme);
   return (
     <View style={styles.footer}>
       <Text style={styles.guarantee}>{guaranteeText}</Text>
@@ -25,36 +29,36 @@ const SubscriptionFooter: React.FC<SubscriptionFooterProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
+const makeStyles = (theme: Theme) => StyleSheet.create({
   footer: {
-    padding: 20,
+    padding: theme.spacing.md,
     borderTopWidth: 1,
-    borderTopColor: '#f0f0f0',
-    backgroundColor: '#fff',
-    alignItems: 'center', // Center items horizontally
+    borderTopColor: theme.colors.border,
+    backgroundColor: theme.colors.background,
+    alignItems: 'center',
   },
   guarantee: {
-    fontSize: 12,
-    color: '#666',
-    marginBottom: 16, // Add space below guarantee text
+    fontSize: theme.typography.sizes.overline,
+    color: theme.colors.textSecondary,
+    marginBottom: theme.spacing.md,
     textAlign: 'center',
   },
   subscribeButton: {
-    backgroundColor: '#000',
-    paddingVertical: 16,
-    borderRadius: 30, // Make it more pill-shaped
-    width: '100%', // Make button take full width
+    backgroundColor: theme.colors.primary,
+    paddingVertical: theme.spacing.md,
+    borderRadius: theme.borderRadius.round,
+    width: '100%',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: theme.spacing.md,
   },
   buttonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
+    color: theme.colors.onPrimary,
+    fontSize: theme.typography.button.fontSize,
+    fontWeight: theme.typography.button.fontWeight,
   },
   terms: {
-    fontSize: 12,
-    color: '#999',
+    fontSize: theme.typography.sizes.overline,
+    color: theme.colors.textSecondary,
     textAlign: 'center',
   },
 });

@@ -6,26 +6,28 @@ interface UseCalendarStripScrollProps {
   selectedIndex: number;
   itemWidth: number;
   itemMargin: number;
+  stripWidth: number;
 }
-
-const windowWidth = Dimensions.get('window').width;
 
 export const useCalendarStripScroll = ({
   scrollViewRef,
   selectedIndex,
   itemWidth,
   itemMargin,
+  stripWidth,
 }: UseCalendarStripScrollProps) => {
   useEffect(() => {
-    if (selectedIndex !== -1 && scrollViewRef.current) {
-      const totalItemWidth = itemWidth + itemMargin * 2;
+    if (selectedIndex !== -1 && scrollViewRef.current && stripWidth > 0) {
+      const totalItemWidthWithMargins = itemWidth + itemMargin * 2;
       const scrollToX =
-        totalItemWidth * selectedIndex - windowWidth / 2 + itemWidth / 2;
+        totalItemWidthWithMargins * selectedIndex -
+        stripWidth / 2 +
+        totalItemWidthWithMargins / 2;
 
       scrollViewRef.current.scrollTo({
         x: scrollToX,
         animated: true,
       });
     }
-  }, [selectedIndex, scrollViewRef, itemWidth, itemMargin]); // Dependency array includes all props used
+  }, [selectedIndex, scrollViewRef, itemWidth, itemMargin, stripWidth]);
 };

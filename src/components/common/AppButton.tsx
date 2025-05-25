@@ -7,9 +7,9 @@ import {
   ViewStyle,
   TextStyle,
 } from 'react-native';
-import {useTheme} from '../../hooks/useTheme';
+import {useTheme} from '@/hooks/useTheme';
 import {AppText} from './AppText'; // Using our themed AppText
-import {Theme} from '../../constants/theme';
+import {Theme} from '@/constants/theme';
 
 interface AppButtonProps extends TouchableOpacityProps {
   title: string;
