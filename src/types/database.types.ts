@@ -9,6 +9,45 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      custom_foods: {
+        Row: {
+          calories: number
+          carbs: number
+          created_at: string
+          fat: number
+          food_name: string
+          id: number
+          protein: number
+          serving_size: number
+          serving_unit: string
+          user_id: string | null
+        }
+        Insert: {
+          calories: number
+          carbs: number
+          created_at?: string
+          fat: number
+          food_name: string
+          id?: number
+          protein: number
+          serving_size: number
+          serving_unit: string
+          user_id?: string | null
+        }
+        Update: {
+          calories?: number
+          carbs?: number
+          created_at?: string
+          fat?: number
+          food_name?: string
+          id?: number
+          protein?: number
+          serving_size?: number
+          serving_unit?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       food_logs: {
         Row: {
           calories: number
@@ -57,6 +96,7 @@ export type Database = {
           avatar_url: string | null
           created_at: string | null
           dob: string | null
+          email: string | null
           full_name: string | null
           gender: string | null
           goal: string | null
@@ -82,6 +122,7 @@ export type Database = {
           avatar_url?: string | null
           created_at?: string | null
           dob?: string | null
+          email?: string | null
           full_name?: string | null
           gender?: string | null
           goal?: string | null
@@ -93,7 +134,7 @@ export type Database = {
           goal_weight?: number | null
           height?: number | null
           height_cm?: number | null
-          id: string
+          id?: string
           target_calories?: number | null
           target_carbs_g?: number | null
           target_fat_g?: number | null
@@ -107,6 +148,7 @@ export type Database = {
           avatar_url?: string | null
           created_at?: string | null
           dob?: string | null
+          email?: string | null
           full_name?: string | null
           gender?: string | null
           goal?: string | null
@@ -161,7 +203,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_food_log_summary_by_date_range: {
+        Args: { p_user_id: string; p_start_date: string; p_end_date: string }
+        Returns: {
+          date: string
+          total_calories: number
+          total_protein: number
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never
@@ -249,7 +298,7 @@ export type TablesUpdate<
 
 export type Enums<
   DefaultSchemaEnumNameOrOptions extends
-    { schema: keyof Database },
+    | { schema: keyof Database },
   EnumName extends DefaultSchemaEnumNameOrOptions extends {
     schema: keyof Database
   }
@@ -263,7 +312,7 @@ export type Enums<
 
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
-    { schema: keyof Database },
+    | { schema: keyof Database },
   CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
     schema: keyof Database
   }

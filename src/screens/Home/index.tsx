@@ -16,6 +16,7 @@ import {Logo} from '../../components/items/Logo';
 import {Streaks} from '../../components/items/Streaks';
 import {RecentlyLogged} from '../../components/cards/RecentlyLogged';
 import {FoodLogItem} from '../../components/items/FoodLogListItem';
+import {WaterIntakeCard} from '../../components/cards/WaterIntakeCard';
 import {useHomeSummaryData} from '../../hooks/useHomeSummaryData';
 import {useHomeNavigation} from '../../hooks/useHomeNavigation';
 import {Ionicons} from '@expo/vector-icons';
@@ -49,6 +50,10 @@ const HomeScreen: React.FC = () => {
   // Memoize the parsed Date object
   const currentDisplayDate = useMemo(() => parseISODate(currentSelectedISO), [currentSelectedISO]);
 
+  // State for water intake
+  const [waterIntake, setWaterIntake] = useState(0);
+  const dailyWaterTarget = 8; // Target glasses of water per day
+
   const {
     dailyData,
     isLoading: isLoadingSummary,
@@ -64,6 +69,7 @@ const HomeScreen: React.FC = () => {
     // Only set params if the date string actually changes to prevent unnecessary re-renders/loops
     if (newSelectedDateISO !== currentSelectedISO) {
       navigation.setParams({selectedDateISO: newSelectedDateISO});
+      setWaterIntake(0); // Reset water intake when date changes
     }
   };
   
@@ -104,13 +110,31 @@ const HomeScreen: React.FC = () => {
   const isLoading = isLoadingSummary;
   const error = errorSummary;
 
+  // Water intake handlers
+  const handleIncrementWater = () => {
+    setWaterIntake(prev => Math.min(prev + 1, dailyWaterTarget));
+  };
+
+  const handleDecrementWater = () => {
+    setWaterIntake(prev => Math.max(prev - 1, 0));
+  };
+
   // Dummy data and functions for RecentlyLogged
-  const recentlyLoggedItems: FoodLogItem[] = [
-    // Add some sample FoodLogItem objects here if needed for testing
-    // Example:
-    // { id: '1', name: 'Apple', calories: 95, timestamp: new Date().toISOString(), mealType: 'Snack' },
-    // { id: '2', name: 'Chicken Salad', calories: 350, timestamp: new Date().toISOString(), mealType: 'Lunch' },
-  ];
+  const recentlyLoggedItems: FoodLogItem[] = useMemo(() => {
+    if (!dailyData?.recentLogs) {
+      return [];
+    }
+    // Transform FoodLog to FoodLogItem
+    return dailyData.recentLogs.map(log => ({
+      id: String(log.id), // Assuming id is a number in FoodLog and string in FoodLogItem
+      name: log.food_name,
+      calories: log.calories,
+      timestamp: log.created_at, // Assuming created_at is a string like FoodLogItem expects
+      mealType: log.meal_type,
+      // Add other transformations if necessary
+    }));
+  }, [dailyData?.recentLogs]);
+
   const handleItemPress = (item: FoodLogItem) => {
     console.log('Pressed item:', item);
     // navigation.navigate('FoodDetailScreen', { foodId: item.id }); // Example navigation
@@ -199,6 +223,15 @@ const HomeScreen: React.FC = () => {
           />
         </View>
 
+        <View style={styles.waterIntakeContainer}>
+          <WaterIntakeCard
+            currentIntake={waterIntake}
+            targetIntake={dailyWaterTarget}
+            onIncrement={handleIncrementWater}
+            onDecrement={handleDecrementWater}
+          />
+        </View>
+
         <View style={styles.recentlyLoggedContainer}>
           <RecentlyLogged
             items={recentlyLoggedItems}
@@ -222,6 +255,7 @@ interface HomeStyles {
   calendarContainer: ViewStyle;
   summaryContainer: ViewStyle;
   macrosContainer: ViewStyle;
+  waterIntakeContainer: ViewStyle;
   centeredContainer: ViewStyle;
   errorText: TextStyle;
   noDataText: TextStyle;
@@ -268,15 +302,12 @@ const makeStyles = (theme: ReturnType<typeof useTheme>): HomeStyles => {
       marginBottom: theme.spacing.lg,
     },
     macrosContainer: {
-      marginBottom: theme.spacing.lg,
-      backgroundColor: theme.colors.surface,
-      borderRadius: theme.borderRadius.md,
-      padding: theme.spacing.md,
-      shadowColor: theme.shadows.sm.shadowColor,
-      shadowOffset: theme.shadows.sm.shadowOffset,
-      shadowOpacity: theme.shadows.sm.shadowOpacity,
-      shadowRadius: theme.shadows.sm.shadowRadius,
-      elevation: theme.shadows.sm.elevation,
+      marginBottom: theme.spacing.medium,
+      paddingHorizontal: theme.spacing.medium,
+    },
+    waterIntakeContainer: {
+      marginBottom: theme.spacing.medium,
+      paddingHorizontal: theme.spacing.medium,
     },
     recentlyLoggedContainer: {
       // Remove outer container styling for RecentlyLogged to allow its own styling to take full effect.

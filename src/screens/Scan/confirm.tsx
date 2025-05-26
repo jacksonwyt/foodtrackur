@@ -121,6 +121,13 @@ const makeStyles = (theme: Theme) => ({
     color: theme.colors.textSecondary,
     fontWeight: theme.typography.weights.semibold,
   },
+  aiDisclaimerText: {
+    fontSize: theme.typography.sizes.caption,
+    color: theme.colors.textSecondary,
+    textAlign: 'center' as const,
+    marginTop: theme.spacing.xs,
+    marginBottom: theme.spacing.md,
+  },
   confirmInstruction: {
     fontSize: theme.typography.sizes.caption,
     color: theme.colors.textSecondary,
@@ -288,6 +295,9 @@ const ScanConfirmScreen: React.FC = () => {
                 </AppText>
               </View>
             </View>
+            <AppText style={styles.aiDisclaimerText}>
+              Note: These values are AI-powered estimations. Actual nutritional content may vary.
+            </AppText>
             <AppText style={styles.confirmInstruction}>
               If this looks correct, confirm to log this item.
             </AppText>

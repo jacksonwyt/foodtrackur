@@ -22,10 +22,14 @@ import {
   selectUserProfile, // Corrected: use selectUserProfile
   selectProfileStatus,
   selectProfileError, // Added to use for error display
+  selectOnboardingComplete, // <-- Import this selector
 } from '../../store/slices/profileSlice'; 
 // import {selectCurrentUser} from '../../store/slices/authSlice'; // No longer needed for dispatching
 import type {RootState} from '../../store/store'; // Removed AppDispatch
 // import type {Profile} from '../../services/profileService'; // Removed Profile type import
+import {Ionicons} from '@expo/vector-icons'; // Added for icons
+import * as Haptics from 'expo-haptics'; // Added for haptic feedback
+import CircularProgressIndicator from 'react-native-circular-progress-indicator'; // Added for circular progress
 
 // Define makeStyles outside the component
 const makeStyles = (theme: Theme) =>
@@ -55,26 +59,33 @@ const makeStyles = (theme: Theme) =>
       justifyContent: 'space-around',
       width: '100%',
       marginBottom: theme.spacing.xl,
+      flexWrap: 'wrap', // Allow wrapping if items are too wide
     },
     goalItem: {
       alignItems: 'center',
-      padding: theme.spacing.md,
-      backgroundColor: theme.colors.surface, // Use theme colors
-      borderRadius: theme.borderRadius.sm, // Use theme border radius
-      minWidth: 80, // Or calculate based on screen width / number of items
-      ...theme.shadows.sm, // Add shadow or elevation if desired, e.g., ...theme.shadows.sm
+      padding: theme.spacing.md, // Increased padding for card feel
+      backgroundColor: theme.colors.surface, 
+      borderRadius: theme.borderRadius.lg, // More pronounced border radius
+      minWidth: 150, // Increased minWidth to accommodate circle + text
+      margin: theme.spacing.xs, // Add margin for separation between cards
+      ...theme.shadows.md, // More pronounced shadow for card effect
+      justifyContent: 'center', 
+      marginBottom: theme.spacing.md, // Space below each card
     },
-    goalValue: {
-      fontSize: theme.typography.sizes.h2,
+    goalIcon: {
+      marginBottom: theme.spacing.sm, // Space between icon and progress circle
+    },
+    goalValue: { // This style is for the text within the circular progress
+      fontSize: theme.typography.sizes.h3, // Adjusted for fitting in circle
       fontWeight: theme.typography.weights.semibold,
       fontFamily: theme.typography.fontFamily,
-      color: theme.colors.primary, // Use theme primary color
+      color: theme.colors.primary,
     },
     goalLabel: {
       fontSize: theme.typography.sizes.caption,
       fontFamily: theme.typography.fontFamily,
       color: theme.colors.textSecondary,
-      marginTop: theme.spacing.xs,
+      marginTop: theme.spacing.sm, // Increased margin for spacing from circle
     },
     infoText: {
       fontSize: theme.typography.sizes.caption,
@@ -134,6 +145,7 @@ export default function NutritionGoalsScreen() {
   const reduxProfile = useSelector(selectUserProfile); // Use the correct selector
   const profileStatus = useSelector(selectProfileStatus);
   const profileErrorFromSlice = useSelector(selectProfileError); // Get error from slice
+  const onboardingComplete = useSelector(selectOnboardingComplete); // <-- Get the state
 
   // Local state for this screen if needed, or rely on Redux for profile data
   // const [currentProfile, setCurrentProfile] = useState<Profile | null>(reduxProfile);
@@ -145,15 +157,20 @@ export default function NutritionGoalsScreen() {
   // }, [reduxProfile]);
 
   const handleContinue = () => {
-    // This button might not even be strictly necessary if AppNavigator handles redirection.
-    // If it is kept, it could be a fallback or a way to explicitly acknowledge.
-    // For now, let AppNavigator handle the primary redirection.
-    console.log("Let's Get Started! pressed. AppNavigator should handle redirection.");
-    // Optionally, navigate to a specific tab if AppNavigator doesn't default as desired:
-    // navigation.reset({
-    //   index: 0,
-    //   routes: [{name: 'Main', params: {screen: 'HomeTab'}}],
-    // });
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); // Add haptic feedback
+    if (onboardingComplete) {
+      console.log(
+        "Let's Get Started! pressed. Onboarding is complete. Navigating to Subscription Screen.",
+      );
+      navigation.navigate('SubscriptionNav', {screen: 'SubscriptionMain'});
+    } else {
+      console.warn(
+        "NutritionGoalsScreen: 'Let's Get Started!' pressed, but onboardingComplete is still false. AppNavigator might not be ready.",
+      );
+      // Optionally, you could add a small delay and re-check, or navigate to a loading/transition screen.
+      // For now, this logs a warning. The navigation might still fail if AppNavigator hasn't switched.
+      // Consider if AppNavigator should handle this transition more centrally.
+    }
   };
 
   if (profileStatus === 'loading' || profileStatus === 'idle') {
@@ -185,39 +202,126 @@ export default function NutritionGoalsScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <OnboardingHeader title="Your Daily Goals" />
+      <OnboardingHeader title="You're All Set!" />
       <View style={styles.container}>
         {/* <Text style={styles.title}>Your Daily Goals</Text> */}
         {/* <Text style={styles.subtitle}> */}
         {/*  Based on your information, here are your recommended daily targets: */}
         {/* </Text> */}
         <Text style={styles.descriptiveText}>
-          Based on your information, here are your recommended daily targets:
+          Congratulations! Based on your information, here are your personalized daily nutritional targets. You're ready to begin your journey!
         </Text>
 
         <View style={styles.goalsContainer}>
           <View style={styles.goalItem}>
-            <Text style={styles.goalValue}>
-              {Math.round(displayProfile.target_calories || 0)}
-            </Text>
+            <Ionicons
+              name="flame-outline"
+              size={32} 
+              color={theme.colors.primary}
+              style={styles.goalIcon}
+            />
+            <CircularProgressIndicator
+              value={displayProfile.target_calories || 0}
+              maxValue={displayProfile.target_calories || 0} 
+              radius={40}
+              activeStrokeColor={theme.colors.primary}
+              inActiveStrokeColor={theme.colors.border} 
+              inActiveStrokeOpacity={0.5}
+              activeStrokeWidth={8}
+              inActiveStrokeWidth={8}
+              title={'kcal'}
+              titleStyle={{
+                fontSize: theme.typography.sizes.caption,
+                color: theme.colors.textSecondary,
+                fontFamily: theme.typography.fontFamily,
+              }}
+              valueSuffix=''
+              progressValueStyle={styles.goalValue} // Use defined style
+            />
             <Text style={styles.goalLabel}>Calories</Text>
           </View>
+
           <View style={styles.goalItem}>
-            <Text style={styles.goalValue}>
-              {Math.round(displayProfile.target_protein_g || 0)}g
-            </Text>
+            <Ionicons
+              name="barbell-outline"
+              size={32}
+              color={theme.colors.primary}
+              style={styles.goalIcon}
+            />
+            <CircularProgressIndicator
+              value={displayProfile.target_protein_g || 0}
+              maxValue={displayProfile.target_protein_g || 0}
+              radius={40}
+              activeStrokeColor={theme.colors.primary}
+              inActiveStrokeColor={theme.colors.border}
+              inActiveStrokeOpacity={0.5}
+              activeStrokeWidth={8}
+              inActiveStrokeWidth={8}
+              title={'grams'}
+              titleStyle={{
+                fontSize: theme.typography.sizes.caption,
+                color: theme.colors.textSecondary,
+                fontFamily: theme.typography.fontFamily,
+              }}
+              valueSuffix={'g'}
+              progressValueStyle={styles.goalValue} // Use defined style
+            />
             <Text style={styles.goalLabel}>Protein</Text>
           </View>
+
           <View style={styles.goalItem}>
-            <Text style={styles.goalValue}>
-              {Math.round(displayProfile.target_carbs_g || 0)}g
-            </Text>
+            <Ionicons
+              name="nutrition-outline"
+              size={32}
+              color={theme.colors.primary}
+              style={styles.goalIcon}
+            />
+            <CircularProgressIndicator
+              value={displayProfile.target_carbs_g || 0}
+              maxValue={displayProfile.target_carbs_g || 0}
+              radius={40}
+              activeStrokeColor={theme.colors.primary}
+              inActiveStrokeColor={theme.colors.border}
+              inActiveStrokeOpacity={0.5}
+              activeStrokeWidth={8}
+              inActiveStrokeWidth={8}
+              title={'grams'}
+              titleStyle={{
+                fontSize: theme.typography.sizes.caption,
+                color: theme.colors.textSecondary,
+                fontFamily: theme.typography.fontFamily,
+              }}
+              valueSuffix={'g'}
+              progressValueStyle={styles.goalValue} // Use defined style
+            />
             <Text style={styles.goalLabel}>Carbs</Text>
           </View>
+
           <View style={styles.goalItem}>
-            <Text style={styles.goalValue}>
-              {Math.round(displayProfile.target_fat_g || 0)}g
-            </Text>
+            <Ionicons
+              name="water-outline" 
+              size={32}
+              color={theme.colors.primary}
+              style={styles.goalIcon}
+            />
+            <CircularProgressIndicator
+              value={displayProfile.target_fat_g || 0}
+              maxValue={displayProfile.target_fat_g || 0}
+              radius={40}
+              activeStrokeColor={theme.colors.primary}
+              inActiveStrokeColor={theme.colors.border}
+              inActiveStrokeOpacity={0.5}
+              activeStrokeWidth={8}
+              inActiveStrokeWidth={8}
+              title={'grams'}
+              titleStyle={{
+                fontSize: theme.typography.sizes.caption,
+                color: theme.colors.textSecondary,
+                fontFamily: theme.typography.fontFamily,
+              }}
+              valueSuffix={'g'}
+              progressValueStyle={styles.goalValue} // Use defined style
+            />
             <Text style={styles.goalLabel}>Fat</Text>
           </View>
         </View>

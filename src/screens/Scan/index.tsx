@@ -20,8 +20,8 @@ const makeStyles = (theme: Theme) => ({
   },
   loadingContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: 'center' as const,
+    alignItems: 'center' as const,
     backgroundColor: theme.colors.background,
   },
   loadingText: {

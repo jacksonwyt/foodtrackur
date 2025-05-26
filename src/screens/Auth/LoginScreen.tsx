@@ -25,6 +25,7 @@ import type {AuthStackParamList} from '../../types/navigation';
 import theme from '../../constants/theme'; // Import theme
 import {Ionicons} from '@expo/vector-icons'; // For potential icons
 import {useSafeAreaInsets} from 'react-native-safe-area-context'; // For safe area
+import {AuthFooterLinks} from '../../components/auth/AuthFooterLinks'; // Added import
 
 // interface LoginScreenProps {
 //   navigation: NativeStackNavigationProp<AuthStackParamList, 'Login'>;
@@ -47,21 +48,45 @@ export function LoginScreen({
   const authError = useSelector(selectAuthError);
   const insets = useSafeAreaInsets();
 
+  // Specific error states for inline messages
+  const [emailError, setEmailError] = useState<string | null>(null);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+
+  const clearInlineErrors = () => {
+    setEmailError(null);
+    setPasswordError(null);
+  };
+
   const handleLogin = async () => {
-    if (!email || !password) {
-      // Consider inline errors over Alerts for better UX
+    clearInlineErrors();
+    dispatch(clearAuthError());
+
+    let isValid = true;
+    if (!email) {
+      setEmailError('Email is required.');
+      isValid = false;
+    } else if (!/\S+@\S+\.\S+/.test(email)) { // Basic email format validation
+      setEmailError('Please enter a valid email address.');
+      isValid = false;
+    }
+
+    if (!password) {
+      setPasswordError('Password is required.');
+      isValid = false;
+    }
+
+    if (!isValid) {
       dispatch(
         setAuthState({
           status: 'failed',
           user: null,
           session: null,
-          error: 'Please enter both email and password.',
+          error: 'Please correct the errors below.',
         }),
       );
       return;
     }
 
-    dispatch(clearAuthError());
     dispatch(setAuthState({status: 'loading', user: null, session: null, error: null}));
     try {
       const {error} = await signInWithEmail({email, password});
@@ -94,10 +119,10 @@ export function LoginScreen({
 
   React.useEffect(() => {
     // Clear error when email or password changes, or component mounts
-    if (authError) {
-      dispatch(clearAuthError());
-    }
-  }, [email, password, dispatch, authError]);
+    // If a general authError from Redux (e.g., server error), display it.
+    // Specific field validation errors are now handled by local state.
+    clearInlineErrors();
+  }, [email, password]); // Removed dispatch and authError from deps to avoid loops if Redux error is set
 
   const navigateToSignUp = () => {
     navigation.navigate('SignUp');
@@ -113,7 +138,8 @@ export function LoginScreen({
         <Text style={styles.title}>Welcome Back!</Text>
         <Text style={styles.subtitle}>Login to your account</Text>
 
-        {authStatus === 'failed' && authError && (
+        {/* General error message display (optional, if inline errors are primary) */}
+        {authStatus === 'failed' && authError && !emailError && !passwordError && (
           <View style={styles.errorContainer}>
             <Ionicons name="alert-circle-outline" size={20} color={theme.colors.error} />
             <Text style={styles.errorText}>{authError}</Text>
@@ -126,7 +152,7 @@ export function LoginScreen({
             style={[
               styles.input,
               focusedInput === 'email' && styles.inputFocused,
-              authError && (authError.toLowerCase().includes('email') || authError.toLowerCase().includes('user')) && styles.inputError,
+              emailError && styles.inputError, // Use local emailError
             ]}
             placeholder="you@example.com"
             value={email}
@@ -137,6 +163,7 @@ export function LoginScreen({
             onFocus={() => setFocusedInput('email')}
             onBlur={() => setFocusedInput(null)}
           />
+          {emailError && <Text style={styles.inlineErrorText}>{emailError}</Text>}
         </View>
 
         <View style={styles.inputContainer}>
@@ -145,7 +172,7 @@ export function LoginScreen({
             style={[
               styles.input,
               focusedInput === 'password' && styles.inputFocused,
-               authError && authError.toLowerCase().includes('password') && styles.inputError,
+              passwordError && styles.inputError, // Use local passwordError
             ]}
             placeholder="••••••••"
             value={password}
@@ -155,6 +182,7 @@ export function LoginScreen({
             onFocus={() => setFocusedInput('password')}
             onBlur={() => setFocusedInput(null)}
           />
+          {passwordError && <Text style={styles.inlineErrorText}>{passwordError}</Text>}
           {/* Consider adding a "Forgot Password?" link here */}
         </View>
 
@@ -179,6 +207,7 @@ export function LoginScreen({
             Don&apos;t have an account? <Text style={styles.signUpLink}>Sign Up</Text>
           </Text>
         </TouchableOpacity>
+        <AuthFooterLinks />
       </View>
     </KeyboardAvoidingView>
   );
@@ -260,6 +289,13 @@ const styles = StyleSheet.create({
     color: theme.colors.error,
     fontSize: theme.typography.sizes.caption, // Was bodySmall
     fontFamily: theme.typography.fontFamily,
+  },
+  inlineErrorText: { // Added style for inline errors
+    color: theme.colors.error,
+    fontSize: theme.typography.sizes.caption,
+    fontFamily: theme.typography.fontFamily,
+    marginTop: theme.spacing.xxs,
+    marginLeft: theme.spacing.xs, // Optional: indent slightly
   },
   button: {
     borderRadius: theme.borderRadius.md,

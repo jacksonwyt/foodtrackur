@@ -8,23 +8,23 @@ export const WelcomeContent: React.FC = () => {
     <View style={styles.content}>
       <Text style={styles.title}>Welcome to FoodTrack</Text>
       <Text style={styles.subtitle}>
-        Your personal AI-powered nutrition assistant
+        Effortlessly track your food, understand your nutrition, and reach your health goals with AI-powered insights.
       </Text>
       <View style={styles.features}>
         <FeatureItem
           icon="nutrition-outline" // Using outline icons for consistency
-          title="Smart Food Tracking"
-          description="Track your meals with AI-powered food recognition"
+          title="AI-Powered Food Scanning"
+          description="Quickly log meals by simply scanning your food."
         />
         <FeatureItem
           icon="trending-up-outline"
-          title="Progress Insights"
-          description="Get detailed insights about your nutrition journey"
+          title="Personalized Tracking"
+          description="Monitor daily calories, macros, and weight to stay on target."
         />
         <FeatureItem
           icon="bulb-outline"
-          title="Personalized Tips"
-          description="Receive AI-generated nutrition advice"
+          title="Achieve Your Goals"
+          description="Set and reach your weight goals with clear, actionable insights."
         />
       </View>
     </View>

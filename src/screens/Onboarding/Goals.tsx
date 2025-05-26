@@ -30,6 +30,8 @@ export const GoalsScreen: React.FC<GoalsScreenProps> = () => {
     <OnboardingHeader
       title="What's your goal?"
       subtitle="Select your primary goal and we'll customize your experience"
+      currentStep={2}
+      totalSteps={3}
     />
   );
 

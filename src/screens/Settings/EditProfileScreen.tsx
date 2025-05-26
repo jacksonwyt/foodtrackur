@@ -30,6 +30,22 @@ import type {Theme} from '../../constants/theme'; // Import Theme
 import {AppText} from '../../components/common/AppText'; // Named import
 import {AppTextInput} from '../../components/common/AppTextInput'; // Named import
 import {AppButton} from '../../components/common/AppButton'; // Named import
+import { ACTIVITY_LEVELS, ActivityLevel } from '../../hooks/useOnboardingDetailsForm'; // Import from hooks
+// import { GOAL_PACES } from '../../constants/profile'; // Commented out
+// import type { GoalPaceId, GoalPaceObject } from '../../types/profile'; // Commented out
+
+// Re-introduce local GOAL_PACES and GoalPace type
+const GOAL_PACES = {
+  'slow': 'Slow (-0.25 kg/week)',
+  'moderate': 'Moderate (-0.5 kg/week)',
+  'fast': 'Fast (-0.75 kg/week)',
+  'gain_slow': 'Slow (+0.25 kg/week)',
+  'gain_moderate': 'Moderate (+0.5 kg/week)',
+  'gain_fast': 'Fast (+0.75 kg/week)',
+} as const;
+
+type GoalPace = keyof typeof GOAL_PACES;
+// End local definitions
 
 type HeightUnit = 'cm' | 'ft_in';
 type GenderOption = 'male' | 'female' | 'other';
@@ -81,6 +97,8 @@ const EditProfileScreen: React.FC<EditProfileScreenProps> = ({
   const [inches, setInches] = useState('');
   const [ageValue, setAgeValue] = useState(''); // Renamed from age to avoid conflict
   const [gender, setGender] = useState<GenderOption | undefined>(undefined);
+  const [activityLevel, setActivityLevel] = useState<ActivityLevel | undefined>(undefined);
+  const [goalPace, setGoalPace] = useState<GoalPace | undefined>(undefined); // Use local GoalPace type
 
   const [originalProfile, setOriginalProfile] = useState<Profile | null>(null);
 
@@ -112,6 +130,14 @@ const EditProfileScreen: React.FC<EditProfileScreenProps> = ({
           setAgeValue(calculateAgeFromDob(profileData.dob));
         }
         setGender(profileData.gender as GenderOption | undefined);
+        setActivityLevel(profileData.activity_level as ActivityLevel | undefined);
+        // Logic for setting initial goalPace based on profileData.goal_pace (numeric) and local GOAL_PACES
+        // This requires a reverse lookup from numeric value to string key, or direct storage of string key if available
+        // For now, let's assume profileData.goal_pace might directly be a string key or needs conversion
+        // This was how it was before: setGoalPace(profileData.goal_pace as GoalPace | undefined);
+        // To be more robust, we should map numeric to key if that's what profileData.goal_pace contains.
+        // However, the simplest revert is to assume it was a string key.
+        setGoalPace(profileData.goal_pace as GoalPace | undefined); 
       } else {
         setError('Could not load profile data.');
       }
@@ -187,20 +213,46 @@ const EditProfileScreen: React.FC<EditProfileScreenProps> = ({
       return;
     }
 
+    // Added validation for activityLevel and goalPace
+    if (!activityLevel) {
+      Alert.alert('Validation Error', 'Please select an activity level.');
+      return;
+    }
+
+    if (originalProfile.goal !== 'maintain' && !goalPace) { // Goal pace is only required if goal is not 'maintain'
+      Alert.alert('Validation Error', 'Please select a goal pace.');
+      return;
+    }
+
     setIsSaving(true);
     setError(null);
+
+    // Use local GOAL_PACES for numeric value mapping
+    const goalPaceNumeric: Record<GoalPace, number> = { // This mapping should align with your backend needs
+      'slow': -0.25,
+      'moderate': -0.5,
+      'fast': -0.75,
+      'gain_slow': 0.25,
+      'gain_moderate': 0.5,
+      'gain_fast': 0.75,
+    };
+    const selectedGoalPaceValue = goalPace ? goalPaceNumeric[goalPace] : null;
 
     try {
       const updates: UpdateProfileData = {
         height_cm: heightCm,
         dob: dob,
         gender: gender,
+        activity_level: activityLevel || undefined, // Ensure it's undefined if null
+        goal_pace: selectedGoalPaceValue, // Use mapped numeric value
       };
 
       const profileDetailsChanged =
         originalProfile.height_cm !== heightCm ||
         originalProfile.dob !== dob ||
-        originalProfile.gender !== gender;
+        originalProfile.gender !== gender ||
+        originalProfile.activity_level !== activityLevel || // Added
+        originalProfile.goal_pace !== selectedGoalPaceValue; // Added
 
       await updateProfile(currentUser.id, updates);
 
@@ -342,6 +394,52 @@ const EditProfileScreen: React.FC<EditProfileScreenProps> = ({
             ))}
           </View>
 
+          <AppText style={styles.label}>Activity Level</AppText>
+          <View style={styles.selectionContainer}>
+            {ACTIVITY_LEVELS.map(level => ( // Iterate directly over the array
+              <TouchableOpacity
+                key={level.id} // Use level.id as key
+                style={[
+                  styles.selectionButton,
+                  activityLevel === level.id && styles.selectionButtonSelected, // Compare with level.id
+                ]}
+                onPress={() => setActivityLevel(level.id)}>
+                <RNText
+                  style={[
+                    styles.selectionButtonText,
+                    activityLevel === level.id && styles.selectionButtonTextSelected, // Compare with level.id
+                  ]}>
+                  {level.title} {/* Use level.title for display */}
+                </RNText>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          {originalProfile?.goal !== 'maintain' && (
+            <>
+              <AppText style={styles.label}>Goal Pace</AppText>
+              <View style={styles.selectionContainer}>
+                {Object.entries(GOAL_PACES).map(([key, value]) => (
+                  <TouchableOpacity
+                    key={key}
+                    style={[
+                      styles.selectionButton,
+                      goalPace === key && styles.selectionButtonSelected,
+                    ]}
+                    onPress={() => setGoalPace(key as GoalPace)}>
+                    <RNText
+                      style={[
+                        styles.selectionButtonText,
+                        goalPace === key && styles.selectionButtonTextSelected,
+                      ]}>
+                      {value}
+                    </RNText>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </>
+          )}
+
           <AppButton
             title={isSaving ? 'Saving...' : 'Save Profile'}
             onPress={() => {
@@ -374,6 +472,11 @@ interface EditProfileStyles {
   genderButtonTextSelected: TextStyle;
   inputGroup: ViewStyle; // for AppTextInput containerStyle
   label: TextStyle; // Added for section labels
+  selectionContainer: ViewStyle; // Added for activity level and goal pace
+  selectionButton: ViewStyle; // Added
+  selectionButtonSelected: ViewStyle; // Added
+  selectionButtonText: TextStyle; // Added
+  selectionButtonTextSelected: TextStyle; // Added
   // Add any other styles used in the component
 }
 
@@ -483,6 +586,39 @@ const getStyles = (theme: Theme): EditProfileStyles =>
       color: theme.colors.textSecondary,
       marginBottom: theme.spacing.sm,
       fontFamily: theme.typography.fontFamily,
+    },
+    selectionContainer: { // Added for activity level and goal pace
+      flexDirection: 'row',
+      flexWrap: 'wrap', // Allow buttons to wrap
+      justifyContent: 'space-between',
+      marginBottom: theme.spacing.lg,
+      gap: theme.spacing.sm,
+    },
+    selectionButton: { // Style for individual selection buttons
+      flexBasis: '48%', // Adjust for 2 buttons per row with gap
+      paddingVertical: theme.spacing.md,
+      backgroundColor: theme.colors.surface,
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+      borderRadius: theme.borderRadius.md,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginBottom: theme.spacing.sm, // Spacing between rows if they wrap
+    },
+    selectionButtonSelected: {
+      backgroundColor: theme.colors.primary,
+      borderColor: theme.colors.primary,
+    },
+    selectionButtonText: {
+      fontSize: theme.typography.sizes.body,
+      color: theme.colors.textSecondary,
+      fontWeight: theme.typography.weights.medium,
+      textAlign: 'center',
+      fontFamily: theme.typography.fontFamily,
+    },
+    selectionButtonTextSelected: {
+      color: theme.colors.onPrimary,
+      fontWeight: theme.typography.weights.semibold,
     },
   });
 

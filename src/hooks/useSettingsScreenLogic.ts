@@ -1,4 +1,4 @@
-import {useNavigation} from '@react-navigation/native';
+import {useNavigation, CompositeNavigationProp} from '@react-navigation/native';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {SettingsItemData} from '../components/settings/SettingsListItem'; // Adjust path as necessary
 import {signOut} from '../services/auth/authService'; // Added for logout
@@ -8,7 +8,7 @@ import {useEffect, useState, useCallback} from 'react'; // Added useEffect, useS
 import {Profile, getProfile} from '../services/profileService'; // Added
 import {WeightLog, getLatestWeightLog} from '../services/weightLogService'; // Added
 import {Alert} from 'react-native'; // Added for error handling
-import type {SettingsStackParamList} from '../types/navigation';
+import type {SettingsStackParamList, AppStackParamList} from '../types/navigation';
 
 interface SettingsSectionData {
   title: string;
@@ -45,7 +45,10 @@ export const useSettingsScreenLogic = (): {
   refreshPersonalData: () => Promise<void>;
 } => {
   const navigation =
-    useNavigation<NativeStackNavigationProp<SettingsStackParamList>>();
+    useNavigation<CompositeNavigationProp<
+      NativeStackNavigationProp<SettingsStackParamList, 'SettingsMain'>,
+      NativeStackNavigationProp<AppStackParamList>
+    >>();
   const dispatch = useDispatch();
   const currentUser = useSelector(selectCurrentUser);
 
@@ -130,6 +133,11 @@ export const useSettingsScreenLogic = (): {
         icon: 'trophy-outline',
         label: 'Adjust Goals',
         onPress: () => navigation.navigate('AdjustGoals'),
+      },
+      {
+        icon: 'card-outline',
+        label: 'Manage Subscription',
+        onPress: () => navigation.navigate('SubscriptionNav', { screen: 'SubscriptionMain' }),
       },
       {
         icon: 'log-out-outline',

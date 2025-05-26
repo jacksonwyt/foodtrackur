@@ -3,7 +3,7 @@ import {useSelector, shallowEqual} from 'react-redux';
 import {selectCurrentUser} from '../store/slices/authSlice';
 import {getProfile} from '../services/profileService';
 import {type Profile} from '../types/profile'; // Updated import path
-import {getFoodLogByDate} from '../services/foodLogService';
+import {getFoodLogByDate, getRecentFoodLogs} from '../services/foodLogService'; // Import getRecentFoodLogs
 import {type FoodLog} from '../types/foodLog'; // Updated import path
 import {formatISODate} from '../utils/dateUtils'; // Reverted: Removed .ts extension
 
@@ -22,6 +22,7 @@ interface DailyData {
   };
   // Optionally include raw logs if needed by the UI
   // logs: FoodLog[];
+  recentLogs: FoodLog[]; // Add recentLogs to DailyData
 }
 
 // Helper function to calculate totals from logs
@@ -92,9 +93,12 @@ export const useHomeSummaryData = (selectedDate: Date) => {
         currentUser.id,
         dateString,
       );
+      // Fetch recent logs
+      console.log('[useHomeSummaryData] Calling getRecentFoodLogs()...');
+      const recentLogsPromise: Promise<FoodLog[] | null> = getRecentFoodLogs(currentUser.id, 3);
 
-      const [profileResult, logsResult]: [Profile | null, FoodLog[] | null] =
-        await Promise.all([profilePromise, logsPromise]);
+      const [profileResult, logsResult, recentLogsResult]: [Profile | null, FoodLog[] | null, FoodLog[] | null] =
+        await Promise.all([profilePromise, logsPromise, recentLogsPromise]);
       console.log('[useHomeSummaryData] Promise.all resolved.');
       console.log(
         '[useHomeSummaryData] Profile result:',
@@ -103,6 +107,10 @@ export const useHomeSummaryData = (selectedDate: Date) => {
       console.log(
         '[useHomeSummaryData] Logs result:',
         logsResult ? `Length: ${logsResult.length}` : 'Null/Empty',
+      );
+      console.log(
+        '[useHomeSummaryData] Recent logs result:',
+        recentLogsResult ? `Length: ${recentLogsResult.length}` : 'Null/Empty',
       );
 
       if (!profileResult) {
@@ -120,6 +128,7 @@ export const useHomeSummaryData = (selectedDate: Date) => {
 
       const logs = logsResult || [];
       const profile = profileResult;
+      const recentLogs = recentLogsResult || []; // Assign recentLogsResult
 
       console.log('[useHomeSummaryData] Calculating consumed totals...');
       const {totalCalories, totalProtein, totalCarbs, totalFat} =
@@ -145,6 +154,7 @@ export const useHomeSummaryData = (selectedDate: Date) => {
             goal: profile.target_fat_g ?? 0,
           },
         },
+        recentLogs, // Add recentLogs to newDailyData
       };
       console.log(
         '[useHomeSummaryData] New dailyData prepared. Setting state...',

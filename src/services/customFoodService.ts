@@ -1,12 +1,13 @@
 import {supabase} from './supabaseClient';
 import {getCurrentUser} from './auth/authService';
 import {User, PostgrestError} from '@supabase/supabase-js'; // Added for explicit user type
+import type { Database } from '../types/database.types';
 
 // --- Custom Food Interface ---
 // Represents the structure of data in the 'custom_foods' table
 export interface CustomFood {
   id: number; // Or string (UUID)
-  user_id: string; // Foreign key referencing auth.users.id
+  user_id: string | null; // Foreign key referencing auth.users.id -- Allow null
   food_name: string;
   calories: number;
   protein: number;
@@ -53,7 +54,7 @@ export async function addCustomFood(
       data,
       error,
     }: {data: CustomFood | null; error: PostgrestError | null} = await supabase
-      .from<CustomFood>('custom_foods')
+      .from('custom_foods')
       .insert(foodToInsert)
       .select()
       .single();
@@ -89,7 +90,7 @@ export async function getCustomFoods(): Promise<CustomFood[] | null> {
       error,
     }: {data: CustomFood[] | null; error: PostgrestError | null} =
       await supabase
-        .from<CustomFood>('custom_foods')
+        .from('custom_foods')
         .select('*')
         .eq('user_id', authUser.id)
         .order('created_at', {ascending: false}); // Optional: order by creation date
@@ -128,7 +129,7 @@ export async function getCustomFoodById(
       data,
       error,
     }: {data: CustomFood | null; error: PostgrestError | null} = await supabase
-      .from<CustomFood>('custom_foods')
+      .from('custom_foods')
       .select('*')
       .eq('id', foodId)
       .eq('user_id', authUser.id) // Ensure user owns the food
@@ -181,7 +182,7 @@ export async function updateCustomFood(
       data,
       error,
     }: {data: CustomFood | null; error: PostgrestError | null} = await supabase
-      .from<CustomFood>('custom_foods')
+      .from('custom_foods')
       .update(validUpdates)
       .eq('id', foodId)
       .eq('user_id', authUser.id) // Ensure user owns the food

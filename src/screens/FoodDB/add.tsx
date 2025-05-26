@@ -13,8 +13,8 @@ import type {NativeStackScreenProps} from '@react-navigation/native-stack'; // I
 import {Screen} from '../../components/Screen'; // Path is correct relative to FoodDB
 import {useAddFoodForm} from '../../hooks/useAddFoodForm'; // Path is correct relative to FoodDB
 import {useAddFoodNavigation} from '../../hooks/useAddFoodNavigation'; // Path is correct relative to FoodDB
-import {AppStackParamList} from '../../types/navigation'; // Path is correct relative to FoodDB
-import {deleteCustomFood} from '../../services/customFoodService';
+import {AppStackParamList, FoodDBStackParamList} from '../../types/navigation'; // Path is correct relative to FoodDB
+import {deleteCustomFood, CustomFood} from '../../services/customFoodService';
 import {useTheme} from '../../hooks/useTheme'; // Added
 import {AppText} from '../../components/common/AppText'; // Added
 import {AppTextInput} from '../../components/common/AppTextInput'; // Added
@@ -25,36 +25,30 @@ import {Theme} from '../../constants/theme'; // Added
 // type AddFoodScreenRouteProp = RouteProp<AppStackParamList, 'AddFood'>;
 
 // Define prop types for the screen itself
-type AddFoodScreenProps = NativeStackScreenProps<AppStackParamList, 'AddFood'>;
+// type AddFoodScreenProps = NativeStackScreenProps<AppStackParamList, 'AddFood'>;
+// Correcting to use FoodDBStackParamList as AddFood is part of FoodDB navigation stack
+type AddFoodScreenProps = NativeStackScreenProps<FoodDBStackParamList, 'AddFood'>;
 
 const AddFoodScreen: React.FC<AddFoodScreenProps> = ({navigation, route}) => {
   // Use the route prop directly
-  const initialDate = route.params?.initialDate;
-  // const itemId = route.params?.itemId; // Assuming AddFood might still be used for editing custom foods with an ID
-  // const mealCategory = route.params?.mealCategory; // This param seems to be from an older version
+  const {dateToLog, itemId: routeItemId} = route.params || {}; // Destructure dateToLog and potential itemId
 
-  // Example: Log the initialDate when the component mounts or initialDate changes
   useEffect(() => {
-    if (initialDate) {
-      console.log('AddFoodScreen received initialDate:', initialDate);
-      // Here, you might want to pass initialDate to useAddFoodForm or set it in local state
-      // For example: setFormData(prev => ({ ...prev, date: initialDate }));
+    if (dateToLog) {
+      console.log('AddFoodScreen received dateToLog:', dateToLog);
     }
-  }, [initialDate]);
+  }, [dateToLog]);
 
-  // Pass itemId to the form hook. initialDate might be used by the hook later.
   const {
     formData,
     handleInputChange,
     handleSubmit,
     isSubmitting,
-    isLoading, // Use loading state for fetching
-    isEditMode, // Use edit mode flag
-    itemId: numericItemId, // Get numeric itemId from hook
+    isLoading,
+    isEditMode,
+    itemId: numericItemId, // Get numeric itemId from hook, if editing
     errors,
-  } = useAddFoodForm({
-    /* itemId */
-  }); // itemId is commented out, decide if still needed
+  } = useAddFoodForm({itemId: routeItemId}); // Pass routeItemId to the hook
   const {handleGoBack} = useAddFoodNavigation();
   const [isDeleting, setIsDeleting] = useState(false); // State for delete loading
 
@@ -62,18 +56,54 @@ const AddFoodScreen: React.FC<AddFoodScreenProps> = ({navigation, route}) => {
   const styles = makeStyles(theme); // Added
 
   const handleFormSubmit = async () => {
-    const success = await handleSubmit();
-    if (success) {
-      Alert.alert(
-        'Success',
-        `Food item ${isEditMode ? 'updated' : 'added'} successfully!`,
-      );
-      handleGoBack();
+    const savedFoodData = await handleSubmit(); // handleSubmit now returns the saved food data or null
+
+    if (savedFoodData) {
+      if (isEditMode) {
+        Alert.alert(
+          'Success',
+          `Food item updated successfully!`,
+        );
+        handleGoBack();
+      } else {
+        // This is a new food item
+        Alert.alert(
+          'Success',
+          `Food item "${savedFoodData.food_name}" added successfully!`,
+          [
+            {
+              text: 'Log It Now',
+              onPress: () => {
+                const foodToLog = {
+                  food_name: savedFoodData.food_name,
+                  calories: savedFoodData.calories,
+                  protein: savedFoodData.protein,
+                  carbs: savedFoodData.carbs,
+                  fat: savedFoodData.fat,
+                  serving_unit: savedFoodData.serving_unit, // Ensure serving_unit is part of CustomFood
+                  // serving_size is part of the CustomFood but LogEntryScreen expects the quantity of these servings
+                  // So we don't pass serving_size directly as a value here for LogEntryScreen's initial state
+                };
+                // Navigate to LogEntry screen
+                // Ensure correct navigation path. If AddFood is in FoodDBNav, then:
+                navigation.replace('LogEntry', {
+                  foodItem: foodToLog,
+                  dateToLog: dateToLog || new Date().toISOString().split('T')[0], // Use provided date or today
+                });
+              },
+            },
+            {
+              text: 'Done',
+              onPress: () => handleGoBack(),
+              style: 'cancel',
+            },
+          ],
+          {cancelable: false},
+        );
+      }
     } else if (errors.form) {
-      // Show general form error if submission failed and an error message exists
       Alert.alert('Error', errors.form);
     }
-    // Field-specific errors are handled below
   };
 
   // --- Delete Handler ---

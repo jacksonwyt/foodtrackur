@@ -31,7 +31,7 @@ export default function WelcomeScreen() {
         styles.container,
         {paddingTop: insets.top, paddingBottom: insets.bottom},
       ]}>
-      <OnboardingHeader title="Welcome to FoodTrack" />
+      <OnboardingHeader title="Welcome to FoodTrack" currentStep={1} totalSteps={3} />
       <ScrollView
         contentContainerStyle={styles.scrollViewContent}
         showsVerticalScrollIndicator={false}>

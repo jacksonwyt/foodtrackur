@@ -17,7 +17,7 @@ export interface Profile {
   target_protein_g?: number;
   target_carbs_g?: number;
   target_fat_g?: number;
-  goal?: GoalType; // Use imported GoalType
+  goal?: GoalType;
   goal_weight?: number | null; // Added: Desired target weight
   goal_pace?: number | null; // Added: Desired pace (e.g., kg/week or lbs/week, can be negative for loss)
 }

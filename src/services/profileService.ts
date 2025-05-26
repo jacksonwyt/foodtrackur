@@ -4,6 +4,7 @@ import {type PostgrestError} from '@supabase/supabase-js';
 import {type GenderType, type ActivityLevelType, type GoalType} from '../types/navigation';
 // import {User} from '@supabase/supabase-js'; // Not strictly needed if only authUser.id is used
 import {type Profile, type UpdateProfileData} from '../types/profile';
+export type { Profile, UpdateProfileData };
 
 // --- Service Functions ---
 

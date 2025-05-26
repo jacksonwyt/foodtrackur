@@ -45,6 +45,7 @@ interface FoodSearchResult {
   description?: string;
   source: 'custom' | 'external';
   originalData?: CustomFood | FatSecretFoodSearchResult;
+  foodType?: string; // Added for FatSecret items
 }
 
 // Function to map CustomFood to FoodSearchResult
@@ -68,6 +69,7 @@ function mapFatSecretFoodToSearchResult(
     description: food.food_description,
     source: 'external',
     originalData: food,
+    foodType: food.food_type, // Populate foodType
   };
 }
 
@@ -221,18 +223,21 @@ const FoodSearchScreen: React.FC<FoodSearchScreenNavigationProp> = ({
   };
 
   const renderItem = ({item}: {item: FoodSearchResult}) => (
-    <Pressable 
+    <Pressable
       style={({pressed}) => [
         styles.resultItem,
         pressed && styles.resultItemPressed,
       ]}
       onPress={() => handleSelectFood(item)}>
       <View style={styles.resultTextContainer}>
-        <View style={styles.resultNameContainer}> 
+        <View style={styles.resultNameContainer}>
           <AppText style={styles.resultName} numberOfLines={1} ellipsizeMode="tail">{item.name}</AppText>
+          {item.source === 'external' && item.foodType === 'Brand' && (
+            <Ionicons name="star" size={16} color={theme.colors.accent} style={styles.brandIcon} />
+          )}
           <View style={[styles.sourceTagBase, item.source === 'custom' ? styles.sourceTagCustom : styles.sourceTagExternal]}>
             <AppText style={[styles.sourceTagText, item.source === 'custom' ? styles.sourceTagTextCustom : styles.sourceTagTextExternal]}>
-              {item.source}
+              {item.source === 'external' && item.foodType === 'Brand' ? 'Brand' : item.source}
             </AppText>
           </View>
         </View>
@@ -242,8 +247,8 @@ const FoodSearchScreen: React.FC<FoodSearchScreenNavigationProp> = ({
           </AppText>
         )}
       </View>
-      <View style={styles.addIconContainer}> 
-        <Ionicons name="add-circle-outline" size={28} color={theme.colors.primary} /> 
+      <View style={styles.addIconContainer}>
+        <Ionicons name="add-circle-outline" size={28} color={theme.colors.primary} />
       </View>
     </Pressable>
   );
@@ -364,7 +369,10 @@ const makeStyles = (theme: Theme) =>
       fontWeight: theme.typography.weights.semibold,
       color: theme.colors.onSurface,
       flexShrink: 1,
-      marginRight: theme.spacing.sm,
+      marginRight: theme.spacing.xs,
+    },
+    brandIcon: {
+      marginRight: theme.spacing.xs,
     },
     sourceTagBase: {
       paddingHorizontal: theme.spacing.sm,

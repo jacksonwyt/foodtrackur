@@ -10,6 +10,7 @@ export type HomeStackParamList = {
 
 export type ProgressStackParamList = {
   Progress: undefined;
+  LogWeight: undefined;
   // Add other screens navigable from Progress tab here
 };
 
@@ -70,6 +71,7 @@ export type MainTabParamList = {
 export type AppStackParamList = {
   Auth: NavigatorScreenParams<AuthStackParamList>;
   Onboarding: NavigatorScreenParams<OnboardingStackParamList>; // Added Onboarding route
+  PostOnboardingNutritionGoals: undefined;
   Main: NavigatorScreenParams<MainTabParamList>;
   AddFood: {initialDate: string};
   SettingsNav: NavigatorScreenParams<SettingsStackParamList>; // MODIFIED to use SettingsStackParamList

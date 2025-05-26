@@ -13,6 +13,7 @@ import {useTheme} from '../../hooks/useTheme';
 import {AppText} from '../../components/common/AppText';
 import {AppButton} from '../../components/common/AppButton';
 import type {Theme} from '../../constants/theme';
+import {AuthFooterLinks} from '../../components/auth/AuthFooterLinks';
 
 interface PersonalDataDisplayProps {
   personalData: PersonalData | null;
@@ -147,6 +148,9 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({navigation, route}) => {
             items={section.items}
           />
         ))}
+        <View style={styles.footerContainer}>
+          <AuthFooterLinks />
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -226,5 +230,9 @@ const getStyles = (theme: Theme) =>
       color: theme.colors.text,
       textAlign: 'center',
       marginBottom: theme.spacing.md,
+    },
+    footerContainer: {
+      marginTop: theme.spacing.xl,
+      alignItems: 'center',
     },
   });

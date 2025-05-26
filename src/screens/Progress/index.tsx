@@ -12,6 +12,7 @@ import { getProfile, type Profile } from '@/services/profileService';
 import { useFocusEffect } from '@react-navigation/native';
 import GoalProgressBar from '@/components/progress/GoalProgressBar';
 import KeyStatistics from '@/components/progress/KeyStatistics';
+import { AppButton } from '@/components/common/AppButton';
 
 // Define prop types for the screen
 type ProgressScreenProps = NativeStackScreenProps<
@@ -127,6 +128,10 @@ const ProgressScreen: React.FC<ProgressScreenProps> = ({ navigation, route }) =>
     }
   }
 
+  const handleLogWeightPress = () => {
+    navigation.navigate('LogWeight');
+  };
+
   return (
     <Screen>
       <ScrollView style={styles.container} contentContainerStyle={styles.scrollContentContainer} showsVerticalScrollIndicator={false}>
@@ -134,6 +139,13 @@ const ProgressScreen: React.FC<ProgressScreenProps> = ({ navigation, route }) =>
         {content} 
         {goalOverviewContent}
         {keyStatisticsContent}
+        <View style={styles.buttonContainer}>
+          <AppButton
+            title="Log New Weight"
+            onPress={handleLogWeightPress}
+            variant="solid"
+          />
+        </View>
       </ScrollView>
     </Screen>
   );
@@ -178,5 +190,9 @@ const makeStyles = (theme: Theme) =>
       color: theme.colors.error,
       textAlign: 'center',
       fontSize: theme.typography.sizes.body,
+    },
+    buttonContainer: {
+      marginTop: theme.spacing.lg,
+      marginBottom: theme.spacing.md,
     },
   });

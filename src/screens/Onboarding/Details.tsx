@@ -1,4 +1,4 @@
-import React, {useState, useMemo} from 'react';
+import React, {useState} from 'react';
 import {
   View,
   Text,
@@ -8,41 +8,23 @@ import {
   TextInput,
   KeyboardAvoidingView,
   Platform,
-  Alert,
-  ViewStyle,
-  TextStyle,
 } from 'react-native';
-import {Ionicons} from '@expo/vector-icons';
-import {useRoute, RouteProp, useNavigation} from '@react-navigation/native';
-import {useDispatch, useSelector} from 'react-redux';
+import {useRoute, RouteProp} from '@react-navigation/native';
+import {useSelector} from 'react-redux';
 import {selectCurrentUser} from '@/store/slices/authSlice';
-import {
-  updateUserProfileAndCompleteOnboarding,
-} from '@/store/slices/profileSlice';
 import {useOnboardingDetailsForm} from '@/hooks/useOnboardingDetailsForm';
 import {OnboardingHeader} from '@/components/onboarding/OnboardingHeader';
 import {OnboardingFooter} from '@/components/onboarding/OnboardingFooter';
 import {ActivityLevelItem} from '@/components/onboarding/ActivityLevelItem';
 import {
   OnboardingStackParamList,
-  OnboardingData,
   GoalType,
   ActivityLevelType,
 } from '../../types/navigation';
-import {
-  calculateNutritionalGoals,
-  CalculatedGoals,
-} from '../../utils/calculations';
-import type {UpdateProfileData} from '../../types/profile';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import theme from '../../constants/theme';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import {
-  convertHeightToCm,
-  convertWeightToKg,
-} from '../../utils/unitConversions';
-import {AppDispatch} from '@/store/store';
+import {useOnboardingSubmission} from '@/hooks/useOnboardingSubmission';
 
 // Define unit types
 type HeightUnit = 'cm' | 'ft_in';
@@ -89,68 +71,13 @@ const ACTIVITY_LEVELS_FORM = [
   },
 ] as const;
 
-// Helper function to prepare OnboardingData
-function prepareOnboardingData(
-  formData: ReturnType<typeof useOnboardingDetailsForm>['formData'],
-  goal: GoalType,
-  heightInCm: number,
-  weightInKg: number,
-  goalWeightInKg: number | undefined | null,
-  parsedGoalPace: number | undefined | null,
-): OnboardingData {
-  return {
-    name: formData.name.trim() || undefined,
-    goal: goal,
-    height: heightInCm,
-    weight: weightInKg,
-    dob: formData.age
-      ? `${new Date().getFullYear() - parseInt(formData.age, 10)}-01-01`
-      : undefined,
-    gender: formData.gender === null ? undefined : formData.gender,
-    activityLevel:
-      formData.activityLevel === null
-        ? undefined
-        : (formData.activityLevel as ActivityLevelType),
-    goal_weight: goalWeightInKg,
-    goal_pace: parsedGoalPace,
-  };
-}
-
-// Helper function to prepare UpdateProfileData
-function prepareProfileUpdateData(
-  onboardingData: OnboardingData,
-  calculatedGoals: CalculatedGoals,
-): UpdateProfileData {
-  const profileUpdate: UpdateProfileData = {
-    username: onboardingData.name,
-    height_cm:
-      typeof onboardingData.height === 'number'
-        ? onboardingData.height
-        : undefined,
-    dob: onboardingData.dob ? onboardingData.dob : undefined,
-    gender: onboardingData.gender,
-    activity_level: onboardingData.activityLevel,
-    target_calories: calculatedGoals.calories,
-    target_protein_g: calculatedGoals.protein,
-    target_carbs_g: calculatedGoals.carbs,
-    target_fat_g: calculatedGoals.fat,
-    goal: onboardingData.goal,
-    goal_weight: onboardingData.goal_weight,
-    goal_pace: onboardingData.goal_pace,
-  };
-  return profileUpdate;
-}
-
 export const DetailsScreen: React.FC<DetailsScreenProps> = ({
   route,
-  navigation,
 }) => {
   const {goal} = route.params;
-  const [isLoading, setIsLoading] = useState(false);
   const [focusedInput, setFocusedInput] = useState<string | null>(null);
   const insets = useSafeAreaInsets();
   const currentUser = useSelector(selectCurrentUser);
-  const dispatch = useDispatch<AppDispatch>();
 
   const [heightUnit, setHeightUnit] = useState<HeightUnit>('cm');
   const [weightUnit, setWeightUnit] = useState<WeightUnit>('kg');
@@ -162,158 +89,36 @@ export const DetailsScreen: React.FC<DetailsScreenProps> = ({
 
   const {
     formData,
-    errors,
+    errors: formErrors,
     handleInputChange,
     handleGenderSelect,
     handleActivitySelect,
     handleSubmit: validateFormInputs,
   } = useOnboardingDetailsForm();
 
-  const handleSubmit = async () => {
+  const {
+    submitDetails,
+    isLoading,
+    error: submissionError,
+  } = useOnboardingSubmission({
+    goal,
+    currentUser,
+    formData,
+    heightUnit,
+    feet,
+    inches,
+    weightUnit,
+    goalWeightInput,
+    goalWeightUnit,
+    goalPaceInput,
+  });
+
+  const handleFormSubmit = async () => {
     if (!validateFormInputs()) {
-      console.log('Form validation failed. Errors:', errors);
+      console.log('Form validation failed. Errors:', formErrors);
       return;
     }
-
-    if (!currentUser || !currentUser.id) {
-      Alert.alert(
-        'Authentication Error',
-        'User not found. Please ensure you are logged in.',
-      );
-      setIsLoading(false);
-      return;
-    }
-    const userId = currentUser.id;
-
-    if (goal === 'lose' || goal === 'gain') {
-      if (
-        goalWeightInput.trim() !== '' &&
-        (isNaN(parseFloat(goalWeightInput)) || parseFloat(goalWeightInput) <= 0)
-      ) {
-        Alert.alert(
-          'Invalid Desired Weight',
-          'If you enter a desired weight, it must be a positive number.',
-        );
-        return;
-      }
-      if (
-        goalPaceInput.trim() !== '' &&
-        (isNaN(parseFloat(goalPaceInput)) || parseFloat(goalPaceInput) <= 0)
-      ) {
-        Alert.alert(
-          'Invalid Goal Pace',
-          'If you enter a goal pace, it must be a positive number.',
-        );
-        return;
-      }
-    }
-
-    setIsLoading(true);
-
-    try {
-      const heightInCm = convertHeightToCm(
-        formData.height,
-        heightUnit,
-        feet,
-        inches,
-      );
-      const weightInKg = convertWeightToKg(formData.weight, weightUnit);
-
-      if (heightInCm === undefined || heightInCm <= 0) {
-        Alert.alert('Invalid Height', 'Please enter a valid height.');
-        setIsLoading(false);
-        return;
-      }
-      if (weightInKg === undefined || weightInKg <= 0) {
-        Alert.alert('Invalid Weight', 'Please enter a valid current weight.');
-        setIsLoading(false);
-        return;
-      }
-
-      let goalWeightInKg: number | undefined | null = null;
-      if (
-        (goal === 'lose' || goal === 'gain') &&
-        goalWeightInput.trim() !== ''
-      ) {
-        goalWeightInKg = convertWeightToKg(goalWeightInput, goalWeightUnit);
-      }
-
-      let parsedGoalPace: number | undefined | null = null;
-      if ((goal === 'lose' || goal === 'gain') && goalPaceInput.trim() !== '') {
-        const gp = parseFloat(goalPaceInput);
-        if (!isNaN(gp)) {
-          parsedGoalPace = gp;
-        }
-      }
-
-      const onboardingData = prepareOnboardingData(
-        formData,
-        goal,
-        heightInCm,
-        weightInKg,
-        goalWeightInKg,
-        parsedGoalPace,
-      );
-
-      if (
-        onboardingData.height === undefined ||
-        onboardingData.height <= 0 ||
-        onboardingData.weight === undefined ||
-        onboardingData.weight <= 0 ||
-        !onboardingData.dob ||
-        !onboardingData.gender ||
-        !onboardingData.activityLevel
-      ) {
-        Alert.alert(
-          'Missing Information',
-          'Please ensure all details (age, height, weight, gender, activity level) are entered correctly.',
-        );
-        setIsLoading(false);
-        return;
-      }
-
-      const calculatedGoals = calculateNutritionalGoals(onboardingData);
-      if (!calculatedGoals) {
-        Alert.alert(
-          'Calculation Error',
-          'Could not calculate nutritional goals. Please check your inputs.',
-        );
-        setIsLoading(false);
-        return;
-      }
-      console.log('Calculated Goals:', calculatedGoals);
-
-      const profileUpdates = prepareProfileUpdateData(
-        onboardingData,
-        calculatedGoals,
-      );
-
-      await dispatch(
-        updateUserProfileAndCompleteOnboarding({
-          userId,
-          profileData: profileUpdates,
-        }),
-      ).unwrap();
-      
-      console.log(
-        'Profile update and onboarding completion dispatched for user:', 
-        userId
-      );
-
-      navigation.navigate('NutritionGoals');
-
-    } catch (err) {
-      console.error('Error submitting onboarding data:', err);
-      let alertMessage = 'Could not save your profile. Please try again.';
-      if (err instanceof Error) {
-        alertMessage = err.message;
-      } else if (typeof err === 'string') {
-        alertMessage = err;
-      }
-      Alert.alert('Error', alertMessage);
-    } finally {
-      setIsLoading(false);
-    }
+    await submitDetails();
   };
 
   return (
@@ -325,7 +130,7 @@ export const DetailsScreen: React.FC<DetailsScreenProps> = ({
         contentContainerStyle={styles.scrollViewContent}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled">
-        <OnboardingHeader title="Your Details" />
+        <OnboardingHeader title="Your Details" currentStep={3} totalSteps={3} />
         <View style={styles.sectionContainer}>
           <Text style={styles.label}>Full Name</Text>
           <TextInput
@@ -337,11 +142,12 @@ export const DetailsScreen: React.FC<DetailsScreenProps> = ({
             onFocus={() => setFocusedInput('name')}
             onBlur={() => setFocusedInput(null)}
           />
-          {errors.name && <Text style={styles.errorText}>{errors.name}</Text>}
+          {formErrors.name && <Text style={styles.errorText}>{formErrors.name}</Text>}
         </View>
 
         <View style={styles.sectionContainer}>
           <Text style={styles.label}>Age</Text>
+          <Text style={styles.infoText}>Your age helps us accurately calculate your daily energy needs.</Text>
           <TextInput
             style={[styles.input, focusedInput === 'age' && styles.inputFocused]}
             placeholder="Enter your age"
@@ -352,11 +158,12 @@ export const DetailsScreen: React.FC<DetailsScreenProps> = ({
             onFocus={() => setFocusedInput('age')}
             onBlur={() => setFocusedInput(null)}
           />
-          {errors.age && <Text style={styles.errorText}>{errors.age}</Text>}
+          {formErrors.age && <Text style={styles.errorText}>{formErrors.age}</Text>}
         </View>
 
         <View style={styles.sectionContainer}>
           <Text style={styles.label}>Sex</Text>
+          <Text style={styles.infoText}>Biological sex is used to estimate metabolic rates for goal calculations.</Text>
           <View style={styles.genderSelectionContainer}>
             <TouchableOpacity
               style={[
@@ -403,11 +210,12 @@ export const DetailsScreen: React.FC<DetailsScreenProps> = ({
               </Text>
             </TouchableOpacity>
           </View>
-          {errors.gender && <Text style={styles.errorText}>{errors.gender}</Text>}
+          {formErrors.gender && <Text style={styles.errorText}>{formErrors.gender}</Text>}
         </View>
 
         <View style={styles.sectionContainer}>
           <Text style={styles.label}>Height</Text>
+          <Text style={styles.infoText}>Your height is a key factor in determining your personalized calorie and nutrient targets.</Text>
           <View style={styles.unitToggleContainer}>
             <TouchableOpacity
               style={[
@@ -473,11 +281,12 @@ export const DetailsScreen: React.FC<DetailsScreenProps> = ({
               />
             </View>
           )}
-          {errors.height && <Text style={styles.errorText}>{errors.height}</Text>}
+          {formErrors.height && <Text style={styles.errorText}>{formErrors.height}</Text>}
         </View>
 
         <View style={styles.sectionContainer}>
           <Text style={styles.label}>Current Weight</Text>
+          <Text style={styles.infoText}>Your current weight is essential for calculating your baseline metabolism and tracking progress towards your goal.</Text>
           <View style={styles.unitToggleContainer}>
             <TouchableOpacity
               style={[
@@ -518,7 +327,7 @@ export const DetailsScreen: React.FC<DetailsScreenProps> = ({
             onFocus={() => setFocusedInput('weight')}
             onBlur={() => setFocusedInput(null)}
           />
-          {errors.weight && <Text style={styles.errorText}>{errors.weight}</Text>}
+          {formErrors.weight && <Text style={styles.errorText}>{formErrors.weight}</Text>}
         </View>
 
         {(goal === 'lose' || goal === 'gain') && (
@@ -584,6 +393,7 @@ export const DetailsScreen: React.FC<DetailsScreenProps> = ({
 
         <View style={styles.sectionContainer}>
           <Text style={styles.label}>Activity Level</Text>
+          <Text style={styles.infoText}>Your activity level helps us estimate your total daily energy expenditure.</Text>
           {ACTIVITY_LEVELS_FORM.map(level => (
             <ActivityLevelItem
               key={level.id}
@@ -593,14 +403,19 @@ export const DetailsScreen: React.FC<DetailsScreenProps> = ({
               onPress={() => handleActivitySelect(level.id)}
             />
           ))}
-          {errors.activityLevel && (
-            <Text style={styles.errorText}>{errors.activityLevel}</Text>
+          {formErrors.activityLevel && (
+            <Text style={styles.errorText}>{formErrors.activityLevel}</Text>
           )}
         </View>
+        {submissionError && (
+          <View style={styles.sectionContainer}>
+            <Text style={styles.errorText}>Submission Error: {submissionError}</Text>
+          </View>
+        )}
       </ScrollView>
       <OnboardingFooter
         onPress={() => {
-          void handleSubmit();
+          void handleFormSubmit();
         }}
         buttonText="Calculate & Save"
         disabled={isLoading}
@@ -630,6 +445,13 @@ const styles = StyleSheet.create({
     fontWeight: theme.typography.weights.semibold,
     color: theme.colors.text,
     marginBottom: theme.spacing.md,
+    fontFamily: theme.typography.fontFamily,
+  },
+  infoText: {
+    fontSize: theme.typography.sizes.body,
+    color: theme.colors.textSecondary,
+    marginBottom: theme.spacing.sm,
+    fontStyle: 'italic',
     fontFamily: theme.typography.fontFamily,
   },
   input: {
@@ -682,6 +504,7 @@ const styles = StyleSheet.create({
   genderButtonTextSelected: {
     color: theme.colors.onPrimary,
     fontWeight: theme.typography.weights.semibold,
+    fontFamily: theme.typography.fontFamily,
   },
   unitToggleContainer: {
     flexDirection: 'row',
@@ -708,6 +531,7 @@ const styles = StyleSheet.create({
   unitButtonTextSelected: {
     color: theme.colors.onPrimary,
     fontWeight: theme.typography.weights.semibold,
+    fontFamily: theme.typography.fontFamily,
   },
   imperialHeightContainer: {
     flexDirection: 'row',

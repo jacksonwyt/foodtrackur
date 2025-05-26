@@ -31,7 +31,7 @@ interface UseAddFoodFormOptions {
 interface UseAddFoodFormResult {
   formData: FoodFormData;
   handleInputChange: (field: keyof FoodFormData, value: string) => void;
-  handleSubmit: () => Promise<boolean>;
+  handleSubmit: () => Promise<CustomFood | null>;
   isSubmitting: boolean;
   isLoading: boolean;
   isEditMode: boolean; // Explicitly indicate if we are editing
@@ -182,9 +182,9 @@ export const useAddFoodForm = (
     return isValid;
   }, [formData]);
 
-  const handleSubmit = useCallback(async (): Promise<boolean> => {
+  const handleSubmit = useCallback(async (): Promise<CustomFood | null> => {
     if (!validateForm()) {
-      return false;
+      return null;
     }
 
     setIsSubmitting(true);
@@ -229,14 +229,14 @@ export const useAddFoodForm = (
             servingUnit: '',
           });
         }
-        return true; // Indicate success
+        return result;
       } else {
         // Handle case where service call returns null (e.g., update failed due to non-ownership)
         const action = isEditMode ? 'update' : 'add';
         setErrors({
           form: `Failed to ${action} food item. Item might not exist or operation failed.`,
         });
-        return false; // Indicate failure
+        return null;
       }
     } catch (error) {
       console.error('Submission failed:', error);
@@ -248,9 +248,9 @@ export const useAddFoodForm = (
           : `An unknown error occurred while trying to ${action} the food item.`;
       setErrors({form: message});
       setIsSubmitting(false);
-      return false; // Indicate failure
+      return null;
     }
-  }, [formData, isEditMode, itemId, validateForm]); // Update dependencies
+  }, [formData, isEditMode, itemId, validateForm]);
 
   return {
     formData,

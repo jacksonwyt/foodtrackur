@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useEffect, useRef} from 'react';
 import {NavigationContainer} from '@react-navigation/native';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
@@ -29,6 +29,7 @@ import HomeScreen from '@/screens/Home/index';
 import ProgressScreen from '@/screens/Progress';
 import ExerciseScreen from '@/screens/Exercise';
 import AddFoodScreen from '@/screens/FoodDB/add';
+import NutritionGoalsScreen from '@/screens/Onboarding/NutritionGoalsScreen';
 
 // Import SettingsNavigator
 import SettingsNavigator from './SettingsNavigator';
@@ -234,6 +235,15 @@ function MainTabs() {
   );
 }
 
+// Helper hook to get the previous value of a prop or state
+function usePrevious<T>(value: T): T | undefined {
+  const ref = useRef<T>();
+  useEffect(() => {
+    ref.current = value;
+  });
+  return ref.current;
+}
+
 // Root App Navigator
 export default function AppNavigator() {
   const authStatus = useSelector(selectAuthStatus);
@@ -241,6 +251,8 @@ export default function AppNavigator() {
   const onboardingComplete = useSelector(selectOnboardingComplete);
   const profileStatus = useSelector(selectProfileStatus);
   const theme = useTheme();
+
+  const prevOnboardingComplete = usePrevious(onboardingComplete);
 
   if (authStatus === 'idle' || authStatus === 'loading') {
     return (
@@ -267,6 +279,7 @@ export default function AppNavigator() {
           <Stack.Screen name="Onboarding" component={OnboardingNavigator} />
         ) : (
           <>
+            <Stack.Screen name="PostOnboardingNutritionGoals" component={NutritionGoalsScreen} />
             <Stack.Screen name="Main" component={MainTabs} />
             <Stack.Screen name="SettingsNav" component={SettingsNavigator} />
             <Stack.Screen name="ScanNav" component={ScanNavigator} />

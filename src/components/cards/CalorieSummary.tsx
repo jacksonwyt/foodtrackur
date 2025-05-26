@@ -110,6 +110,7 @@ const makeStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
     fontSize: theme.typography.sizes.bodySmall,
     color: theme.colors.textSecondary,
     marginTop: theme.spacing.xxs,
+    fontWeight: theme.typography.weights.medium,
   },
   statsContainer: {
     flexDirection: 'row',

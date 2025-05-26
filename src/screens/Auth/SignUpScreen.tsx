@@ -25,6 +25,7 @@ import type {AuthStackParamList} from '../../types/navigation';
 import theme from '../../constants/theme';
 import {Ionicons} from '@expo/vector-icons';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import {AuthFooterLinks} from '../../components/auth/AuthFooterLinks';
 
 interface SignUpScreenProps {
   navigation: NativeStackNavigationProp<AuthStackParamList, 'SignUp'>;
@@ -42,31 +43,59 @@ export function SignUpScreen({
   const authError = useSelector(selectAuthError);
   const insets = useSafeAreaInsets();
 
+  // Specific error states for inline messages
+  const [emailError, setEmailError] = useState<string | null>(null);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [confirmPasswordError, setConfirmPasswordError] = useState<string | null>(null);
+
+  const clearInlineErrors = () => {
+    setEmailError(null);
+    setPasswordError(null);
+    setConfirmPasswordError(null);
+  };
+
   const handleSignUp = async () => {
-    if (!email || !password || !confirmPassword) {
-      dispatch(
-        setAuthState({
-          status: 'failed',
-          user: null,
-          session: null,
-          error: 'Please fill in all fields.',
-        }),
-      );
-      return;
+    clearInlineErrors(); // Clear previous inline errors
+    dispatch(clearAuthError()); // Clear general auth error from Redux
+
+    let isValid = true;
+    if (!email) {
+      setEmailError('Email is required.');
+      isValid = false;
+    } else if (!/\S+@\S+\.\S+/.test(email)) {
+      setEmailError('Please enter a valid email address.');
+      isValid = false;
     }
-    if (password !== confirmPassword) {
+
+    if (!password) {
+      setPasswordError('Password is required.');
+      isValid = false;
+    } else if (password.length < 6) { // Example: Basic password length check
+      setPasswordError('Password must be at least 6 characters.');
+      isValid = false;
+    }
+
+    if (!confirmPassword) {
+      setConfirmPasswordError('Please confirm your password.');
+      isValid = false;
+    } else if (password && password !== confirmPassword) {
+      setConfirmPasswordError('Passwords do not match.');
+      isValid = false;
+    }
+
+    if (!isValid) {
+       // Set a general error for the top-level display if needed, or rely on inline
       dispatch(
         setAuthState({
           status: 'failed',
           user: null,
           session: null,
-          error: 'Passwords do not match.',
+          error: 'Please correct the errors below.', // General message
         }),
       );
       return;
     }
 
-    dispatch(clearAuthError());
     dispatch(setAuthState({status: 'loading', user: null, session: null, error: null}));
     try {
       const {user, session, error} = await signUpWithEmail({email, password});
@@ -130,9 +159,14 @@ export function SignUpScreen({
 
   React.useEffect(() => {
     if (authError) {
-      dispatch(clearAuthError());
+      // If a general authError from Redux (e.g., server error, email taken), display it.
+      // Specific field validation errors are now handled by local state.
+      // This logic might need refinement based on how Redux errors should interact with local form validation.
+      // For now, let's assume Redux authError is for server-side messages.
     }
-  }, [email, password, confirmPassword, dispatch]);
+    // Clear inline errors when inputs change
+    clearInlineErrors();
+  }, [email, password, confirmPassword]);
 
   const navigateToLogin = () => {
     navigation.navigate('Login');
@@ -146,18 +180,19 @@ export function SignUpScreen({
         <Text style={styles.title}>Create Account</Text>
         <Text style={styles.subtitle}>Join us and start tracking your nutrition!</Text>
 
-        {/* {authStatus === 'failed' && authError && (
+        {/* General error message display (optional, if inline errors are primary) */}
+        {authStatus === 'failed' && authError && !emailError && !passwordError && !confirmPasswordError && (
           <View style={styles.errorContainer}>
             <Ionicons name="alert-circle-outline" size={20} color={theme.colors.error} />
             <Text style={styles.errorText}>{authError}</Text>
           </View>
         )}
         {authStatus === 'unauthenticated' && authError && authError.includes('confirm your account') && (
-           <View style={[styles.errorContainer, styles.successContainer]}> /!* Using error styles for now, can be specific success style *!/
+           <View style={[styles.errorContainer, styles.successContainer]}>
             <Ionicons name="checkmark-circle-outline" size={20} color={theme.colors.success} />
             <Text style={[styles.errorText, styles.successText]}>{authError}</Text>
           </View>
-        )} */}
+        )}
 
         <View style={styles.inputContainer}>
           <Text style={styles.label}>Email Address</Text>
@@ -165,7 +200,7 @@ export function SignUpScreen({
             style={[
               styles.input,
               focusedInput === 'email' && styles.inputFocused,
-              authError && authError.toLowerCase().includes('email') && styles.inputError,
+              emailError && styles.inputError, // Use local emailError
             ]}
             placeholder="you@example.com"
             value={email}
@@ -176,6 +211,7 @@ export function SignUpScreen({
             onFocus={() => setFocusedInput('email')}
             onBlur={() => setFocusedInput(null)}
           />
+          {emailError && <Text style={styles.inlineErrorText}>{emailError}</Text>}
         </View>
 
         <View style={styles.inputContainer}>
@@ -184,9 +220,9 @@ export function SignUpScreen({
             style={[
               styles.input,
               focusedInput === 'password' && styles.inputFocused,
-              authError && authError.toLowerCase().includes('password') && !authError.toLowerCase().includes('match') && styles.inputError,
+              passwordError && styles.inputError, // Use local passwordError
             ]}
-            placeholder="Choose a strong password"
+            placeholder="At least 6 characters" // Hint for password requirement
             value={password}
             onChangeText={setPassword}
             secureTextEntry
@@ -194,6 +230,8 @@ export function SignUpScreen({
             onFocus={() => setFocusedInput('password')}
             onBlur={() => setFocusedInput(null)}
           />
+          {passwordError && <Text style={styles.inlineErrorText}>{passwordError}</Text>}
+          {!passwordError && <Text style={styles.passwordHintText}>Password must be at least 6 characters.</Text>}
         </View>
 
         <View style={styles.inputContainer}>
@@ -202,7 +240,7 @@ export function SignUpScreen({
             style={[
               styles.input,
               focusedInput === 'confirmPassword' && styles.inputFocused,
-              authError && authError.toLowerCase().includes('match') && styles.inputError,
+              confirmPasswordError && styles.inputError, // Use local confirmPasswordError
             ]}
             placeholder="Confirm your password"
             value={confirmPassword}
@@ -212,6 +250,7 @@ export function SignUpScreen({
             onFocus={() => setFocusedInput('confirmPassword')}
             onBlur={() => setFocusedInput(null)}
           />
+          {confirmPasswordError && (<Text style={styles.inlineErrorText}>{confirmPasswordError}</Text>)}
         </View>
 
         <TouchableOpacity
@@ -235,6 +274,7 @@ export function SignUpScreen({
             Already have an account? <Text style={styles.loginLink}>Login</Text>
           </Text>
         </TouchableOpacity>
+        <AuthFooterLinks />
       </View>
     </KeyboardAvoidingView>
   );
@@ -310,6 +350,20 @@ const styles = StyleSheet.create({
     color: theme.colors.error,
     fontSize: theme.typography.sizes.caption,
     fontFamily: theme.typography.fontFamily,
+  },
+  inlineErrorText: { // Added style for inline errors
+    color: theme.colors.error,
+    fontSize: theme.typography.sizes.caption,
+    fontFamily: theme.typography.fontFamily,
+    marginTop: theme.spacing.xxs,
+    marginLeft: theme.spacing.xs, // Optional: indent slightly
+  },
+  passwordHintText: { // Added style for password hint
+    color: theme.colors.textSecondary,
+    fontSize: theme.typography.sizes.caption,
+    fontFamily: theme.typography.fontFamily,
+    marginTop: theme.spacing.xxs,
+    marginLeft: theme.spacing.xs, // Optional: indent slightly
   },
   successContainer: {
     backgroundColor: theme.colors.successBackground,

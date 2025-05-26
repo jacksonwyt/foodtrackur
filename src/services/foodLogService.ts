@@ -9,27 +9,13 @@ import {
 
 // --- Food Log Interface ---
 // Represents the structure of data in the 'food_logs' table
-export interface FoodLog {
-  id: number; // Or string (UUID) depending on your table primary key
-  user_id: string; // Foreign key referencing auth.users.id
-  food_name: string;
-  calories: number;
-  protein: number;
-  carbs: number;
-  fat: number;
-  serving_size: number;
-  serving_unit: string; // e.g., 'g', 'oz', 'cup', 'item'
-  log_date: string; // ISO 8601 timestamp string (e.g., YYYY-MM-DDTHH:mm:ssZ)
-  created_at?: string; // Supabase automatically handles this
-}
+// [REMOVED]
 
 // Type for data needed when *adding* a new food log (omits id, user_id, created_at)
-export type AddFoodLogData = Omit<FoodLog, 'id' | 'user_id' | 'created_at'>;
+// [REMOVED]
 
 // Type for data needed when *updating* a food log (all fields optional)
-export type UpdateFoodLogData = Partial<
-  Omit<FoodLog, 'id' | 'user_id' | 'created_at' | 'log_date'>
->;
+// [REMOVED]
 
 // --- Service Functions ---
 
@@ -247,6 +233,43 @@ export async function getFoodLogSummaryByDateRange(
 
   if (error) {
     console.error('Error fetching food log summary by date range:', error);
+    return null;
+  }
+  return data;
+}
+
+/**
+ * Retrieves the most recent food log entries for a user.
+ * @param userId - The ID of the user.
+ * @param limit - The maximum number of recent logs to retrieve.
+ */
+export async function getRecentFoodLogs(
+  userId: string,
+  limit: number,
+): Promise<FoodLog[] | null> {
+  const {user: authUser, error: authError} = await getCurrentUser();
+  if (authError || !authUser) {
+    console.error(
+      'Authentication error fetching recent food logs:',
+      authError?.message || 'User not authenticated.',
+    );
+    return null;
+  }
+  if (authUser.id !== userId) {
+    console.error('User mismatch: Cannot fetch recent logs for another user.');
+    return null;
+  }
+
+  const {data, error}: {data: FoodLog[] | null; error: PostgrestError | null} =
+    await supabase
+      .from('food_logs')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', {ascending: false})
+      .limit(limit);
+
+  if (error) {
+    console.error('Error fetching recent food logs:', error);
     return null;
   }
   return data;

@@ -31,6 +31,7 @@ export const MacroTile: React.FC<MacroTileProps> = ({
   const safeGoal = Math.max(goal, 1);
   const cappedConsumed = Math.max(consumed, 0); // Ensure consumed is not negative
   const progress = Math.min(cappedConsumed / safeGoal, 1) * 100; // Progress capped at 100%
+  const remaining = Math.max(safeGoal - cappedConsumed, 0);
 
   return (
     <View style={styles.tile}>
@@ -44,9 +45,8 @@ export const MacroTile: React.FC<MacroTileProps> = ({
       </View>
       <Text style={styles.macroLabel}>{label}</Text>
       <Text style={styles.valueText} numberOfLines={1} ellipsizeMode="tail">
-        <Text style={styles.consumedText}>{cappedConsumed}</Text>
-        {/* Handle goal being potentially 0 for display */}
-        <Text style={styles.goalText}> / {Math.max(goal, 0)}g</Text>
+        <Text style={styles.mainValueText}>{remaining}g</Text>
+        <Text style={styles.remainingLabelText}> left</Text>
       </Text>
       <View style={styles.progressContainer}>
         <View
@@ -86,12 +86,12 @@ const makeStyles = (theme: ReturnType<typeof useTheme>) => StyleSheet.create({
     height: theme.typography.sizes.body * theme.typography.lineHeights.normal, // Ensure consistent height based on font
     alignItems: 'flex-end',
   },
-  consumedText: {
+  mainValueText: { // Renamed from consumedText for clarity
     fontSize: theme.typography.sizes.body, // Use theme typography
     fontWeight: theme.typography.weights.semibold, // Use theme typography
     color: theme.colors.text, // Use theme color
   },
-  goalText: {
+  remainingLabelText: { // Renamed from goalText for clarity and new purpose
     fontSize: theme.typography.sizes.bodySmall, // Use theme typography
     color: theme.colors.textSecondary, // Use theme color
   },
